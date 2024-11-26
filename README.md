@@ -1,2 +1,2 @@
-# hto_dd
-Package for demultiplexing single cell data after normalizing the data using a adaptation of the DSB algorithm
+# hto_dnd
+Package for demultiplexing single-cell data after normalizing the data using an adaptation of the DSB algorithm

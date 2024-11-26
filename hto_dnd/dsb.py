@@ -1,25 +1,11 @@
-import sys
 import argparse
-import logging
 import anndata as ad
 import os
 
 from dsb_algorithm import dsb_adapted
 from dsb_viz import create_visualization
 
-numba_logger = logging.getLogger("numba")
-numba_logger.setLevel(logging.WARNING)
 
-logger = logging.getLogger("updata_adata")
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("update_adata.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
 
 def dsb(
     path_adata_filtered_in: str,
@@ -27,19 +13,15 @@ def dsb(
     path_adata_out: str,
     create_viz: bool = True,
 ):
-    logger.info(f"Loading AnnData {path_adata_filtered_in}...")
     adata_filtered = ad.read_h5ad(path_adata_filtered_in)
 
-    logger.info(f"Loading AnnData {path_adata_raw_in}...")
     adata_raw = ad.read_h5ad(path_adata_raw_in)
 
-    logger.info("Running DSB...")
     dsb_adapted(adata_filtered, adata_raw)
 
     # Ensure the output directory exists
     # os.makedirs(os.path.dirname(path_adata_out), exist_ok=True)
 
-    logger.info(f"Saving AnnData {path_adata_out}...")
     adata_filtered.write(path_adata_out)
 
 
@@ -54,7 +36,6 @@ def dsb(
             # If path_adata_out is just a filename, use the current directory
             viz_output_path = os.path.join(os.getcwd(), viz_filename)
         
-        logger.info(f"Creating visualization at {viz_output_path}...")
         create_visualization(adata_filtered, viz_output_path)
 
 
@@ -100,13 +81,9 @@ def parse_arguments():
 if __name__ == "__main__":
     params = parse_arguments()
 
-    logger.info("Starting...")
-
     dsb(
         path_adata_filtered_in=params.path_adata_filtered_in,
         path_adata_raw_in=params.path_adata_raw_in,
         path_adata_out=params.path_adata_out,
         create_viz=params.create_viz,
     )
-
-    logger.info("DONE.")

@@ -1,0 +1,34 @@
+[project]
+name = "hto-dnd"
+version = "0.1.0"
+description = "A method to demultiplex hashtagged single-cell data by first applying a denoising and normalizing step adapted from DSB (Denoised and Scaled by Background)."
+dependencies = [
+    "pandas >= 1.5.0, < 2.0.0",             # Data manipulation and analysis
+    "numpy >= 1.21.0, < 2.0.0",             # Numerical operations
+    "matplotlib >= 3.5.0, < 4.0.0",         # Plotting and visualization
+    "seaborn >= 0.12.0, < 1.0.0",           # Statistical data visualization
+    "scipy >= 1.8.0, < 2.0.0",              # Scientific computing
+    "scikit-learn >= 1.2.0, < 2.0.0",       # Machine learning algorithms
+    "anndata >= 0.8.0, < 1.0.0",            # Annotated data structures
+    "pyyaml >= 6.0, < 7.0",                 # YAML parsing and writing
+]
+authors = [
+    { name = "Hussen Mohammed Ibrahim", email = "ibrahih3@mskcc.org" },
+    { name = "Tobias Krause", email = "krauset@mskcc.org" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+dsb = "hto_dnd.dsb:main"
+demux_dsb = "hto_dnd.demux_dsb:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

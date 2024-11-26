@@ -1,30 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import sys
-import os
 import argparse
 import pandas as pd
 import numpy as np
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, davies_bouldin_score
-import yaml
-import logging
 import anndata as ad
-
-
-logger = logging.getLogger("demux_dsb_kmeans")
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("demux_dsb_kmeans.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
-
 
 def cluster_and_evaluate(data, method="kmeans"):
     """
@@ -91,7 +74,6 @@ def hto_demux_dsb(
     classifications = []
     metrics = {}
 
-    logger.info(f"Running clustering using {method}...")
     for hto in df_umi_dsb.columns:
         data = df_umi_dsb[hto].values.reshape(-1, 1)
 
@@ -122,7 +104,6 @@ def hto_demux_dsb(
         *result_df.apply(categorize_cell, axis=1)
     )
 
-    logger.info("Classification completed.")
 
     # create an anndata object where the denoised data is the X matrix, the barcodes and features are the obs and var names, add the hashID and Doublet_Info as an obs column, and metrics as an uns
     adata_filtered.obs["hashID"] = result_df["hashID"]
@@ -178,16 +159,10 @@ if __name__ == "__main__":
 
     params = parse_arguments()
 
-    logger.info("Starting...")
-
     adata_result = hto_demux_dsb(
         params.path_dsb_denoised_adata_dir,
         method=params.method,
         layer=params.layer,
     )
 
-    logger.info("Saving AnnData result...")
     adata_result.write(params.output_path)
-
-    logger.info(f"Results saved to {params.output_dir}")
-    logger.info("DONE.")

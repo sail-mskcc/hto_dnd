@@ -51,7 +51,7 @@ def cluster_and_evaluate(data, method="kmeans"):
     return labels, positive_cluster, metrics
 
 def hto_demux_dsb(
-    path_dsb_denoised_adata_dir: str,
+    dsb_denoised_adata: ad.AnnData,
     method: str = "kmeans",
     layer: str = "dsb_normalized",
 ):
@@ -60,16 +60,15 @@ def hto_demux_dsb(
     and categorize cells based on their HTO classifications.
 
     Parameters:
-    - path_dsb_denoised_adata_dir (str): Path to the DSB denoised anndata directory.
+    - dsb_denoised_adata (ad.AnnData): The DSB denoised AnnData object.
     - method (str): Clustering method to use. Must be either 'gmm' or 'kmeans'. Default is 'kmeans'.
+    - layer (str): The layer to use for demultiplexing. Default is 'dsb_normalized'.
 
     Returns:
     - AnnData: An AnnData object containing the results of the demultiplexing.
     """
-    adata_filtered = ad.read_h5ad(path_dsb_denoised_adata_dir)
-
-    # Check if the dsb_normalized is added in adata_filtered layers
-    df_umi_dsb = adata_filtered.to_df(layer=layer)
+    # Check if the dsb_normalized is added in dsb_denoised_adata layers and get the df
+    df_umi_dsb = dsb_denoised_adata.to_df(layer=layer)
 
     classifications = []
     metrics = {}
@@ -106,11 +105,11 @@ def hto_demux_dsb(
 
 
     # create an anndata object where the denoised data is the X matrix, the barcodes and features are the obs and var names, add the hashID and Doublet_Info as an obs column, and metrics as an uns
-    adata_filtered.obs["hashID"] = result_df["hashID"]
-    adata_filtered.obs["Doublet_Info"] = result_df["Doublet_Info"]
-    adata_filtered.uns["metrics"] = metrics
+    dsb_denoised_adata.obs["hashID"] = result_df["hashID"]
+    dsb_denoised_adata.obs["Doublet_Info"] = result_df["Doublet_Info"]
+    dsb_denoised_adata.uns["metrics"] = metrics
 
-    return adata_filtered
+    return dsb_denoised_adata
 
 
 

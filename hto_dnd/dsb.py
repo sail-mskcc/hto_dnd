@@ -2,41 +2,65 @@ import argparse
 import anndata as ad
 import os
 
-from dsb_algorithm import dsb_adapted
-from dsb_viz import create_visualization
+from .dsb_algorithm import dsb_adapted
+from .dsb_viz import create_visualization
 
 
 
 def dsb(
-    path_adata_filtered_in: str,
-    path_adata_raw_in: str,
-    path_adata_out: str,
-    create_viz: bool = True,
+    adata_filtered: ad.AnnData,
+    adata_raw: ad.AnnData,
+    path_adata_out: str = None,
+    create_viz: bool = True
 ):
-    adata_filtered = ad.read_h5ad(path_adata_filtered_in)
+    """
+    Perform DSB normalization on the provided AnnData object.
 
-    adata_raw = ad.read_h5ad(path_adata_raw_in)
+    Parameters:
+        - adata_filtered (AnnData): AnnData object with filtered counts
+        - adata_raw (AnnData): AnnData object with raw counts
+        - path_adata_out (str): name of the output file including the path in .h5ad format (default: None)
+        - create_viz (bool): create visualization plot (default: True). If path_adata_ouput is None, the visualization will be saved in the current directory.
+    Returns:
+        - adata_denoised (AnnData): AnnData object with DSB normalized counts
+    """
+    if adata_filtered is None:
+        raise ValueError("adata containing the filtered droplets must be provided.")
 
-    dsb_adapted(adata_filtered, adata_raw)
+    if adata_raw is None:
+        raise ValueError("adata containing all the droplets must be provided.")
 
-    # Ensure the output directory exists
-    # os.makedirs(os.path.dirname(path_adata_out), exist_ok=True)
+    adata_denoised = dsb_adapted(adata_filtered, adata_raw)
 
-    adata_filtered.write(path_adata_out)
-
-
-    if create_viz:
-        # Create visualization filename based on the AnnData filename
-        viz_filename = os.path.splitext(os.path.basename(path_adata_out))[0] + "_dsb_viz.png"
-        
+    # if path_adata_out is not provided, check if there is a need to make the plot and then return the adata_denoised
+    if path_adata_out is None:
+        if create_viz:
+            # If path_adata_out is not provided, use the current directory
+            viz_output_path = os.path.join(os.getcwd(), "dsb_viz.png")
+            
+            create_visualization(adata_denoised, viz_output_path)
+        return adata_denoised
+    else:
+        # Ensure the output directory exists if a directory is specified
         if os.path.dirname(path_adata_out):
-            # If path_adata_out includes a directory, use that
-            viz_output_path = os.path.join(os.path.dirname(path_adata_out), viz_filename)
-        else:
-            # If path_adata_out is just a filename, use the current directory
-            viz_output_path = os.path.join(os.getcwd(), viz_filename)
+            os.makedirs(os.path.dirname(path_adata_out), exist_ok=True)
+        adata_denoised.write(path_adata_out)
+
+        if create_viz:
+            # Create visualization filename based on the AnnData filename
+            viz_filename = os.path.splitext(os.path.basename(path_adata_out))[0] + "_dsb_viz.png"
+            
+            if os.path.dirname(path_adata_out):
+                # If path_adata_out includes a directory, use that
+                viz_output_path = os.path.join(os.path.dirname(path_adata_out), viz_filename)
+            else:
+                # If path_adata_out is just a filename, use the current directory
+                viz_output_path = os.path.join(os.getcwd(), viz_filename)
+            
+            create_visualization(adata_denoised, viz_output_path)
+
         
-        create_visualization(adata_filtered, viz_output_path)
+    return adata_denoised
 
 
 def parse_arguments():

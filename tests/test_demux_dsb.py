@@ -5,7 +5,7 @@ import anndata as ad
 import yaml
 import os
 from sklearn.datasets import make_blobs
-from src.demux_dsb import cluster_and_evaluate, hto_demux_dsb
+from hto_dnd.demux_dsb import cluster_and_evaluate, hto_demux_dsb
 
 @pytest.fixture
 def mock_dsb_denoised_adata():
@@ -95,7 +95,8 @@ def test_hto_demux_dsb(mock_dsb_denoised_adata, tmp_path):
 
     
     for method in ['kmeans', 'gmm']:
-        result = hto_demux_dsb(str(temp_file), method=method)
+        adata_filtered = ad.read_h5ad(temp_file)
+        result = hto_demux_dsb(adata_filtered, method=method)
         
         assert isinstance(result, ad.AnnData)
         assert 'hashID' in result.obs.columns
@@ -132,8 +133,9 @@ def test_consistent_classification(mock_dsb_denoised_adata, tmp_path):
     temp_file = tmp_path / "mock_dsb_denoised_adata.h5ad"
     mock_dsb_denoised_adata.write(temp_file)
     
-    result1 = hto_demux_dsb(str(temp_file), method='kmeans')
-    result2 = hto_demux_dsb(str(temp_file), method='kmeans')
+    adata_filtered = ad.read_h5ad(temp_file)
+    result1 = hto_demux_dsb(adata_filtered, method='kmeans')
+    result2 = hto_demux_dsb(adata_filtered, method='kmeans')
     
     pd.testing.assert_series_equal(result1.obs['hashID'], result2.obs['hashID'])
 

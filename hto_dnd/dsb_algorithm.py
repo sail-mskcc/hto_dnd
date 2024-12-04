@@ -54,8 +54,7 @@ def dsb_adapted(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
     pseudocount: int = 10,
-    denoise_counts: bool = True,
-    use_isotype_controls: bool = None
+    denoise_counts: bool = True
 ) -> ad.AnnData:
     """
     Custom implementation of the DSB (Denoised and Sclaed by Background) algorithm.
@@ -70,8 +69,6 @@ def dsb_adapted(
         The pseudocount value used in the formula. Default is 10.
     denoise_counts : bool, optional
         Flag indicating whether to perform denoising. Default is True.
-    use_isotype_controls : bool, optional
-        Placeholder for isotype controls. Default is None.
 
     Returns:
     --------
@@ -142,11 +139,6 @@ def dsb_adapted(
         background_means.append(background_component_mean)
 
     noise_vector = np.array(background_means)
-
-    if use_isotype_controls:
-        
-        
-        pass
 
     norm_adt = remove_batch_effect(normalized_matrix, covariates=noise_vector)
 

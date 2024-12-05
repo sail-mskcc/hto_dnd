@@ -4,9 +4,9 @@ import anndata as ad
 import pytest
 from sklearn.datasets import make_blobs
 
-from hto_dnd.dsb import dsb
-from hto_dnd.dsb_algorithm import dsb_adapted
-from hto_dnd.demux_dsb import hto_demux_dsb
+from hto_dnd.dsb_algorithm import dsb
+# from hto_dnd.dsb_algorithm import _dsb_adapted
+from hto_dnd.demux_dsb import demux
 
 def generate_clustered_hto_data(n_cells=1000, n_htos=3, noise_level=0.5):
     """Generate clustered HTO data."""
@@ -122,8 +122,8 @@ def test_full_pipeline(test_datasets_with_files, tmp_path):
     # Step 1: Run DSB
     dsb_output_path = str(tmp_path / "dsb_output.h5ad")
     dsb(
-        path_adata_filtered_in=filtered_path,
-        path_adata_raw_in=raw_path,
+        adata_filtered=adata_filtered,
+        adata_raw=adata_raw,
         path_adata_out=dsb_output_path,
         create_viz=True
     )
@@ -142,7 +142,8 @@ def test_full_pipeline(test_datasets_with_files, tmp_path):
     assert os.path.exists(viz_output_path), f"Visualization file not created at {viz_output_path}"
 
     # Step 2: Run demultiplexing
-    adata_result = hto_demux_dsb(dsb_output_path, method="kmeans")
+    dsb_output_adata = ad.read_h5ad(dsb_output_path)
+    adata_result = demux(dsb_output_adata, method="kmeans")
 
     # Verify demultiplexing output
     assert isinstance(adata_result, ad.AnnData), "Demultiplexing result is not an AnnData object"
@@ -176,8 +177,8 @@ def test_incorrect_path(test_datasets_with_files):
 
     dsb_output_path = "dsb_output.h5ad"
     dsb(
-        path_adata_filtered_in=filtered_path,
-        path_adata_raw_in=raw_path,
+        adata_filtered=adata_filtered,
+        adata_raw=adata_raw,
         path_adata_out=dsb_output_path,
         create_viz=True
     )

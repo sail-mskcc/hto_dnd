@@ -1,11 +1,14 @@
 ## In thif file, we implement DSB on raw data, where we have empty droplets. We the use the bimodal distribution of the HTOs to set a threshold for each HTO. This threshold is used to classify a cell into negative or non negative. If a cell is classified as non negative by more than one HTo, it's considered a doublet.
 
+import os
 import numpy as np
 import scipy
 from sklearn.mixture import GaussianMixture
 from sklearn.linear_model import LinearRegression
 import anndata as ad
 import pandas as pd
+
+from .dsb_viz import create_visualization
 
 
 def remove_batch_effect(x, covariates=None, design=None):
@@ -50,7 +53,7 @@ def remove_batch_effect(x, covariates=None, design=None):
     return x_corrected
 
 
-def dsb_adapted(
+def _dsb_adapted(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
     pseudocount: int = 10,
@@ -146,3 +149,63 @@ def dsb_adapted(
     adata_filtered.layers["dsb_normalized"] = norm_adt
 
     return adata_filtered
+
+
+def dsb(
+    adata_filtered: ad.AnnData,
+    adata_raw: ad.AnnData,
+    path_adata_out: str = None,
+    create_viz: bool = False
+):
+    """
+    Perform DSB normalization on the provided AnnData object.
+
+    Parameters:
+        - adata_filtered (AnnData): AnnData object with filtered counts
+        - adata_raw (AnnData): AnnData object with raw counts
+        - path_adata_out (str): name of the output file including the path in .h5ad format (default: None)
+        - create_viz (bool): create visualization plot (default: False). If path_adata_ouput is None, the visualization will be saved in the current directory.
+    Returns:
+        - adata_denoised (AnnData): AnnData object with DSB normalized counts
+    """
+    if adata_filtered is None:
+        raise ValueError("adata containing the filtered droplets must be provided.")
+
+    if adata_raw is None:
+        raise ValueError("adata containing all the droplets must be provided.")
+    
+    # have an assertion to check if the values are integers. check using x=round(x)
+    assert np.allclose(adata_filtered.X, np.round(adata_filtered.X)), "Filtered counts must be integers."
+    assert np.allclose(adata_raw.X, np.round(adata_raw.X)), "Raw counts must be integers."
+
+    adata_denoised = _dsb_adapted(adata_filtered, adata_raw)
+
+    # if path_adata_out is not provided, check if there is a need to make the plot and then return the adata_denoised
+    if path_adata_out is None:
+        if create_viz:
+            # If path_adata_out is not provided, use the current directory
+            viz_output_path = os.path.join(os.getcwd(), "dsb_viz.png")
+            
+            create_visualization(adata_denoised, viz_output_path)
+        return adata_denoised
+    else:
+        # Ensure the output directory exists if a directory is specified
+        if os.path.dirname(path_adata_out):
+            os.makedirs(os.path.dirname(path_adata_out), exist_ok=True)
+        adata_denoised.write(path_adata_out)
+
+        if create_viz:
+            # Create visualization filename based on the AnnData filename
+            viz_filename = os.path.splitext(os.path.basename(path_adata_out))[0] + "_dsb_viz.png"
+            
+            if os.path.dirname(path_adata_out):
+                # If path_adata_out includes a directory, use that
+                viz_output_path = os.path.join(os.path.dirname(path_adata_out), viz_filename)
+            else:
+                # If path_adata_out is just a filename, use the current directory
+                viz_output_path = os.path.join(os.getcwd(), viz_filename)
+            
+            create_visualization(adata_denoised, viz_output_path)
+
+        
+    return adata_denoised

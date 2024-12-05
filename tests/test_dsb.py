@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import anndata as ad
 from scipy import sparse
-from hto_dnd.dsb_algorithm import remove_batch_effect, dsb_adapted
+from hto_dnd.dsb_algorithm import remove_batch_effect, _dsb_adapted
 
 @pytest.fixture
 def test_datasets():
@@ -41,12 +41,12 @@ def test_remove_batch_effect():
 
 def test_dsb_adapted_basic(test_datasets):
     """
-    Test basic functionality of dsb_adapted function.
+    Test basic functionality of _dsb_adapted function.
     """
     adata_filtered, adata_raw = test_datasets
 
-    # Run the dsb_adapted function
-    adata_result = dsb_adapted(adata_filtered, adata_raw, pseudocount=1, denoise_counts=False)
+    # Run the _dsb_adapted function
+    adata_result = _dsb_adapted(adata_filtered, adata_raw, pseudocount=1, denoise_counts=False)
 
     # Verify that the dsb_normalized layer is added and has expected dimensions
     assert "dsb_normalized" in adata_result.layers
@@ -56,21 +56,21 @@ def test_dsb_adapted_basic(test_datasets):
 
 def test_dsb_adapted_denoising(test_datasets):
     """
-    Test dsb_adapted function with denoising.
+    Test _dsb_adapted function with denoising.
     """
     adata_filtered_original, adata_raw = test_datasets
 
     # Create a copy for the denoised version
     adata_filtered_for_denoised = adata_filtered_original.copy()
 
-    # Run the dsb_adapted function with denoising
-    adata_result_denoised = dsb_adapted(adata_filtered_for_denoised, adata_raw, pseudocount=1, denoise_counts=True)
+    # Run the _dsb_adapted function with denoising
+    adata_result_denoised = _dsb_adapted(adata_filtered_for_denoised, adata_raw, pseudocount=1, denoise_counts=True)
 
     # Create another copy for the non-denoised version
     adata_filtered_for_non_denoised = adata_filtered_original.copy()
 
-    # Run the dsb_adapted function without denoising
-    adata_result_no_denoise = dsb_adapted(adata_filtered_for_non_denoised, adata_raw, pseudocount=1, denoise_counts=False)
+    # Run the _dsb_adapted function without denoising
+    adata_result_no_denoise = _dsb_adapted(adata_filtered_for_non_denoised, adata_raw, pseudocount=1, denoise_counts=False)
 
     # Verify that the dsb_normalized layer is added and has expected dimensions
     assert "dsb_normalized" in adata_result_denoised.layers
@@ -88,7 +88,7 @@ def test_dsb_adapted_denoising(test_datasets):
 
 def test_dsb_adapted_sparse_input(test_datasets):
     """
-    Test dsb_adapted function with sparse input matrices.
+    Test _dsb_adapted function with sparse input matrices.
     """
     adata_filtered, adata_raw = test_datasets
 
@@ -96,8 +96,8 @@ def test_dsb_adapted_sparse_input(test_datasets):
     adata_filtered.X = sparse.csr_matrix(adata_filtered.X)
     adata_raw.X = sparse.csr_matrix(adata_raw.X)
 
-    # Run the dsb_adapted function
-    adata_result = dsb_adapted(adata_filtered, adata_raw, pseudocount=1, denoise_counts=False)
+    # Run the _dsb_adapted function
+    adata_result = _dsb_adapted(adata_filtered, adata_raw, pseudocount=1, denoise_counts=False)
 
     # Verify that the dsb_normalized layer is added and is a dense array
     assert "dsb_normalized" in adata_result.layers

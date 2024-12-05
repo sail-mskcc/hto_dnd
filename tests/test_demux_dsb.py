@@ -5,7 +5,7 @@ import anndata as ad
 import yaml
 import os
 from sklearn.datasets import make_blobs
-from hto_dnd.demux_dsb import cluster_and_evaluate, hto_demux_dsb
+from hto_dnd.demux_dsb import cluster_and_evaluate, demux
 
 @pytest.fixture
 def mock_dsb_denoised_adata():
@@ -71,9 +71,9 @@ def mock_dsb_denoised_adata():
     return adata
 
 
-def test_hto_demux_dsb(mock_dsb_denoised_adata, tmp_path):
+def test_demux(mock_dsb_denoised_adata, tmp_path):
     """
-    Test the hto_demux_dsb function for demultiplexing using different methods.
+    Test the demux function for demultiplexing using different methods.
     Parameters:
         mock_dsb_denoised_adata: Mock AnnData object used for testing.
         tmp_path: Temporary directory for storing test files.
@@ -96,7 +96,7 @@ def test_hto_demux_dsb(mock_dsb_denoised_adata, tmp_path):
     
     for method in ['kmeans', 'gmm']:
         adata_filtered = ad.read_h5ad(temp_file)
-        result = hto_demux_dsb(adata_filtered, method=method)
+        result = demux(adata_filtered, method=method)
         
         assert isinstance(result, ad.AnnData)
         assert 'hashID' in result.obs.columns
@@ -120,7 +120,7 @@ def test_hto_demux_dsb(mock_dsb_denoised_adata, tmp_path):
 
 def test_consistent_classification(mock_dsb_denoised_adata, tmp_path):
     """
-    This test verifies that running the hto_demux_dsb function twice with the same 
+    This test verifies that running the demux function twice with the same 
     input data produces identical results in terms of the 'hashID' observed in the 
     output AnnData object
     Parameters:
@@ -128,19 +128,19 @@ def test_consistent_classification(mock_dsb_denoised_adata, tmp_path):
         tmp_path: A temporary directory path for storing the mock data file.
     Assertions:
         Asserts that the 'hashID' series from the results of two consecutive calls 
-        to hto_demux_dsb are equal.
+        to demux are equal.
     """
     temp_file = tmp_path / "mock_dsb_denoised_adata.h5ad"
     mock_dsb_denoised_adata.write(temp_file)
     
     adata_filtered = ad.read_h5ad(temp_file)
-    result1 = hto_demux_dsb(adata_filtered, method='kmeans')
-    result2 = hto_demux_dsb(adata_filtered, method='kmeans')
+    result1 = demux(adata_filtered, method='kmeans')
+    result2 = demux(adata_filtered, method='kmeans')
     
     pd.testing.assert_series_equal(result1.obs['hashID'], result2.obs['hashID'])
 
 
-@pytest.mark.parametrize("method", ["kmeans", "gmm"])
+@pytest.mark.parametrize("method", ["kmeans", "gmm", "otsu"])
 def test_cluster_and_evaluate(mock_dsb_denoised_adata, method):
     """
     Test the clustering and evaluation of HTO data.
@@ -154,6 +154,9 @@ def test_cluster_and_evaluate(mock_dsb_denoised_adata, method):
     4. For the "gmm" method:
         - The metrics dictionary contains 'bic' and 'log_likelihood'.
         - The log-likelihood is negative, as expected.
+    5. For the "otsu" method:
+        - The metrics dictionary contains 'threshold', 'inter_class_variance', and 'entropy'.
+        - The threshold is a float greater than 0.
     Parameters:
          mock_dsb_denoised_adata: An AnnData object containing the denoised data.
          method: A string indicating the clustering method to use ("kmeans" or "gmm").
@@ -163,10 +166,13 @@ def test_cluster_and_evaluate(mock_dsb_denoised_adata, method):
 
     for i in range(X.shape[1]):
         hto_data = X[:, i].reshape(-1, 1)
-        labels, positive_cluster, metrics = cluster_and_evaluate(hto_data, method=method)
+        if method == "otsu":
+            labels, threshold, metrics = cluster_and_evaluate(hto_data, method=method)
+        else:
+            labels, positive_cluster, metrics = cluster_and_evaluate(hto_data, method=method)
+            assert positive_cluster in [0, 1]
         
         assert len(np.unique(labels)) == 2
-        assert positive_cluster in [0, 1]
         
         if method == "kmeans":
             assert 'silhouette_score' in metrics
@@ -177,6 +183,12 @@ def test_cluster_and_evaluate(mock_dsb_denoised_adata, method):
             assert 'bic' in metrics
             assert 'log_likelihood' in metrics
             assert metrics['log_likelihood'] < 0
+        elif method == "otsu":
+            assert 'threshold' in metrics
+            assert 'inter_class_variance' in metrics
+            assert 'entropy' in metrics
+            assert isinstance(metrics['threshold'], float)
+            assert threshold > 0
 
 def test_well_separated_clusters_kmeans():
     """

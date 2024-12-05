@@ -43,7 +43,7 @@ def compare_distributions(raw_data, dsb_data, output_path):
 
 def create_visualization(adata, output_path):
     # Extract raw and DSB-normalized data
-    raw_data = pd.DataFrame(adata.X.toarray(), columns=adata.var_names)
+    raw_data = pd.DataFrame(adata.X, columns=adata.var_names)
     dsb_data = pd.DataFrame(adata.layers['dsb_normalized'], columns=adata.var_names)
     
     # Create the output directory if it doesn't exist

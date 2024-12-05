@@ -1,6 +1,6 @@
 [project]
 name = "hto-dnd"
-version = "0.1.3"
+version = "0.1.4"
 description = "A method to demultiplex hashtagged single-cell data by first applying a denoising and normalizing step adapted from DSB (Denoised and Scaled by Background)."
 dependencies = [
     "pandas >= 1.5.0",            

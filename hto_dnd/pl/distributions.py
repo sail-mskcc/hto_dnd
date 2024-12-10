@@ -17,6 +17,16 @@ def _set_ylim(ax, xmin=1):
     ax.set_ylim(0, cutoff * 1.1)
     return ax
 
+def _symmetric_log1p(x):
+    return np.sign(x) * np.log1p(np.abs(x))
+
+def _format(x):
+    if np.expm1(x) < 1000:
+        return f"{np.expm1(x):.0f}"
+    elif np.expm1(x) < 1000000:
+        return f"{np.expm1(x) / 1000:.0f}K"
+    else:
+        return f"{np.expm1(x) / 1000000:.0f}M"
 
 def plot_distributions_log(
     adata, ax=None,
@@ -28,7 +38,7 @@ def plot_distributions_log(
 ):
     # prep data
     df_long = adata.to_df(layer).melt()
-    df_long.loc[:, "value_log"] = np.log1p(df_long.value)
+    df_long.loc[:, "value_log"] = _symmetric_log1p(df_long.value)
     df_long.head()
 
     # plot
@@ -51,15 +61,7 @@ def plot_distributions_log(
     ax.set_xlabel("Logged Antibody Count")
 
     # ticks in raw counts
-    def _format(x):
-        if np.expm1(x) < 1000:
-            return f"{np.expm1(x):.0f}"
-        elif np.expm1(x) < 1000000:
-            return f"{np.expm1(x) / 1000:.0f}K"
-        else:
-            return f"{np.expm1(x) / 1000000:.0f}M"
-
-    log_ticks = np.log1p([1, 10, 100, 1000, 10000, 100000])  # Replace with dynamic range if needed
+    log_ticks = _symmetric_log1p([-100000, -1000, -10, -1, 0, 1, 10, 100, 1000, 10000, 100000])  # Replace with dynamic range if needed
     ax.xaxis.set_major_locator(ticker.FixedLocator(log_ticks))
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: _format(x)))
 

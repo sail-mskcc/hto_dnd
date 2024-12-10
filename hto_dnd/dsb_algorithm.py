@@ -7,9 +7,10 @@ from sklearn.mixture import GaussianMixture
 from sklearn.linear_model import LinearRegression
 import anndata as ad
 import pandas as pd
+from pandas.api.types import is_integer_dtype
 
+from .logging import get_logger
 from .dsb_viz import create_visualization
-
 
 def remove_batch_effect(x, covariates=None, design=None):
     """
@@ -57,7 +58,11 @@ def _dsb_adapted(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
     pseudocount: int = 10,
-    denoise_counts: bool = True
+    denoise_counts: bool = True,
+    add_key_normalise: str = None,
+    add_key_dnd: str = None,
+    inplace: bool = False,
+    verbose: int = 1,
 ) -> ad.AnnData:
     """
     Custom implementation of the DSB (Denoised and Sclaed by Background) algorithm.
@@ -72,6 +77,14 @@ def _dsb_adapted(
         The pseudocount value used in the formula. Default is 10.
     denoise_counts : bool, optional
         Flag indicating whether to perform denoising. Default is True.
+    add_key_normalise : str, optional
+        Key to store the normalized data in the AnnData object. Default is None.
+    add_key_dnd : str, optional
+        Key to store the normalised and denoised data in the AnnData object. Default is None.
+    inplace : bool, optional
+        Flag indicating whether to modify the input AnnData object. Default is False.
+    verbose : int, optional
+        Verbosity level. Default is 1.
 
     Returns:
     --------
@@ -79,15 +92,26 @@ def _dsb_adapted(
         The input adata_filtered with DSB-normalized data added.
     """
 
+    # Inplace not supported warning
+    if inplace:
+        raise NotImplementedError("Inplace operation is not supported.")
+
+    # Get logger
+    logger = get_logger(level=verbose)
+    logger.info("Starting DSB normalization...")
+
+    # Setup
+    adata = adata_filtered.copy()
+
     # Create cell_protein_matrix
-    cell_protein_matrix = adata_filtered.X  # .T
+    cell_protein_matrix = adata.X  # .T
     if scipy.sparse.issparse(cell_protein_matrix):
         cell_protein_matrix = cell_protein_matrix.toarray()
 
     # Identify barcodes that are in adata_raw but not in adata_filtered
     # Convert to sets
     raw_barcodes = set(adata_raw.obs_names)
-    filtered_barcodes = set(adata_filtered.obs_names)
+    filtered_barcodes = set(adata.obs_names)
 
     # Find the difference
     empty_barcodes = list(raw_barcodes - filtered_barcodes)
@@ -99,8 +123,8 @@ def _dsb_adapted(
 
     cell_protein_matrix = pd.DataFrame(
         cell_protein_matrix,
-        index=adata_filtered.obs_names,
-        columns=adata_filtered.var_names,
+        index=adata.obs_names,
+        columns=adata.var_names,
     )
 
     empty_drop_matrix = pd.DataFrame(
@@ -121,12 +145,18 @@ def _dsb_adapted(
     # Normalize the cell protein matrix
     normalized_matrix = (adt_log - mu_empty) / sd_empty
 
-    if not denoise_counts:
-        adata_filtered.layers["dsb_normalized"] = normalized_matrix
+    # Checkpoint
+    if add_key_normalise is not None:
+        adata.layers[add_key_normalise] = normalized_matrix
+        logger.info(f"Normalized matrix stored in adata.layers['{add_key_normalise}']")
+    else:
+        logger.info("DSB normalization completed.")
 
-        return adata_filtered
+    if not denoise_counts:
+        return adata
 
     # Step 2: Technical noise removal
+    logger.info("Removing technical noise...")
 
     # Apply a 2-component GMM for each cell and get the first component mean
     n_cells, n_proteins = normalized_matrix.shape
@@ -144,18 +174,25 @@ def _dsb_adapted(
     noise_vector = np.array(background_means)
 
     norm_adt = remove_batch_effect(normalized_matrix, covariates=noise_vector)
+    logger.info("Technical noise removal completed.")
 
     # After computing norm_adt, update the AnnData object
-    adata_filtered.layers["dsb_normalized"] = norm_adt
-
-    return adata_filtered
+    if add_key_dnd is not None:
+        adata.layers[add_key_dnd] = norm_adt
+        logger.info(f"DND matrix stored in adata.layers['{add_key_dnd}']")
+    else:
+        adata.X = norm_adt
+        logger.info("DND matrix stored in adata.X")
+    return adata
 
 
 def dsb(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
+    denoise_counts: bool = True,
     path_adata_out: str = None,
-    create_viz: bool = False
+    create_viz: bool = False,
+    verbose: int = 1,
 ):
     """
     Perform DSB normalization on the provided AnnData object.
@@ -173,19 +210,24 @@ def dsb(
 
     if adata_raw is None:
         raise ValueError("adata containing all the droplets must be provided.")
-    
-    # have an assertion to check if the values are integers. check using x=round(x)
-    assert np.allclose(adata_filtered.X, np.round(adata_filtered.X)), "Filtered counts must be integers."
-    assert np.allclose(adata_raw.X, np.round(adata_raw.X)), "Raw counts must be integers."
 
-    adata_denoised = _dsb_adapted(adata_filtered, adata_raw)
+    # have an assertion to check if the values are integers. check using x=round(x)
+    assert is_integer_dtype(adata_filtered.X), "Filtered counts must be integers."
+    assert is_integer_dtype(adata_raw.X), "Raw counts must be integers."
+
+    adata_denoised = _dsb_adapted(
+        adata_filtered,
+        adata_raw,
+        denoise_counts=denoise_counts,
+        verbose=verbose,
+    )
 
     # if path_adata_out is not provided, check if there is a need to make the plot and then return the adata_denoised
     if path_adata_out is None:
         if create_viz:
             # If path_adata_out is not provided, use the current directory
             viz_output_path = os.path.join(os.getcwd(), "dsb_viz.png")
-            
+
             create_visualization(adata_denoised, viz_output_path)
         return adata_denoised
     else:
@@ -197,15 +239,15 @@ def dsb(
         if create_viz:
             # Create visualization filename based on the AnnData filename
             viz_filename = os.path.splitext(os.path.basename(path_adata_out))[0] + "_dsb_viz.png"
-            
+
             if os.path.dirname(path_adata_out):
                 # If path_adata_out includes a directory, use that
                 viz_output_path = os.path.join(os.path.dirname(path_adata_out), viz_filename)
             else:
                 # If path_adata_out is just a filename, use the current directory
                 viz_output_path = os.path.join(os.getcwd(), viz_filename)
-            
+
             create_visualization(adata_denoised, viz_output_path)
 
-        
+
     return adata_denoised

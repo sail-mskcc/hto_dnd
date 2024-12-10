@@ -150,6 +150,7 @@ def _dsb_adapted(
         adata.layers[add_key_normalise] = normalized_matrix
         logger.info(f"Normalized matrix stored in adata.layers['{add_key_normalise}']")
     else:
+        adata.X = normalized_matrix
         logger.info("DSB normalization completed.")
 
     if not denoise_counts:

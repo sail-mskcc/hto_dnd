@@ -4,6 +4,8 @@ import seaborn as sns
 import matplotlib.ticker as ticker
 
 def _set_ylim(ax, xmin=1):
+    if xmin is None:
+        return ax
     cutoff = 0
     lines = ax.get_lines()
     for i in range(len(lines)):
@@ -16,7 +18,14 @@ def _set_ylim(ax, xmin=1):
     return ax
 
 
-def plot_distributions_log(adata, ax=None, layer=None, cmap="tab20", title="", **kwargs):
+def plot_distributions_log(
+    adata, ax=None,
+    layer=None,
+    cmap="tab20",
+    title="",
+    xmin=None,
+    **kwargs
+):
     # prep data
     df_long = adata.to_df(layer).melt()
     df_long.loc[:, "value_log"] = np.log1p(df_long.value)
@@ -35,7 +44,7 @@ def plot_distributions_log(adata, ax=None, layer=None, cmap="tab20", title="", *
         ax=ax,
         **kwargs
     )
-    ax = _set_ylim(ax, xmin=1)
+    ax = _set_ylim(ax, xmin=xmin)
     ax.set_title(title)
     ax.yaxis.set_ticks([])
     ax.set_ylabel("")

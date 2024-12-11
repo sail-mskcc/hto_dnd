@@ -12,6 +12,14 @@ import scipy.stats
 import anndata as ad
 
 def numpy_to_python(obj):
+    """Convert NumPy types to native Python types.
+
+    Args:
+        obj (object): The object to convert.
+
+    Returns:
+        object: The converted object.
+    """
     if isinstance(obj, np.generic):
         return obj.item()
     elif isinstance(obj, dict):
@@ -22,6 +30,16 @@ def numpy_to_python(obj):
         return obj
     
 def write_stats(result_df, metrics, output_file="stats.yml"):
+    """Write statistics and metrics to a YAML file.
+
+    Args:
+        result_df (pd.DataFrame): The result DataFrame containing the hashID and Doublet_Info columns.
+        metrics (dict): A dictionary containing the metrics for each HTO.
+        output_file (str): The output file path. Default is 'stats.yml'.
+
+    Returns:
+        None
+    """
     stats = result_df.groupby(by="hashID").size().to_dict()
     stats["Total"] = len(result_df)
 
@@ -35,18 +53,17 @@ def write_stats(result_df, metrics, output_file="stats.yml"):
         yaml.dump(output_dict, fout, sort_keys=False, default_flow_style=False)
 
 def cluster_and_evaluate(data, method="kmeans"):
-    """
-    Perform clustering and evaluate it using multiple metrics for K-means or GMM.
+    """Perform clustering and evaluate it using multiple metrics for K-means or GMM.
 
-    Parameters:
-    data (np.array): The input data used for clustering
-    method (str): Clustering method to use. Either 'kmeans' or 'gmm'. Default is 'kmeans'.
+    Args:
+        data (np.array): The input data used for clustering
+        method (str): Clustering method to use. Either 'kmeans' or 'gmm'. Default is 'kmeans'.
 
     Returns:
-    tuple: A tuple containing:
-        - np.array: The cluster labels
-        - int: The index of the positive cluster
-        - dict: A dictionary containing various goodness of fit metrics
+        tuple: A tuple containing:
+            - np.array: The cluster labels
+            - int: The index of the positive cluster
+            - dict: A dictionary containing various goodness of fit metrics
     """
     n_clusters = 2
     if method == "kmeans":
@@ -116,17 +133,18 @@ def demux(
     save_stats: bool = False,
 ):
     """
-    Classify HTOs as singlets (assign to HTO), doublets, or negatives based on either a 2-component K-means or GMM,
-    and categorize cells based on their HTO classifications.
+    Classify HTOs as singlets (assign to HTO), doublets, or negatives.
+     
+    It uses a 2-component K-means, GMM, or Otsu threshold method to categorize cells based on their HTO classifications.
 
-    Parameters:
-    - dsb_denoised_adata (ad.AnnData): The DSB denoised AnnData object.
-    - method (str): Clustering method to use. Must be either 'gmm' or 'kmeans'. Default is 'kmeans'.
-    - layer (str): The layer to use for demultiplexing. Default is 'dsb_normalized'.
-    - save_stats (bool): Whether to save the statistics to a YAML file. Default is False.
+    Args:
+        dsb_denoised_adata (ad.AnnData): The DSB denoised AnnData object.
+        method (str): Clustering method to use. Must be either 'gmm' or 'kmeans'. Default is 'kmeans'.
+        layer (str): The layer to use for demultiplexing. Default is 'dsb_normalized'.
+        save_stats (bool): Whether to save the statistics to a YAML file. Default is False.
 
     Returns:
-    - AnnData: An AnnData object containing the results of the demultiplexing.
+        AnnData: An AnnData object containing the results of the demultiplexing.
     """
     # check that the values are not integers (as they should be floats)
     assert dsb_denoised_adata.layers[layer].dtype == float, "Denoised AnnData object must have float values."

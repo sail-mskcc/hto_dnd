@@ -100,8 +100,10 @@ def test_dsb_cli(test_datasets_with_files, tmp_path):
     filtered_path, raw_path, adata_filtered, adata_raw = test_datasets_with_files
     dsb_output_path = tmp_path / "dsb_output.h5ad"
     viz_output_path = tmp_path / "dsb_viz.png"
+    pseudocount = 10
+    denoise_counts = True
 
-    command = f"python -m hto_dnd.cli dsb --adata-filtered-in {filtered_path} --adata-raw-in {raw_path} --adata-out {dsb_output_path} --create-viz"
+    command = f"python -m hto_dnd.cli dsb --adata-filtered-in {filtered_path} --adata-raw-in {raw_path} --adata-out {dsb_output_path} --create-viz --pseudocount {pseudocount} --denoise-counts"
     result = run_cli_command(command)
 
     assert result.returncode == 0, f"CLI command failed: {result.stderr}"

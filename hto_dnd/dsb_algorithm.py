@@ -15,15 +15,21 @@ from .dsb_viz import create_visualization
 from line_profiler import profile
 @profile
 def remove_batch_effect(x, covariates=None, design=None):
-    """
-    Remove batch effects from a given matrix.
+    """Remove batch effects from a given matrix using linear regression.
 
-    Parameters:
-    - x (ndarray): The input matrix to remove batch effects from.
-    - covariates (ndarray, optional): Covariates to consider for batch effect removal. Default is None.
-    - design (ndarray, optional): Design matrix for linear regression. Default is None.
+    This function removes technical noise (batch effects) from the input matrix by fitting
+    a linear model with the provided covariates and design matrix. The correction is then
+    subtracted from the original matrix.
+
+    Args:
+        x (ndarray): Input matrix from which batch effects will be removed.
+        covariates (ndarray, optional): Matrix of technical covariates (e.g. GMM means)
+            used to model batch effects.
+        design (ndarray, optional): Design matrix for the linear regression model. If not
+            provided, uses a column vector of ones.
+
     Returns:
-    - ndarray: The matrix with batch effects removed.
+        ndarray: Matrix with batch effects removed.
     """
     x = np.asarray(x)
 
@@ -72,32 +78,31 @@ def _dsb_adapted(
     inplace: bool = False,
     verbose: int = 1,
 ) -> ad.AnnData:
-    """
-    Custom implementation of the DSB (Denoised and Sclaed by Background) algorithm.
+    """Custom implementation of the DSB (Denoised and Scaled by Background) algorithm.
 
-    Parameters:
-    -----------
-    adata_filtered : AnnData
-        Filtered AnnData object.
-    adata_raw : AnnData
-        Raw AnnData object.
-    pseudocount : int, optional
-        The pseudocount value used in the formula. Default is 10.
-    denoise_counts : bool, optional
-        Flag indicating whether to perform denoising. Default is True.
-    add_key_normalise : str, optional
-        Key to store the normalized data in the AnnData object. Default is None.
-    add_key_dnd : str, optional
-        Key to store the normalised and denoised data in the AnnData object. Default is None.
-    inplace : bool, optional
-        Flag indicating whether to modify the input AnnData object. Default is False.
-    verbose : int, optional
-        Verbosity level. Default is 1.
+    This function implements an adapted version of the DSB algorithm, which normalizes protein
+    expression data using empty droplets as background reference and optionally performs
+    technical noise removal.
+    Args:
+        adata_filtered (AnnData): Filtered AnnData object containing protein expression data
+            for cells passing QC.
+        adata_raw (AnnData): Raw AnnData object containing protein expression data for all
+            droplets including empty ones.
+        pseudocount (int, optional): Value added to expression counts before log transformation.
+            Defaults to 10.
+        denoise_counts (bool, optional): Whether to perform technical noise removal using
+            Gaussian Mixture Models. Defaults to True.
+        add_key_normalise (str, optional): Key to store the normalized data in the AnnData object. Default is None.
+        add_key_dnd (str, optional): Key to store the normalised and denoised data in the AnnData object. Default is None.
+        inplace (bool, optional): Flag indicating whether to modify the input AnnData object. Default is False.
+        verbose (int, optional): Verbosity level. Default is 1.
 
     Returns:
-    --------
-    AnnData
-        The input adata_filtered with DSB-normalized data added.
+        AnnData: The input adata_filtered object with an additional layer 'dsb_normalized'
+            containing the normalized protein expression values.
+
+        The normalized data is stored in the layers attribute of the returned AnnData object
+        under 'dsb_normalized'.
     """
 
     # Inplace not supported warning
@@ -128,16 +133,6 @@ def _dsb_adapted(
     empty_drop_matrix = adata_raw[empty_barcodes, :].X  # .T
     if scipy.sparse.issparse(empty_drop_matrix):
         empty_drop_matrix = empty_drop_matrix.toarray()
-
-    cell_protein_matrix = pd.DataFrame(
-        cell_protein_matrix,
-        index=adata.obs_names,
-        columns=adata.var_names,
-    )
-
-    empty_drop_matrix = pd.DataFrame(
-        empty_drop_matrix, index=empty_barcodes, columns=adata_raw.var_names
-    )
 
     adt = np.array(cell_protein_matrix)
     adtu = np.array(empty_drop_matrix)
@@ -223,18 +218,20 @@ def dsb(
     denoise_counts: bool = True,
     path_adata_out: str = None,
     create_viz: bool = False,
-    verbose: int = 1,
+    pseudocount: int = 10,
+    denoise_counts: bool = True
 ):
-    """
-    Perform DSB normalization on the provided AnnData object.
+    """Perform DSB normalization on the provided AnnData object.
 
-    Parameters:
-        - adata_filtered (AnnData): AnnData object with filtered counts
-        - adata_raw (AnnData): AnnData object with raw counts
-        - path_adata_out (str): name of the output file including the path in .h5ad format (default: None)
-        - create_viz (bool): create visualization plot (default: False). If path_adata_ouput is None, the visualization will be saved in the current directory.
+    Args:
+        adata_filtered (AnnData): AnnData object with filtered counts
+        adata_raw (AnnData): AnnData object with raw counts
+        path_adata_out (str): name of the output file including the path in .h5ad format (default: None)
+        create_viz (bool): create visualization plot (default: False). If path_adata_ouput is None, the visualization will be saved in the current directory.
+        pseudocount (int): pseudocount value used in the formula to avoid takig log of 0 (default: 10)
+        denoise_counts (bool): flag indicating whether to perform correction to cell variation using the background values (default: True)
     Returns:
-        - adata_denoised (AnnData): AnnData object with DSB normalized counts
+        adata_denoised (AnnData): AnnData object with DSB normalized counts
     """
     if adata_filtered is None:
         raise ValueError("adata containing the filtered droplets must be provided.")

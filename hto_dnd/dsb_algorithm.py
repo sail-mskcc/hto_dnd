@@ -3,6 +3,7 @@
 import os
 import numpy as np
 import scipy
+from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.linear_model import LinearRegression
 import anndata as ad
@@ -13,6 +14,18 @@ from .logging import get_logger
 from .dsb_viz import create_visualization
 
 from line_profiler import profile
+
+
+def _get_background_gmm(x):
+    """Fit a Gaussian Mixture Model to the input data and return the mean of the first component."""
+    gmm = GaussianMixture(n_components=2, random_state=0).fit(x.reshape(-1, 1))
+    return min(gmm.means_)[0]
+
+def _get_background_kmeans(x):
+    """Fit a KMeans model to the input data and return the mean of the first cluster."""
+    kmeans = KMeans(n_clusters=2, random_state=0).fit(x.reshape(-1, 1))
+    return min(kmeans.cluster_centers_)[0]
+
 @profile
 def remove_batch_effect(x, covariates=None, design=None):
     """Remove batch effects from a given matrix using linear regression.
@@ -73,8 +86,9 @@ def dsb(
     adata_raw: ad.AnnData,
     pseudocount: int = 10,
     denoise_counts: bool = True,
+    background_method: str = "kmeans",
     add_key_normalise: str = None,
-    add_key_dnd: str = None,
+    add_key_denoise: str = None,
     inplace: bool = False,
     path_adata_out: str = None,
     create_viz: bool = False,
@@ -94,19 +108,18 @@ def dsb(
             Defaults to 10.
         denoise_counts (bool, optional): Whether to perform technical noise removal using
             Gaussian Mixture Models. Defaults to True.
+        background_method (str, optional): Method to use for background estimation. Must be either 'gmm' or 'kmeans'. Default is 'kmeans'.
         add_key_normalise (str, optional): Key to store the normalized data in the AnnData object. Default is None.
-        add_key_dnd (str, optional): Key to store the normalised and denoised data in the AnnData object. Default is None.
+        add_key_denoise (str, optional): Key to store the normalised and denoised data in the AnnData object. Default is None.
         inplace (bool, optional): Flag indicating whether to modify the input AnnData object. Default is False.
         path_adata_out (str, optional): Path to save the output AnnData object. Default is None.
         create_viz (bool, optional): Flag indicating whether to create a visualization plot. Default is False.
         verbose (int, optional): Verbosity level. Default is 1.
 
     Returns:
-        AnnData: The input adata_filtered object with an additional layer 'dsb_normalized'
-            containing the normalized protein expression values.
-
-        The normalized data is stored in the layers attribute of the returned AnnData object
-        under 'dsb_normalized'.
+        AnnData: The input adata_filtered object. If 'add_key_normalise' is provided, a new layer
+        containing the normalized data is added to the AnnData object. If 'add_key_denoise' is
+        provided, a new layer containing the denoised data is added to the AnnData object.
     """
 
     # assertions
@@ -114,6 +127,8 @@ def dsb(
         raise NotImplementedError("Inplace operation is not supported.")
     assert is_integer_dtype(adata_filtered.X), "Filtered counts must be integers."
     assert is_integer_dtype(adata_raw.X), "Raw counts must be integers."
+    supported_background_methods = ["gmm", "kmeans"]
+    assert background_method in supported_background_methods, f"Background method must be one of {supported_background_methods}, got '{background_method}'"
 
     # Get logger
     logger = get_logger(level=verbose)
@@ -184,10 +199,14 @@ def dsb(
     # Apply a 2-component GMM for each cell and get the first component mean
     n_cells, n_proteins = normalized_matrix.shape
 
-    def _get_background(x):
-        gmm = GaussianMixture(n_components=2, random_state=0).fit(x.reshape(-1, 1))
-        return min(gmm.means_)[0]
+    if background_method == "gmm":
+        _get_background = _get_background_gmm
+    elif background_method == "kmeans":
+        _get_background = _get_background_kmeans
+    else:
+        raise ValueError(f"Invalid background method: '{background_method}'")
 
+    logger.info(f"Build background data using '{background_method}' method")
     noise_vector = np.array([
         _get_background(normalized_matrix[i, :])
         for i in range(n_cells)
@@ -209,9 +228,9 @@ def dsb(
     }
 
     # After computing norm_adt, update the AnnData object
-    if add_key_dnd is not None:
-        adata.layers[add_key_dnd] = norm_adt
-        logger.info(f"DND matrix stored in adata.layers['{add_key_dnd}']")
+    if add_key_denoise is not None:
+        adata.layers[add_key_denoise] = norm_adt
+        logger.info(f"DND matrix stored in adata.layers['{add_key_denoise}']")
     else:
         adata.X = norm_adt
         logger.info("DND matrix stored in adata.X")

@@ -1,19 +1,31 @@
 import numpy as np
 from pandas.api.types import is_integer_dtype
+from scipy.sparse import issparse
 from .logging import get_logger
 
 def get_whitelist_background(
     ad_raw,
     ad_gex,
+    layer=None,
     min_umi=300,
     verbose=1,
 ):
     """Get a whitelist based on GEX counts.
 
-
+    Args:
+        ad_raw (AnnData): Raw data with HTO counts.
+        ad_gex (AnnData): GEX data.
+        min_umi (int, optional): Minimum UMI count to consider a barcode. Defaults to 300.
+        verbose (int, optional): Verbosity level. Defaults to 1.
     """
     # assertions - gex inputs must be integers
-    x = ad_gex.X.data[:1000]
+    if layer is None:
+        x = ad_gex.X
+    else:
+        x = ad_gex.layers[layer]
+    if issparse(x):
+        x = x.data
+    x = x[:1000]
     assert is_integer_dtype(ad_gex.X) or np.array_equal(x, x.astype(int)), "GEX counts must be integers."
     logger = get_logger("utils", level=verbose)
 

@@ -3,10 +3,10 @@ import anndata as ad
 from .dsb_algorithm import dsb
 from .demux_dsb import demux
 
-def dsb_and_demux(
+def hto_dnd(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
-    path_adata_out: str = None
+    **kwargs,
 ):
     """Perform DSB normalization and demultiplexing on the provided filtered and raw AnnData objects.
 
@@ -17,8 +17,28 @@ def dsb_and_demux(
     Returns:
         demux_adata (AnnData): An AnnData object containing the results of the demultiplexing.
     """
-    adata_denoised = dsb(adata_filtered, adata_raw, path_adata_out)
 
-    demux_adata = demux(adata_denoised)
+    # TODO: rework 'path_adata_out'.
+    # normalise and denoise
+    params_dsb_list = [
+        "pseudocount",
+        "denoise_counts",
+        "background_method",
+        "add_key_normalise",
+        "add_key_denoise",
+        "inplace",
+        "path_adata_out",
+    ]
+    params_dsb = {key: kwargs[key] for key in params_dsb_list if key in kwargs}
+    adata_denoised = dsb(adata_filtered, adata_raw)
+
+    # demultiplex
+    params_demux_list = [
+        "method",
+        "save_stats",
+    ]
+    params_demux = {key: kwargs[key] for key in params_demux_list if key in kwargs}
+    params_demux["layer"] = params_dsb["add_key_denoise"]
+    demux_adata = demux(adata_denoised, **params_demux)
 
     return demux_adata

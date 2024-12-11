@@ -68,7 +68,7 @@ def remove_batch_effect(x, covariates=None, design=None):
 
 
 @profile
-def _dsb_adapted(
+def dsb(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
     pseudocount: int = 10,
@@ -76,6 +76,8 @@ def _dsb_adapted(
     add_key_normalise: str = None,
     add_key_dnd: str = None,
     inplace: bool = False,
+    path_adata_out: str = None,
+    create_viz: bool = False,
     verbose: int = 1,
 ) -> ad.AnnData:
     """Custom implementation of the DSB (Denoised and Scaled by Background) algorithm.
@@ -95,6 +97,8 @@ def _dsb_adapted(
         add_key_normalise (str, optional): Key to store the normalized data in the AnnData object. Default is None.
         add_key_dnd (str, optional): Key to store the normalised and denoised data in the AnnData object. Default is None.
         inplace (bool, optional): Flag indicating whether to modify the input AnnData object. Default is False.
+        path_adata_out (str, optional): Path to save the output AnnData object. Default is None.
+        create_viz (bool, optional): Flag indicating whether to create a visualization plot. Default is False.
         verbose (int, optional): Verbosity level. Default is 1.
 
     Returns:
@@ -105,9 +109,11 @@ def _dsb_adapted(
         under 'dsb_normalized'.
     """
 
-    # Inplace not supported warning
+    # assertions
     if inplace:
         raise NotImplementedError("Inplace operation is not supported.")
+    assert is_integer_dtype(adata_filtered.X), "Filtered counts must be integers."
+    assert is_integer_dtype(adata_raw.X), "Raw counts must be integers."
 
     # Get logger
     logger = get_logger(level=verbose)
@@ -209,73 +215,23 @@ def _dsb_adapted(
     else:
         adata.X = norm_adt
         logger.info("DND matrix stored in adata.X")
+
+    # Save outputs (try catch to return the adata object even if saving fails)
+    try:
+        path_viz = os.path.join(os.getcwd(), "dsb_viz.png")
+
+        if path_adata_out is not None:
+            adata.write_h5ad(path_adata_out)
+            path_viz = os.path.join(
+                os.path.dirname(path_adata_out),
+                os.path.basename(path_adata_out).split(".")[0] + "_dsb_viz.png",
+            )
+            logger.info(f"AnnData object saved to '{path_adata_out}'")
+
+        if create_viz:
+            create_visualization(adata, path_viz)
+            logger.info(f"Visualization plot saved to '{path_viz}'")
+    except Exception as e:
+        logger.error(f"Failed to save outputs: '{e}'")
+
     return adata
-
-
-def dsb(
-    adata_filtered: ad.AnnData,
-    adata_raw: ad.AnnData,
-    denoise_counts: bool = True,
-    path_adata_out: str = None,
-    create_viz: bool = False,
-    pseudocount: int = 10,
-    denoise_counts: bool = True
-):
-    """Perform DSB normalization on the provided AnnData object.
-
-    Args:
-        adata_filtered (AnnData): AnnData object with filtered counts
-        adata_raw (AnnData): AnnData object with raw counts
-        path_adata_out (str): name of the output file including the path in .h5ad format (default: None)
-        create_viz (bool): create visualization plot (default: False). If path_adata_ouput is None, the visualization will be saved in the current directory.
-        pseudocount (int): pseudocount value used in the formula to avoid takig log of 0 (default: 10)
-        denoise_counts (bool): flag indicating whether to perform correction to cell variation using the background values (default: True)
-    Returns:
-        adata_denoised (AnnData): AnnData object with DSB normalized counts
-    """
-    if adata_filtered is None:
-        raise ValueError("adata containing the filtered droplets must be provided.")
-
-    if adata_raw is None:
-        raise ValueError("adata containing all the droplets must be provided.")
-
-    # have an assertion to check if the values are integers. check using x=round(x)
-    assert is_integer_dtype(adata_filtered.X), "Filtered counts must be integers."
-    assert is_integer_dtype(adata_raw.X), "Raw counts must be integers."
-
-    adata_denoised = _dsb_adapted(
-        adata_filtered,
-        adata_raw,
-        denoise_counts=denoise_counts,
-        verbose=verbose,
-    )
-
-    # if path_adata_out is not provided, check if there is a need to make the plot and then return the adata_denoised
-    if path_adata_out is None:
-        if create_viz:
-            # If path_adata_out is not provided, use the current directory
-            viz_output_path = os.path.join(os.getcwd(), "dsb_viz.png")
-
-            create_visualization(adata_denoised, viz_output_path)
-        return adata_denoised
-    else:
-        # Ensure the output directory exists if a directory is specified
-        if os.path.dirname(path_adata_out):
-            os.makedirs(os.path.dirname(path_adata_out), exist_ok=True)
-        adata_denoised.write(path_adata_out)
-
-        if create_viz:
-            # Create visualization filename based on the AnnData filename
-            viz_filename = os.path.splitext(os.path.basename(path_adata_out))[0] + "_dsb_viz.png"
-
-            if os.path.dirname(path_adata_out):
-                # If path_adata_out includes a directory, use that
-                viz_output_path = os.path.join(os.path.dirname(path_adata_out), viz_filename)
-            else:
-                # If path_adata_out is just a filename, use the current directory
-                viz_output_path = os.path.join(os.getcwd(), viz_filename)
-
-            create_visualization(adata_denoised, viz_output_path)
-
-
-    return adata_denoised

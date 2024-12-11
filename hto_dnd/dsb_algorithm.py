@@ -12,6 +12,8 @@ from pandas.api.types import is_integer_dtype
 from .logging import get_logger
 from .dsb_viz import create_visualization
 
+from line_profiler import profile
+@profile
 def remove_batch_effect(x, covariates=None, design=None):
     """
     Remove batch effects from a given matrix.
@@ -51,9 +53,15 @@ def remove_batch_effect(x, covariates=None, design=None):
     # Subtract the correction from x to remove the batch effect
     x_corrected = x - correction
 
-    return x_corrected
+    # Store metadata
+    meta = {
+        "coefs": model.coef_,
+    }
+
+    return x_corrected, meta
 
 
+@profile
 def _dsb_adapted(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
@@ -145,6 +153,19 @@ def _dsb_adapted(
     # Normalize the cell protein matrix
     normalized_matrix = (adt_log - mu_empty) / sd_empty
 
+    # Store meta information
+    meta_normalise = {
+        "normalise": {
+            "pseudocount": pseudocount,
+            "mean_empty": mu_empty,
+            "sd_empty": sd_empty,
+        }
+    }
+    adata.uns["dnd"] = {
+        **adata.uns.get("dnd", {}),
+        **meta_normalise
+    }
+
     # Checkpoint
     if add_key_normalise is not None:
         adata.layers[add_key_normalise] = normalized_matrix
@@ -161,21 +182,30 @@ def _dsb_adapted(
 
     # Apply a 2-component GMM for each cell and get the first component mean
     n_cells, n_proteins = normalized_matrix.shape
-    background_means = []
 
-    for i in range(n_cells):
-        cell_data = normalized_matrix[i, :].reshape(-1, 1)
-        gmm = GaussianMixture(n_components=2, random_state=0)
-        gmm.fit(cell_data)
+    def _get_background(x):
+        gmm = GaussianMixture(n_components=2, random_state=0).fit(x.reshape(-1, 1))
+        return min(gmm.means_)[0]
 
-        # Identify the background component (the one with lower mean)
-        background_component_mean = min(gmm.means_)[0]
-        background_means.append(background_component_mean)
+    noise_vector = np.array([
+        _get_background(normalized_matrix[i, :])
+        for i in range(n_cells)
+    ])
 
-    noise_vector = np.array(background_means)
-
-    norm_adt = remove_batch_effect(normalized_matrix, covariates=noise_vector)
+    norm_adt, meta_batch_model = remove_batch_effect(normalized_matrix, covariates=noise_vector)
     logger.info("Technical noise removal completed.")
+
+    # Store meta information
+    meta_dnd = {
+        "dnd": {
+            "background_means": noise_vector,
+            "batch_model": meta_batch_model,
+        }
+    }
+    adata.uns["dnd"] = {
+        **adata.uns.get("dnd", {}),
+        **meta_dnd
+    }
 
     # After computing norm_adt, update the AnnData object
     if add_key_dnd is not None:

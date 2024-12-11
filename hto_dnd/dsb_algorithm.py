@@ -121,6 +121,10 @@ def dsb(
         containing the normalized data is added to the AnnData object. If 'add_key_denoise' is
         provided, a new layer containing the denoised data is added to the AnnData object.
     """
+    # Get logger
+    logger = get_logger("denoise", level=verbose)
+    logger.debug(f"Parameters: {locals()}")
+    logger.info("Starting DSB normalization...")
 
     # assertions
     if inplace:
@@ -129,10 +133,6 @@ def dsb(
     assert is_integer_dtype(adata_raw.X), "Raw counts must be integers."
     supported_background_methods = ["gmm", "kmeans"]
     assert background_method in supported_background_methods, f"Background method must be one of {supported_background_methods}, got '{background_method}'"
-
-    # Get logger
-    logger = get_logger(level=verbose)
-    logger.info("Starting DSB normalization...")
 
     # Setup
     adata = adata_filtered.copy()
@@ -230,10 +230,10 @@ def dsb(
     # After computing norm_adt, update the AnnData object
     if add_key_denoise is not None:
         adata.layers[add_key_denoise] = norm_adt
-        logger.info(f"DND matrix stored in adata.layers['{add_key_denoise}']")
+        logger.info(f"Denoised matrix stored in adata.layers['{add_key_denoise}']")
     else:
         adata.X = norm_adt
-        logger.info("DND matrix stored in adata.X")
+        logger.info("Denoised matrix stored in adata.X")
 
     # Save outputs (try catch to return the adata object even if saving fails)
     try:

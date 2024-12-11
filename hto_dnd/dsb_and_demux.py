@@ -30,7 +30,7 @@ def hto_dnd(
         "path_adata_out",
     ]
     params_dsb = {key: kwargs[key] for key in params_dsb_list if key in kwargs}
-    adata_denoised = dsb(adata_filtered, adata_raw)
+    adata_denoised = dsb(adata_filtered, adata_raw, **params_dsb)
 
     # demultiplex
     params_demux_list = [
@@ -38,7 +38,7 @@ def hto_dnd(
         "save_stats",
     ]
     params_demux = {key: kwargs[key] for key in params_demux_list if key in kwargs}
-    params_demux["layer"] = params_dsb["add_key_denoise"]
+    params_demux["layer"] = params_dsb.get("add_key_denoise", None)
     demux_adata = demux(adata_denoised, **params_demux)
 
     return demux_adata

@@ -10,6 +10,8 @@ import yaml
 from skimage.filters import threshold_otsu
 import scipy.stats
 import anndata as ad
+from .logging import get_logger
+from line_profiler import profile
 
 def numpy_to_python(obj):
     """Convert NumPy types to native Python types.
@@ -126,12 +128,14 @@ def cluster_and_evaluate(data, method="kmeans"):
 
     return labels, positive_cluster, metrics
 
+@profile
 def demux(
     adata_denoised: ad.AnnData,
     method: str = "kmeans",
     layer: str = None,
     save_stats: bool = False,
     inplace: bool = False,
+    verbose: int = 1,
 ):
     """
     Classify HTOs as singlets (assign to HTO), doublets, or negatives.
@@ -144,10 +148,16 @@ def demux(
         layer (str): The layer to use for demultiplexing. Default is 'None'.
         save_stats (bool): Whether to save the statistics to a YAML file. Default is False.
         inplace (bool): Whether to modify the input AnnData object. Default is False.
+        verbose (int): Verbosity level. Default is 1.
 
     Returns:
         AnnData: An AnnData object containing the results of the demultiplexing.
     """
+
+    # debug - print parameters
+    logger = get_logger("demux", level=verbose)
+    logger.debug(f"Parameters: {locals()}")
+    logger.info(f"Starting demultiplexing using '{method}'...")
 
     # assertions
     if inplace:
@@ -196,16 +206,18 @@ def demux(
         else:
             return "Doublet", ", ".join(positive_htos)
 
-    result_df["hashID"], result_df["Doublet_Info"] = zip(
+    result_df["hash_id"], result_df["doublet_info"] = zip(
         *result_df.apply(categorize_cell, axis=1)
     )
 
 
     # create an anndata object where the denoised data is the X matrix, the barcodes and features are the obs and var names, add the hashID and Doublet_Info as an obs column, and metrics as an uns
-    adata.obs["hashID"] = result_df["hashID"]
-    adata.obs["Doublet_Info"] = result_df["Doublet_Info"]
+    adata.obs["hash_id"] = result_df["hash_id"]
+    adata.obs["doublet_info"] = result_df["doublet_info"]
     adata.uns["metrics"] = metrics
     adata.uns["thresholds"] = thresholds if method == "otsu" else None
+
+    logger.info(f"Demultiplexing completed. Assignments found as 'hash_id' and 'doublet_info' in adata.obs.")
 
     if save_stats:
         write_stats(result_df, metrics)

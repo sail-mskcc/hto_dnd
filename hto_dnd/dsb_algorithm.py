@@ -7,10 +7,13 @@ from sklearn.mixture import GaussianMixture
 from sklearn.linear_model import LinearRegression
 import anndata as ad
 import pandas as pd
+from pandas.api.types import is_integer_dtype
 
+from .logging import get_logger
 from .dsb_viz import create_visualization
 
-
+from line_profiler import profile
+@profile
 def remove_batch_effect(x, covariates=None, design=None):
     """Remove batch effects from a given matrix using linear regression.
 
@@ -20,7 +23,7 @@ def remove_batch_effect(x, covariates=None, design=None):
 
     Args:
         x (ndarray): Input matrix from which batch effects will be removed.
-        covariates (ndarray, optional): Matrix of technical covariates (e.g. GMM means) 
+        covariates (ndarray, optional): Matrix of technical covariates (e.g. GMM means)
             used to model batch effects.
         design (ndarray, optional): Design matrix for the linear regression model. If not
             provided, uses a column vector of ones.
@@ -56,46 +59,78 @@ def remove_batch_effect(x, covariates=None, design=None):
     # Subtract the correction from x to remove the batch effect
     x_corrected = x - correction
 
-    return x_corrected
+    # Store metadata
+    meta = {
+        "coefs": model.coef_,
+    }
+
+    return x_corrected, meta
 
 
-def _dsb_adapted(
+@profile
+def dsb(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
     pseudocount: int = 10,
-    denoise_counts: bool = True
+    denoise_counts: bool = True,
+    add_key_normalise: str = None,
+    add_key_dnd: str = None,
+    inplace: bool = False,
+    path_adata_out: str = None,
+    create_viz: bool = False,
+    verbose: int = 1,
 ) -> ad.AnnData:
     """Custom implementation of the DSB (Denoised and Scaled by Background) algorithm.
 
-    This function implements an adapted version of the DSB algorithm, which normalizes protein 
-    expression data using empty droplets as background reference and optionally performs 
+    This function implements an adapted version of the DSB algorithm, which normalizes protein
+    expression data using empty droplets as background reference and optionally performs
     technical noise removal.
     Args:
-        adata_filtered (AnnData): Filtered AnnData object containing protein expression data 
+        adata_filtered (AnnData): Filtered AnnData object containing protein expression data
             for cells passing QC.
-        adata_raw (AnnData): Raw AnnData object containing protein expression data for all 
+        adata_raw (AnnData): Raw AnnData object containing protein expression data for all
             droplets including empty ones.
         pseudocount (int, optional): Value added to expression counts before log transformation.
             Defaults to 10.
-        denoise_counts (bool, optional): Whether to perform technical noise removal using 
+        denoise_counts (bool, optional): Whether to perform technical noise removal using
             Gaussian Mixture Models. Defaults to True.
+        add_key_normalise (str, optional): Key to store the normalized data in the AnnData object. Default is None.
+        add_key_dnd (str, optional): Key to store the normalised and denoised data in the AnnData object. Default is None.
+        inplace (bool, optional): Flag indicating whether to modify the input AnnData object. Default is False.
+        path_adata_out (str, optional): Path to save the output AnnData object. Default is None.
+        create_viz (bool, optional): Flag indicating whether to create a visualization plot. Default is False.
+        verbose (int, optional): Verbosity level. Default is 1.
+
     Returns:
-        AnnData: The input adata_filtered object with an additional layer 'dsb_normalized' 
+        AnnData: The input adata_filtered object with an additional layer 'dsb_normalized'
             containing the normalized protein expression values.
-        
+
         The normalized data is stored in the layers attribute of the returned AnnData object
         under 'dsb_normalized'.
     """
 
+    # assertions
+    if inplace:
+        raise NotImplementedError("Inplace operation is not supported.")
+    assert is_integer_dtype(adata_filtered.X), "Filtered counts must be integers."
+    assert is_integer_dtype(adata_raw.X), "Raw counts must be integers."
+
+    # Get logger
+    logger = get_logger(level=verbose)
+    logger.info("Starting DSB normalization...")
+
+    # Setup
+    adata = adata_filtered.copy()
+
     # Create cell_protein_matrix
-    cell_protein_matrix = adata_filtered.X  # .T
+    cell_protein_matrix = adata.X  # .T
     if scipy.sparse.issparse(cell_protein_matrix):
         cell_protein_matrix = cell_protein_matrix.toarray()
 
     # Identify barcodes that are in adata_raw but not in adata_filtered
     # Convert to sets
     raw_barcodes = set(adata_raw.obs_names)
-    filtered_barcodes = set(adata_filtered.obs_names)
+    filtered_barcodes = set(adata.obs_names)
 
     # Find the difference
     empty_barcodes = list(raw_barcodes - filtered_barcodes)
@@ -119,94 +154,84 @@ def _dsb_adapted(
     # Normalize the cell protein matrix
     normalized_matrix = (adt_log - mu_empty) / sd_empty
 
-    if not denoise_counts:
-        adata_filtered.layers["dsb_normalized"] = normalized_matrix
+    # Store meta information
+    meta_normalise = {
+        "normalise": {
+            "pseudocount": pseudocount,
+            "mean_empty": mu_empty,
+            "sd_empty": sd_empty,
+        }
+    }
+    adata.uns["dnd"] = {
+        **adata.uns.get("dnd", {}),
+        **meta_normalise
+    }
 
-        return adata_filtered
+    # Checkpoint
+    if add_key_normalise is not None:
+        adata.layers[add_key_normalise] = normalized_matrix
+        logger.info(f"Normalized matrix stored in adata.layers['{add_key_normalise}']")
+    else:
+        adata.X = normalized_matrix
+        logger.info("DSB normalization completed.")
+
+    if not denoise_counts:
+        return adata
 
     # Step 2: Technical noise removal
+    logger.info("Removing technical noise...")
 
     # Apply a 2-component GMM for each cell and get the first component mean
     n_cells, n_proteins = normalized_matrix.shape
-    background_means = []
 
-    for i in range(n_cells):
-        cell_data = normalized_matrix[i, :].reshape(-1, 1)
-        gmm = GaussianMixture(n_components=2, random_state=0)
-        gmm.fit(cell_data)
+    def _get_background(x):
+        gmm = GaussianMixture(n_components=2, random_state=0).fit(x.reshape(-1, 1))
+        return min(gmm.means_)[0]
 
-        # Identify the background component (the one with lower mean)
-        background_component_mean = min(gmm.means_)[0]
-        background_means.append(background_component_mean)
+    noise_vector = np.array([
+        _get_background(normalized_matrix[i, :])
+        for i in range(n_cells)
+    ])
 
-    noise_vector = np.array(background_means)
+    norm_adt, meta_batch_model = remove_batch_effect(normalized_matrix, covariates=noise_vector)
+    logger.info("Technical noise removal completed.")
 
-    norm_adt = remove_batch_effect(normalized_matrix, covariates=noise_vector)
+    # Store meta information
+    meta_dnd = {
+        "dnd": {
+            "background_means": noise_vector,
+            "batch_model": meta_batch_model,
+        }
+    }
+    adata.uns["dnd"] = {
+        **adata.uns.get("dnd", {}),
+        **meta_dnd
+    }
 
     # After computing norm_adt, update the AnnData object
-    adata_filtered.layers["dsb_normalized"] = norm_adt
-
-    return adata_filtered
-
-
-def dsb(
-    adata_filtered: ad.AnnData,
-    adata_raw: ad.AnnData,
-    path_adata_out: str = None,
-    create_viz: bool = False,
-    pseudocount: int = 10,
-    denoise_counts: bool = True
-):
-    """Perform DSB normalization on the provided AnnData object.
-
-    Args:
-        adata_filtered (AnnData): AnnData object with filtered counts
-        adata_raw (AnnData): AnnData object with raw counts
-        path_adata_out (str): name of the output file including the path in .h5ad format (default: None)
-        create_viz (bool): create visualization plot (default: False). If path_adata_ouput is None, the visualization will be saved in the current directory.
-        pseudocount (int): pseudocount value used in the formula to avoid takig log of 0 (default: 10)
-        denoise_counts (bool): flag indicating whether to perform correction to cell variation using the background values (default: True)
-    Returns:
-        adata_denoised (AnnData): AnnData object with DSB normalized counts
-    """
-    if adata_filtered is None:
-        raise ValueError("adata containing the filtered droplets must be provided.")
-
-    if adata_raw is None:
-        raise ValueError("adata containing all the droplets must be provided.")
-    
-    # have an assertion to check if the values are integers. check using x=round(x)
-    # assert np.allclose(adata_filtered.X, np.round(adata_filtered.X)), "Filtered counts must be integers."
-    # assert np.allclose(adata_raw.X, np.round(adata_raw.X)), "Raw counts must be integers."
-
-    adata_denoised = _dsb_adapted(adata_filtered, adata_raw, pseudocount, denoise_counts)
-
-    # if path_adata_out is not provided, check if there is a need to make the plot and then return the adata_denoised
-    if path_adata_out is None:
-        if create_viz:
-            # If path_adata_out is not provided, use the current directory
-            viz_output_path = os.path.join(os.getcwd(), "dsb_viz.png")
-            
-            create_visualization(adata_denoised, viz_output_path)
-        return adata_denoised
+    if add_key_dnd is not None:
+        adata.layers[add_key_dnd] = norm_adt
+        logger.info(f"DND matrix stored in adata.layers['{add_key_dnd}']")
     else:
-        # Ensure the output directory exists if a directory is specified
-        if os.path.dirname(path_adata_out):
-            os.makedirs(os.path.dirname(path_adata_out), exist_ok=True)
-        adata_denoised.write(path_adata_out)
+        adata.X = norm_adt
+        logger.info("DND matrix stored in adata.X")
+
+    # Save outputs (try catch to return the adata object even if saving fails)
+    try:
+        path_viz = os.path.join(os.getcwd(), "dsb_viz.png")
+
+        if path_adata_out is not None:
+            adata.write_h5ad(path_adata_out)
+            path_viz = os.path.join(
+                os.path.dirname(path_adata_out),
+                os.path.basename(path_adata_out).split(".")[0] + "_dsb_viz.png",
+            )
+            logger.info(f"AnnData object saved to '{path_adata_out}'")
 
         if create_viz:
-            # Create visualization filename based on the AnnData filename
-            viz_filename = os.path.splitext(os.path.basename(path_adata_out))[0] + "_dsb_viz.png"
-            
-            if os.path.dirname(path_adata_out):
-                # If path_adata_out includes a directory, use that
-                viz_output_path = os.path.join(os.path.dirname(path_adata_out), viz_filename)
-            else:
-                # If path_adata_out is just a filename, use the current directory
-                viz_output_path = os.path.join(os.getcwd(), viz_filename)
-            
-            create_visualization(adata_denoised, viz_output_path)
+            create_visualization(adata, path_viz)
+            logger.info(f"Visualization plot saved to '{path_viz}'")
+    except Exception as e:
+        logger.error(f"Failed to save outputs: '{e}'")
 
-        
-    return adata_denoised
+    return adata

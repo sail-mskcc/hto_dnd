@@ -5,7 +5,6 @@ import pytest
 from sklearn.datasets import make_blobs
 
 from hto_dnd.dsb_algorithm import dsb
-# from hto_dnd.dsb_algorithm import _dsb_adapted
 from hto_dnd.demux_dsb import demux
 
 def generate_clustered_hto_data(n_cells=1000, n_htos=3, noise_level=0.5):

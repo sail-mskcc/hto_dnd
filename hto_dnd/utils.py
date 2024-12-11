@@ -48,4 +48,4 @@ def get_whitelist_background(
     )
     logger.info(msg)
 
-    return ids_background
+    return list(ids_background)

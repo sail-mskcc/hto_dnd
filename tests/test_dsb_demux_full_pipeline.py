@@ -119,11 +119,11 @@ def test_full_pipeline(test_datasets_with_files, tmp_path):
     filtered_path, raw_path, adata_filtered, adata_raw = test_datasets_with_files
 
     # Step 1: Run DSB
-    dsb_output_path = str(tmp_path / "dsb_output.h5ad")
+    dnd_output_path = str(tmp_path / "dsb_output.h5ad")
     dsb(
         adata_filtered=adata_filtered,
         adata_raw=adata_raw,
-        path_adata_out=dsb_output_path,
+        path_adata_out=dnd_output_path,
         create_viz=True
     )
 
@@ -131,17 +131,17 @@ def test_full_pipeline(test_datasets_with_files, tmp_path):
     n_htos = adata_filtered.n_vars
 
     # Verify DSB output
-    assert os.path.exists(dsb_output_path), "DSB output file not created"
-    adata_dsb = ad.read_h5ad(dsb_output_path)
-    assert "dsb_normalized" in adata_dsb.layers, "DSB normalized layer not found"
+    assert os.path.exists(dnd_output_path), "DSB output file not created"
+    adata_dsb = ad.read_h5ad(dnd_output_path)
+    assert "deniosed" in adata_dsb.layers, "Denoised layer not found in output"
 
     # Check if visualization file was created
-    viz_filename = os.path.splitext(os.path.basename(dsb_output_path))[0] + "_dsb_viz.png"
-    viz_output_path = os.path.join(os.path.dirname(dsb_output_path), viz_filename)
+    viz_filename = os.path.splitext(os.path.basename(dnd_output_path))[0] + "_dsb_viz.png"
+    viz_output_path = os.path.join(os.path.dirname(dnd_output_path), viz_filename)
     assert os.path.exists(viz_output_path), f"Visualization file not created at {viz_output_path}"
 
     # Step 2: Run demultiplexing
-    dsb_output_adata = ad.read_h5ad(dsb_output_path)
+    dsb_output_adata = ad.read_h5ad(dnd_output_path)
     adata_result = demux(dsb_output_adata, method="kmeans")
 
     # Verify demultiplexing output
@@ -174,20 +174,21 @@ def test_incorrect_path(test_datasets_with_files):
     """
     filtered_path, raw_path, adata_filtered, adata_raw = test_datasets_with_files
 
-    dsb_output_path = "dsb_output.h5ad"
+    dnd_output_path = "dsb_output.h5ad"
     dsb(
         adata_filtered=adata_filtered,
         adata_raw=adata_raw,
-        path_adata_out=dsb_output_path,
+        path_adata_out=dnd_output_path,
+        add_key_denoise="denoised",
         create_viz=True
     )
 
     # Verify DSB output
-    assert os.path.exists(dsb_output_path), "DSB output file not created"
-    adata_dsb = ad.read_h5ad(dsb_output_path)
-    assert "dsb_normalized" in adata_dsb.layers, "DSB normalized layer not found"
+    assert os.path.exists(dnd_output_path), "DSB output file not created"
+    adata_dsb = ad.read_h5ad(dnd_output_path)
+    assert "denoised" in adata_dsb.layers, "DSB normalized layer not found"
 
     # Check if visualization file was created
-    viz_filename = os.path.splitext(os.path.basename(dsb_output_path))[0] + "_dsb_viz.png"
-    viz_output_path = os.path.join(os.path.dirname(dsb_output_path), viz_filename)
+    viz_filename = os.path.splitext(os.path.basename(dnd_output_path))[0] + "_dsb_viz.png"
+    viz_output_path = os.path.join(os.path.dirname(dnd_output_path), viz_filename)
     assert os.path.exists(viz_output_path), f"Visualization file not created at {viz_output_path}"

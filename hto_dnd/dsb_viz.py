@@ -42,6 +42,14 @@ def compare_distributions(raw_data, dsb_data, output_path):
     plt.close()
 
 def create_visualization(adata, output_path):
+    """Creates and saves a visualization comparing pre and DSB-normalized data.
+
+    Args:
+        adata (AnnData): An AnnData object containing the data.
+        output_path (str): The file path where the visualization will be saved.
+    Returns:
+        None
+    """
     # Extract raw and DSB-normalized data
     raw_data = pd.DataFrame(adata.X, columns=adata.var_names)
     dsb_data = pd.DataFrame(adata.layers['dsb_normalized'], columns=adata.var_names)

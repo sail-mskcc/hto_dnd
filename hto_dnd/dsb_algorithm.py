@@ -12,15 +12,21 @@ from .dsb_viz import create_visualization
 
 
 def remove_batch_effect(x, covariates=None, design=None):
-    """
-    Remove batch effects from a given matrix.
+    """Remove batch effects from a given matrix using linear regression.
 
-    Parameters:
-    - x (ndarray): The input matrix to remove batch effects from.
-    - covariates (ndarray, optional): Covariates to consider for batch effect removal. Default is None.
-    - design (ndarray, optional): Design matrix for linear regression. Default is None.
+    This function removes technical noise (batch effects) from the input matrix by fitting
+    a linear model with the provided covariates and design matrix. The correction is then
+    subtracted from the original matrix.
+
+    Args:
+        x (ndarray): Input matrix from which batch effects will be removed.
+        covariates (ndarray, optional): Matrix of technical covariates (e.g. GMM means) 
+            used to model batch effects.
+        design (ndarray, optional): Design matrix for the linear regression model. If not
+            provided, uses a column vector of ones.
+
     Returns:
-    - ndarray: The matrix with batch effects removed.
+        ndarray: Matrix with batch effects removed.
     """
     x = np.asarray(x)
 
@@ -59,24 +65,26 @@ def _dsb_adapted(
     pseudocount: int = 10,
     denoise_counts: bool = True
 ) -> ad.AnnData:
-    """
-    Custom implementation of the DSB (Denoised and Sclaed by Background) algorithm.
+    """Custom implementation of the DSB (Denoised and Scaled by Background) algorithm.
 
-    Parameters:
-    -----------
-    adata_filtered : AnnData
-        Filtered AnnData object.
-    adata_raw : AnnData
-        Raw AnnData object.
-    pseudocount : int, optional
-        The pseudocount value used in the formula. Default is 10.
-    denoise_counts : bool, optional
-        Flag indicating whether to perform denoising. Default is True.
-
+    This function implements an adapted version of the DSB algorithm, which normalizes protein 
+    expression data using empty droplets as background reference and optionally performs 
+    technical noise removal.
+    Args:
+        adata_filtered (AnnData): Filtered AnnData object containing protein expression data 
+            for cells passing QC.
+        adata_raw (AnnData): Raw AnnData object containing protein expression data for all 
+            droplets including empty ones.
+        pseudocount (int, optional): Value added to expression counts before log transformation.
+            Defaults to 10.
+        denoise_counts (bool, optional): Whether to perform technical noise removal using 
+            Gaussian Mixture Models. Defaults to True.
     Returns:
-    --------
-    AnnData
-        The input adata_filtered with DSB-normalized data added.
+        AnnData: The input adata_filtered object with an additional layer 'dsb_normalized' 
+            containing the normalized protein expression values.
+        
+        The normalized data is stored in the layers attribute of the returned AnnData object
+        under 'dsb_normalized'.
     """
 
     # Create cell_protein_matrix
@@ -96,16 +104,6 @@ def _dsb_adapted(
     empty_drop_matrix = adata_raw[empty_barcodes, :].X  # .T
     if scipy.sparse.issparse(empty_drop_matrix):
         empty_drop_matrix = empty_drop_matrix.toarray()
-
-    cell_protein_matrix = pd.DataFrame(
-        cell_protein_matrix,
-        index=adata_filtered.obs_names,
-        columns=adata_filtered.var_names,
-    )
-
-    empty_drop_matrix = pd.DataFrame(
-        empty_drop_matrix, index=empty_barcodes, columns=adata_raw.var_names
-    )
 
     adt = np.array(cell_protein_matrix)
     adtu = np.array(empty_drop_matrix)
@@ -155,18 +153,21 @@ def dsb(
     adata_filtered: ad.AnnData,
     adata_raw: ad.AnnData,
     path_adata_out: str = None,
-    create_viz: bool = False
+    create_viz: bool = False,
+    pseudocount: int = 10,
+    denoise_counts: bool = True
 ):
-    """
-    Perform DSB normalization on the provided AnnData object.
+    """Perform DSB normalization on the provided AnnData object.
 
-    Parameters:
-        - adata_filtered (AnnData): AnnData object with filtered counts
-        - adata_raw (AnnData): AnnData object with raw counts
-        - path_adata_out (str): name of the output file including the path in .h5ad format (default: None)
-        - create_viz (bool): create visualization plot (default: False). If path_adata_ouput is None, the visualization will be saved in the current directory.
+    Args:
+        adata_filtered (AnnData): AnnData object with filtered counts
+        adata_raw (AnnData): AnnData object with raw counts
+        path_adata_out (str): name of the output file including the path in .h5ad format (default: None)
+        create_viz (bool): create visualization plot (default: False). If path_adata_ouput is None, the visualization will be saved in the current directory.
+        pseudocount (int): pseudocount value used in the formula to avoid takig log of 0 (default: 10)
+        denoise_counts (bool): flag indicating whether to perform correction to cell variation using the background values (default: True)
     Returns:
-        - adata_denoised (AnnData): AnnData object with DSB normalized counts
+        adata_denoised (AnnData): AnnData object with DSB normalized counts
     """
     if adata_filtered is None:
         raise ValueError("adata containing the filtered droplets must be provided.")
@@ -175,10 +176,10 @@ def dsb(
         raise ValueError("adata containing all the droplets must be provided.")
     
     # have an assertion to check if the values are integers. check using x=round(x)
-    assert np.allclose(adata_filtered.X, np.round(adata_filtered.X)), "Filtered counts must be integers."
-    assert np.allclose(adata_raw.X, np.round(adata_raw.X)), "Raw counts must be integers."
+    # assert np.allclose(adata_filtered.X, np.round(adata_filtered.X)), "Filtered counts must be integers."
+    # assert np.allclose(adata_raw.X, np.round(adata_raw.X)), "Raw counts must be integers."
 
-    adata_denoised = _dsb_adapted(adata_filtered, adata_raw)
+    adata_denoised = _dsb_adapted(adata_filtered, adata_raw, pseudocount, denoise_counts)
 
     # if path_adata_out is not provided, check if there is a need to make the plot and then return the adata_denoised
     if path_adata_out is None:

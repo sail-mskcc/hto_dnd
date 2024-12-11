@@ -34,8 +34,18 @@ def plot_distributions_log(
     cmap="tab20",
     title="",
     xmin=None,
+    remove_legend=False,
+    params_legend={},
     **kwargs
 ):
+    # defaults
+    defaults_legend = {
+        "title": "Hashtags",
+        "bbox_to_anchor": (1.05, 1),
+        "loc": "upper left",
+    }
+    params_legend = {**defaults_legend, **params_legend}
+
     # prep data
     df_long = adata.to_df(layer).melt()
     df_long.loc[:, "value_log"] = _symmetric_log1p(df_long.value)
@@ -65,8 +75,11 @@ def plot_distributions_log(
     ax.xaxis.set_major_locator(ticker.FixedLocator(log_ticks))
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: _format(x)))
 
-    handles = ax.get_legend().legend_handles
-    labels = [t._text for t in ax.get_legend().texts]
-    ax.legend(handles, labels, title="Hashtags", bbox_to_anchor=(1.05, 1), loc="upper left")
+    if remove_legend:
+        ax.get_legend().remove()
+    else:
+        handles = ax.get_legend().legend_handles
+        labels = [t._text for t in ax.get_legend().texts]
+        ax.legend(handles, labels, **params_legend)
 
     return ax

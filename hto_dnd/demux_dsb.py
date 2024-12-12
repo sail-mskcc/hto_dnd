@@ -12,7 +12,7 @@ from skimage.filters import threshold_otsu
 import scipy.stats
 import anndata as ad
 
-from .logging import get_logger
+from ._logging import get_logger
 from ._meta import init_meta, add_meta
 from line_profiler import profile
 

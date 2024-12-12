@@ -11,7 +11,7 @@ import anndata as ad
 import pandas as pd
 from pandas.api.types import is_integer_dtype
 
-from .logging import get_logger
+from ._logging import get_logger
 from .dsb_viz import create_visualization
 from ._meta import init_meta, add_meta
 
@@ -125,9 +125,7 @@ def dsb(
     """
     # Get logger
     logger = get_logger("denoise", level=verbose)
-    params = {k: v.shape if isinstance(v, ad.AnnData) else v for k, v in locals().items()}
-    params_str = pformat(params, indent=4)
-    logger.debug(f"Parameters:\n{params_str}")
+    logger.log_parameters(locals())
     logger.info("Starting DSB normalization...")
 
     # assertions
@@ -245,14 +243,16 @@ def dsb(
         paths = {}
         path_viz = os.path.join(os.getcwd(), "dsb_viz.png")
         if path_adata_out is not None:
+            os.makedirs(os.path.dirname(path_adata_out), exist_ok=True)
             path_viz = os.path.join(
                 os.path.dirname(path_adata_out),
                 os.path.basename(path_adata_out).split(".")[0] + "_dsb_viz.png",
             )
             paths["adata_denoised"] = path_adata_out
         if create_viz:
+            os.makedirs(os.path.dirname(path_viz), exist_ok=True)
             paths["viz"] = path_viz
-        adata = add_meta(adata, step="paths", paths=paths)
+        adata = add_meta(adata, step="paths", **paths)
 
         # save adata
         if path_adata_out is not None:
@@ -266,5 +266,8 @@ def dsb(
 
     except Exception as e:
         logger.error(f"Failed to save outputs: '{e}'")
+
+    # Log metadata
+    logger.debug(pformat(adata.uns["dnd"]))
 
     return adata

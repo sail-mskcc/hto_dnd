@@ -3,6 +3,7 @@
 import os
 import numpy as np
 import scipy
+from pprint import pformat
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.linear_model import LinearRegression
@@ -123,7 +124,9 @@ def dsb(
     """
     # Get logger
     logger = get_logger("denoise", level=verbose)
-    logger.debug(f"Parameters: {locals()}")
+    params = {k: v.shape if isinstance(v, ad.AnnData) else v for k, v in locals().items()}
+    params_str = pformat(params, indent=4)
+    logger.debug(f"Parameters:\n{params_str}")
     logger.info("Starting DSB normalization...")
 
     # assertions

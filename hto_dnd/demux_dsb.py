@@ -3,6 +3,7 @@
 
 import pandas as pd
 import numpy as np
+from pprint import pformat
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, davies_bouldin_score
@@ -156,7 +157,9 @@ def demux(
 
     # debug - print parameters
     logger = get_logger("demux", level=verbose)
-    logger.debug(f"Parameters: {locals()}")
+    params = {k: v.shape if isinstance(v, ad.AnnData) else v for k, v in locals().items()}
+    params_str = pformat(params, indent=4)
+    logger.debug(f"Parameters:\n{params_str}")
     logger.info(f"Starting demultiplexing using '{method}'...")
 
     # assertions

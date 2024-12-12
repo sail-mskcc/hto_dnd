@@ -3,73 +3,8 @@ import numpy as np
 import pandas as pd
 import anndata as ad
 import yaml
-import os
 from sklearn.datasets import make_blobs
 from hto_dnd.demux_dsb import cluster_and_evaluate, demux
-
-@pytest.fixture
-def mock_dsb_denoised_adata():
-    """
-    Generates a mock AnnData object simulating denoised data from a multiplexing experiment.
-    This function creates synthetic data for a specified number of cells, simulating three types of cell populations:
-    - Singlets, Doublets, and Negatives.
-    The generated data includes:
-    - A 2D array of cell data where each row corresponds to a cell and each column corresponds to an HTO.
-    - A DataFrame containing the true labels for each cell.
-    - An AnnData object that encapsulates the generated data, true labels, and additional information.
-    Returns:
-        AnnData: An AnnData object containing the synthetic cell data, true labels, and HTO information.
-    """
-    np.random.seed(42)
-    n_cells = 1000
-    n_htos = 3
-
-    # Parameters for different populations
-    background_mean, background_std = 0, 0.5
-    signal_mean, signal_std = 3, 0.5
-
-    # Proportions of different cell types
-    prop_singlets = 0.7
-    prop_doublets = 0.1
-    prop_negatives = 0.2
-
-    data = []
-    true_labels = []
-
-    for i in range(n_cells):
-        cell_type = np.random.choice(['singlet', 'doublet', 'negative'], p=[prop_singlets, prop_doublets, prop_negatives])
-
-        if cell_type == 'singlet':
-            hto_idx = np.random.randint(n_htos)
-            cell_data = [np.random.normal(background_mean, background_std) for _ in range(n_htos)]
-            cell_data[hto_idx] = np.random.normal(signal_mean, signal_std)
-            true_labels.append(f'HTO_{hto_idx}')
-
-        elif cell_type == 'doublet':
-            hto_indices = np.random.choice(n_htos, size=2, replace=False)
-            cell_data = [np.random.normal(background_mean, background_std) for _ in range(n_htos)]
-            cell_data[hto_indices[0]] = np.random.normal(signal_mean, signal_std)
-            cell_data[hto_indices[1]] = np.random.normal(signal_mean, signal_std)
-            true_labels.append('Doublet')
-
-        else:  # negative
-            cell_data = [np.random.normal(background_mean, background_std) for _ in range(n_htos)]
-            true_labels.append('Negative')
-
-        data.append(cell_data)
-
-    X = np.array(data)
-
-    obs = pd.DataFrame({
-        'true_label': true_labels
-    }, index=[f'cell_{i}' for i in range(n_cells)])
-
-    var = pd.DataFrame(index=[f'HTO_{i}' for i in range(n_htos)])
-
-    adata = ad.AnnData(X=X, obs=obs, var=var)
-    adata.layers['dnd'] = X
-    return adata
-
 
 def test_demux(mock_dsb_denoised_adata, tmp_path):
     """
@@ -101,7 +36,7 @@ def test_demux(mock_dsb_denoised_adata, tmp_path):
         assert isinstance(result, ad.AnnData)
         assert 'hashID' in result.obs.columns
         assert 'Doublet_Info' in result.obs.columns
-        assert 'metrics' in result.uns
+        assert 'metrics' in result.uns["dnd"]["denoise"]
 
         # Check if classifications exist
         classifications = result.obs['hashID'].value_counts()

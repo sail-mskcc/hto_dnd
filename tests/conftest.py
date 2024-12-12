@@ -7,8 +7,8 @@ import anndata as ad
 from sklearn.datasets import make_blobs
 
 
-@pytest.fixture(scope='session')
-def mock_hto_data(n_cells=1000, n_htos=3, noise_level=0.5):
+@pytest.fixture(scope='module')
+def mock_hto_data(request):
     """Generate clustered HTO data.
 
     Creates the following labels:
@@ -31,6 +31,11 @@ def mock_hto_data(n_cells=1000, n_htos=3, noise_level=0.5):
         - 'filtered_cell_types': Cell types for the filtered data
         - 'raw_cell_types': Cell types for the raw data
     """
+
+    # Parameters
+    n_cells = request.param.get("n_cells", 1000)
+    n_htos = request.param.get("n_htos", 3)
+    noise_level = request.param.get("noise_level", 0.5)
 
     # Define cluster centers
     # hto_centers = np.eye(n_htos) * 10
@@ -115,7 +120,7 @@ def mock_hto_data(n_cells=1000, n_htos=3, noise_level=0.5):
     yield {
         "filtered": filtered_adata,
         "path_filtered": path_filtered,
-        "raw": raw_data,
+        "raw": raw_adata,
         "path_raw": path_raw,
         "path_denoised": path_denoised,
         "filtered_labels": raw_labels[subset_filterd],

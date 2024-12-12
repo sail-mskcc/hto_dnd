@@ -11,7 +11,9 @@ import yaml
 from skimage.filters import threshold_otsu
 import scipy.stats
 import anndata as ad
+
 from .logging import get_logger
+from ._meta import init_meta, add_meta
 from line_profiler import profile
 
 def numpy_to_python(obj):
@@ -171,6 +173,9 @@ def demux(
     df_umi = adata.to_df(layer=layer)
     assert all([t == float for t in df_umi.dtypes]), "Denoised data must be float."
 
+    # initialize meta
+    adata = init_meta(adata)
+
     classifications = []
     metrics = {}
     thresholds = {}
@@ -207,7 +212,7 @@ def demux(
         elif len(positive_htos) == 1:
             return positive_htos[0], None
         else:
-            return "Doublet", ", ".join(positive_htos)
+            return "Doublet", ",".join(positive_htos)
 
     result_df["hash_id"], result_df["doublet_info"] = zip(
         *result_df.apply(categorize_cell, axis=1)
@@ -217,8 +222,18 @@ def demux(
     # create an anndata object where the denoised data is the X matrix, the barcodes and features are the obs and var names, add the hashID and Doublet_Info as an obs column, and metrics as an uns
     adata.obs["hash_id"] = result_df["hash_id"]
     adata.obs["doublet_info"] = result_df["doublet_info"]
-    adata.uns["metrics"] = metrics
-    adata.uns["thresholds"] = thresholds if method == "otsu" else None
+
+    # add metadata
+    adata = add_meta(
+        adata,
+        step="demux",
+        params=dict(
+            method=method,
+            layer=layer,
+        ),
+        metrics=metrics,
+        thresholds=thresholds if method == "otsu" else None,
+    )
 
     logger.info(f"Demultiplexing completed. Assignments found as 'hash_id' and 'doublet_info' in adata.obs.")
 

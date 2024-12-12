@@ -13,6 +13,7 @@ from pandas.api.types import is_integer_dtype
 
 from .logging import get_logger
 from .dsb_viz import create_visualization
+from ._meta import init_meta, add_meta
 
 from line_profiler import profile
 
@@ -140,6 +141,9 @@ def dsb(
     # Setup
     adata = adata_filtered.copy()
 
+    # Init metadata
+    adata = init_meta(adata)
+
     # Create cell_protein_matrix
     cell_protein_matrix = adata.X  # .T
     if scipy.sparse.issparse(cell_protein_matrix):
@@ -173,17 +177,15 @@ def dsb(
     normalized_matrix = (adt_log - mu_empty) / sd_empty
 
     # Store meta information
-    meta_normalise = {
-        "normalise": {
+    adata = add_meta(
+        adata,
+        step="normalise",
+        params={
             "pseudocount": pseudocount,
-            "mean_empty": mu_empty,
-            "sd_empty": sd_empty,
-        }
-    }
-    adata.uns["dnd"] = {
-        **adata.uns.get("dnd", {}),
-        **meta_normalise
-    }
+        },
+        mu_empty=mu_empty,
+        sd_empty=sd_empty,
+    )
 
     # Checkpoint
     if add_key_normalise is not None:
@@ -219,16 +221,15 @@ def dsb(
     logger.info("Technical noise removal completed.")
 
     # Store meta information
-    meta_dnd = {
-        "dnd": {
-            "background_means": noise_vector,
-            "batch_model": meta_batch_model,
-        }
-    }
-    adata.uns["dnd"] = {
-        **adata.uns.get("dnd", {}),
-        **meta_dnd
-    }
+    adata = add_meta(
+        adata,
+        step="denoise",
+        params={
+            "background_method": background_method,
+        },
+        noise_vector=noise_vector,
+        batch_model=meta_batch_model,
+    )
 
     # After computing norm_adt, update the AnnData object
     if add_key_denoise is not None:
@@ -240,19 +241,29 @@ def dsb(
 
     # Save outputs (try catch to return the adata object even if saving fails)
     try:
+        # create paths (first, so that we can save the paths in the metadata)
+        paths = {}
         path_viz = os.path.join(os.getcwd(), "dsb_viz.png")
-
         if path_adata_out is not None:
-            adata.write_h5ad(path_adata_out)
             path_viz = os.path.join(
                 os.path.dirname(path_adata_out),
                 os.path.basename(path_adata_out).split(".")[0] + "_dsb_viz.png",
             )
+            paths["adata_denoised"] = path_adata_out
+        if create_viz:
+            paths["viz"] = path_viz
+        adata = add_meta(adata, step="paths", paths=paths)
+
+        # save adata
+        if path_adata_out is not None:
+            adata.write_h5ad(path_adata_out)
             logger.info(f"AnnData object saved to '{path_adata_out}'")
 
+        # save visualization
         if create_viz:
             create_visualization(adata, path_viz)
             logger.info(f"Visualization plot saved to '{path_viz}'")
+
     except Exception as e:
         logger.error(f"Failed to save outputs: '{e}'")
 

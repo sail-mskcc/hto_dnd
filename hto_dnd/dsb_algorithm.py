@@ -12,8 +12,9 @@ import pandas as pd
 from pandas.api.types import is_integer_dtype
 
 from ._logging import get_logger
-from .dsb_viz import create_visualization
 from ._meta import init_meta, add_meta
+from ._exceptions import AnnDataFormatError
+from .dsb_viz import create_visualization
 
 from line_profiler import profile
 
@@ -148,12 +149,14 @@ def dsb(
         cell_protein_matrix = cell_protein_matrix.toarray()
 
     # Identify barcodes that are in adata_raw but not in adata_filtered
-    # Convert to sets
     raw_barcodes = set(adata_raw.obs_names)
     filtered_barcodes = set(adata.obs_names)
-
-    # Find the difference
     empty_barcodes = list(raw_barcodes - filtered_barcodes)
+    if len(empty_barcodes) < 5:
+        raise AnnDataFormatError("adata_raw_missing_cells", len(empty_barcodes))
+    if len(filtered_barcodes) < 5:
+        raise AnnDataFormatError("adata_filtered_too_few_cells", len(filtered_barcodes))
+    logger.info(f"Detected '{len(empty_barcodes)}' empty droplets")
 
     # Get the empty droplets from adata_raw
     empty_drop_matrix = adata_raw[empty_barcodes, :].X  # .T

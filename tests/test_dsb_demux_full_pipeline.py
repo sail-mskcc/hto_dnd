@@ -5,6 +5,7 @@ import pytest
 
 from hto_dnd.dsb_algorithm import dsb
 from hto_dnd.demux_dsb import demux
+from hto_dnd._exceptions import AnnDataFormatError
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_components(mock_hto_data):
@@ -76,8 +77,15 @@ def test_no_background(mock_hto_data):
     adata_raw = adata_filtered.copy()
 
     # Test with no background
-    with pytest.raises(ValueError):
+    with pytest.raises(AnnDataFormatError):
         adata = dsb(
             adata_filtered=adata_filtered,
+            adata_raw=adata_filtered.copy(),
+        )
+
+    # Test with too few cells
+    with pytest.raises(AnnDataFormatError):
+        adata = dsb(
+            adata_filtered=adata_filtered[:2],
             adata_raw=adata_raw,
         )

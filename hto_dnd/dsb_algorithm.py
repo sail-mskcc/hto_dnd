@@ -4,8 +4,6 @@ import os
 import numpy as np
 import scipy
 from pprint import pformat
-from sklearn.cluster import KMeans
-from sklearn.mixture import GaussianMixture
 from sklearn.linear_model import LinearRegression
 import anndata as ad
 import pandas as pd
@@ -14,20 +12,10 @@ from pandas.api.types import is_integer_dtype
 from ._logging import get_logger
 from ._meta import init_meta, add_meta
 from ._exceptions import AnnDataFormatError
+from .cluster_background import assert_background, estimate_background
 from .dsb_viz import create_visualization
 
 from line_profiler import profile
-
-
-def _get_background_gmm(x):
-    """Fit a Gaussian Mixture Model to the input data and return the mean of the first component."""
-    gmm = GaussianMixture(n_components=2, random_state=0).fit(x.reshape(-1, 1))
-    return min(gmm.means_)[0]
-
-def _get_background_kmeans(x):
-    """Fit a KMeans model to the input data and return the mean of the first cluster."""
-    kmeans = KMeans(n_clusters=2, random_state=0).fit(x.reshape(-1, 1))
-    return min(kmeans.cluster_centers_)[0]
 
 @profile
 def remove_batch_effect(x, covariates=None, design=None):
@@ -92,6 +80,7 @@ def dsb(
     background_method: str = "kmeans",
     add_key_normalise: str = None,
     add_key_denoise: str = None,
+    params_background: dict = {},
     inplace: bool = False,
     path_adata_out: str = None,
     create_viz: bool = False,
@@ -114,6 +103,7 @@ def dsb(
         background_method (str, optional): Method to use for background estimation. Must be either 'gmm' or 'kmeans'. Default is 'kmeans'.
         add_key_normalise (str, optional): Key to store the normalized data in the AnnData object. Default is None.
         add_key_denoise (str, optional): Key to store the normalised and denoised data in the AnnData object. Default is None.
+        params_background (dict, optional): Additional parameters for the background estimation method. Default is {}.
         inplace (bool, optional): Flag indicating whether to modify the input AnnData object. Default is False.
         path_adata_out (str, optional): Path to save the output AnnData object. Default is None.
         create_viz (bool, optional): Flag indicating whether to create a visualization plot. Default is False.
@@ -134,8 +124,10 @@ def dsb(
         raise NotImplementedError("Inplace operation is not supported.")
     assert is_integer_dtype(adata_filtered.X), "Filtered counts must be integers."
     assert is_integer_dtype(adata_raw.X), "Raw counts must be integers."
-    supported_background_methods = ["gmm", "kmeans"]
-    assert background_method in supported_background_methods, f"Background method must be one of {supported_background_methods}, got '{background_method}'"
+    assert_background(
+        method=background_method,
+        **params_background
+    )
 
     # Setup
     adata = adata_filtered.copy()
@@ -205,18 +197,12 @@ def dsb(
     # Apply a 2-component GMM for each cell and get the first component mean
     n_cells, n_proteins = normalized_matrix.shape
 
-    if background_method == "gmm":
-        _get_background = _get_background_gmm
-    elif background_method == "kmeans":
-        _get_background = _get_background_kmeans
-    else:
-        raise ValueError(f"Invalid background method: '{background_method}'")
-
     logger.info(f"Build background data using '{background_method}' method")
-    noise_vector = np.array([
-        _get_background(normalized_matrix[i, :])
-        for i in range(n_cells)
-    ])
+    noise_vector = estimate_background(
+        matrix=normalized_matrix,
+        method=background_method,
+        **params_background
+    )
 
     norm_adt, meta_batch_model = remove_batch_effect(normalized_matrix, covariates=noise_vector)
     logger.info("Technical noise removal completed.")

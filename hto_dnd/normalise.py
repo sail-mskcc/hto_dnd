@@ -111,5 +111,4 @@ def normalise(
     # Log metadata
     logger.debug(pformat(adata_hto.uns["dnd"]))
 
-    if not inplace:
-        return adata_hto
+    return adata_hto

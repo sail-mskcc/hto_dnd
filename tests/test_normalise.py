@@ -61,7 +61,7 @@ def test_normalise(mock_hto_data):
 
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
-def test_normalise(mock_hto_data):
+def test_faulty_data(mock_hto_data):
     """
     Test if normalisation works.
     """

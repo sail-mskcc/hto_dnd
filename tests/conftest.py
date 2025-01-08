@@ -1,7 +1,6 @@
 import os
 import shutil
 import pytest
-from sklearn.datasets import make_blobs
 from hto_dnd.data import generate_mock_hto_data
 
 @pytest.fixture(scope='module')

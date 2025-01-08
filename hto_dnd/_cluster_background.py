@@ -4,6 +4,11 @@ from itertools import chain
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
+SUPPORTED_BACKGROUND_METHODS = ["kmeans-fast", "kmeans", "gmm"]
+
+# ASSERTIONS
+def assert_background(method, **kwargs):
+    assert method in SUPPORTED_BACKGROUND_METHODS, f"Method '{method}' not supported. Choose from: {', '.join(SUPPORTED_BACKGROUND_METHODS)}"
 
 # OUT OF THE BOX
 def _apply_gmm_to_row(x, func):
@@ -143,11 +148,6 @@ def _get_background_kmeans_fast(matrix, n_iter=5, inits=None):
 
     # return mean of the lower cluster
     return center_lower_min, meta
-
-
-def assert_background(method, **kwargs):
-    supported_methods = ["kmeans-fast", "kmeans", "gmm"]
-    assert method in supported_methods, f"Method '{method}' not supported. Choose from: {', '.join(supported_methods)}"
 
 def estimate_background(
     matrix,

@@ -9,6 +9,7 @@ from ._meta import add_meta
 from ._cluster_background import assert_background, estimate_background
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._exceptions import AnnDataFormatError
+from ._utils import get_layer
 
 from line_profiler import profile
 
@@ -17,8 +18,9 @@ def remove_batch_effect(
     covariates: np.ndarray = DEFAULTS["covariates"],
     design: np.ndarray = DEFAULTS["design"],
 ) -> np.ndarray:
-    assert isinstance(x, np.ndarray), "Input matrix must be a NumPy array"
 
+    # assertions
+    assert isinstance(x, np.ndarray), "Input matrix must be a NumPy array"
     if design is None:
         design = np.ones((x.shape[0], 1))
     else:
@@ -96,18 +98,13 @@ def denoise(
     logger.info("Starting denoising...")
 
     # setup data
-    if not inplace:
-        adata_hto = adata_hto.copy()
-    x = adata_hto.X
-    if use_layer is not None:
-        x = adata_hto.layers[use_layer]
-    if scipy.sparse.issparse(x):
-        x = np.asarray(x)
-
-    # assertions
-    assert isinstance(x, np.ndarray), "Input matrix must be a NumPy array"
-    if (not is_float_dtype(x)) or np.any(x[:10] == np.round(x[:10])):
-        raise AnnDataFormatError("adata_not_float", x)
+    adata_hto, x = get_layer(
+        adata=adata_hto,
+        use_layer=use_layer,
+        numpy=True,
+        float=True,
+        inplace=inplace,
+    )
 
     # 1. Build Background Data
     if covariates is None:
@@ -150,5 +147,4 @@ def denoise(
         meta_background=meta_background,
     )
 
-    if not inplace:
-        return adata_hto
+    return adata_hto

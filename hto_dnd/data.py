@@ -2,7 +2,6 @@ import numpy as np
 import anndata as ad
 from sklearn.datasets import make_blobs
 
-
 def generate_mock_hto_data(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     """Generate clustered HTO data.
 
@@ -34,8 +33,8 @@ def generate_mock_hto_data(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     # Define cluster centers
     # - off-diagonal is random around 0-5
     # - diagonal is random around 10
-    hto_centers = np.random.uniform(0, 5, (n_htos, n_htos))
-    hto_centers[np.diag_indices(n_htos)] = np.random.uniform(5, 15, n_htos)
+    hto_centers = np.random.uniform(0, 3, (n_htos, n_htos))
+    hto_centers[np.diag_indices(n_htos)] = np.random.uniform(8, 15, n_htos)
 
     negative_center = np.ones(n_htos) * 2  # All HTOs low
     empty_center = np.ones(n_htos) * 0.5  # All HTOs very low

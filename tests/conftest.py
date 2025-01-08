@@ -20,6 +20,7 @@ def mock_hto_data(request):
     path = "temp"
     path_filtered = path + "/filtered_data.h5ad"
     path_raw = path + "/raw_data.h5ad"
+    path_normalised = path + "/normalised_data.h5ad"
     path_denoised = path + "/out/denoised_data.h5ad"
     os.makedirs(path, exist_ok=True)
     mock["filtered"].write_h5ad(path_filtered)
@@ -28,6 +29,7 @@ def mock_hto_data(request):
     # add paths
     mock["path_filtered"] = path_filtered
     mock["path_raw"] = path_raw
+    mock["path_normalised"] = path_normalised
     mock["path_denoised"] = path_denoised
 
     # Yield data

@@ -52,7 +52,7 @@ python cli.py demux --dsb-denoised-adata-dir path/to/dsb_normalized_data.h5ad \
 3. DSB and Demultiplexing:
 
 ```bash
-python cli.py dsb_and_demux --adata_filtered_dir path/to/filtered_data.h5ad \
+python cli.py dnd --adata_filtered_dir path/to/filtered_data.h5ad \
                             --adata_raw_dir path/to/raw_data.h5ad \
                             --output-path path/to/output_data.h5ad
 ```
@@ -86,13 +86,13 @@ demultiplexed_adata = demux(dsb_normalized_adata, method="gmm", layer="dsb_norma
 DSB and Demultiplexing:
 
 ```python
-from hto_dnd import dsb_and_demux
+from hto_dnd import dnd
 import anndata as ad
 
 adata_filtered = ad.read("path/to/filtered_data.h5ad")
 adata_raw = ad.read("path/to/raw_data.h5ad")
 
-demuxed_adata = dsb_and_demux(adata_filtered, adata_raw, path_adata_out="path/to/output_data.h5ad")
+demuxed_adata = dnd(adata_filtered, adata_raw, path_adata_out="path/to/output_data.h5ad")
 ```
 
 ### Visualization

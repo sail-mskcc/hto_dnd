@@ -8,15 +8,15 @@ python cli.py dsb --adata-filtered-in path/to/filtered_data.h5ad --adata-raw-in 
 python cli.py demux --dsb-denoised-adata-dir path/to/normalised_data.h5ad --method kmeans --output-path path/to/demultiplexed_data.h5ad
 
 # Perform DSB normalization and demultiplexing
-python cli.py dsb_and_demux --adata_filtered_dir path/to/filtered_data.h5ad --adata_raw_dir path/to/raw_data.h5ad --output-path path/to/output_data.h5ad
+hto-dnd --adata_filtered_dir path/to/filtered_data.h5ad --adata_raw_dir path/to/raw_data.h5ad --output-path path/to/output_data.h5ad
 """
 
 
 import argparse
 import anndata as ad
-from hto_dnd.dsb_algorithm import dsb
-from hto_dnd.demux_dsb import demux
-from hto_dnd.dsb_and_demux import dsb_and_demux
+from hto_dnd.hto_dnd.remove_technical_noise import dsb
+from hto_dnd.hto_dnd.demux import demux
+from hto_dnd.dnd import dnd
 
 def parse_dsb_arguments():
     """Parse command line arguments for DSB analysis.
@@ -155,7 +155,7 @@ def parse_demux_arguments():
 
     return params
 
-def parse_dsb_and_demux_arguments():
+def parse_dnd_arguments():
     """Parse command line arguments for DSB and demux operations.
     This function sets up and parses command line arguments for processing filtered
     and raw AnnData files and specifying an output path.
@@ -206,7 +206,7 @@ def main():
     The CLI supports three commands:
         - dsb: Performs DSB normalization on HTO data
         - demux: Performs demultiplexing on DSB-normalized data
-        - dsb_and_demux: Combines DSB normalization and demultiplexing in one step
+        - dnd: Combines DSB normalization and demultiplexing in one step
     Returns:
         None
     Command-line Arguments:
@@ -222,14 +222,14 @@ def main():
             --method: Demultiplexing method (default: "kmeans")
             --layer: Layer name in AnnData (default: "dnd")
             --output-path: Path for output file
-        For 'dsb_and_demux' command:
+        For 'dnd' command:
             --adata_filtered_dir: Directory with filtered AnnData
             --adata_raw_dir: Directory with raw AnnData
             --output-path: Path for output file
     Example:
         $ python script.py dsb --adata-filtered-in filtered.h5ad --adata-raw-in raw.h5ad --adata-out output.h5ad
         $ python script.py demux --dsb-denoised-adata-dir processed.h5ad --output-path result.h5ad
-        $ python script.py dsb_and_demux --adata_filtered_dir filtered.h5ad --adata_raw_dir raw.h5ad --output-path final.h5ad
+        $ python script.py dnd --adata_filtered_dir filtered.h5ad --adata_raw_dir raw.h5ad --output-path final.h5ad
     """
 
     parser = argparse.ArgumentParser(description="HTO DND CLI")
@@ -249,10 +249,10 @@ def main():
     demux_parser.add_argument("--layer", default="dnd")
     demux_parser.add_argument("--output-path", required=True)
 
-    dsb_and_demux_parser = subparsers.add_parser("dsb_and_demux")
-    dsb_and_demux_parser.add_argument("--adata_filtered_dir", required=True)
-    dsb_and_demux_parser.add_argument("--adata_raw_dir", required=True)
-    dsb_and_demux_parser.add_argument("--output-path", required=True)
+    dnd_parser = subparsers.add_parser("dnd")
+    dnd_parser.add_argument("--adata_filtered_dir", required=True)
+    dnd_parser.add_argument("--adata_raw_dir", required=True)
+    dnd_parser.add_argument("--output-path", required=True)
 
     args = parser.parse_args()
 
@@ -274,10 +274,10 @@ def main():
             layer=args.layer,
         )
         adata_result.write(args.output_path)
-    elif args.command == "dsb_and_demux":
+    elif args.command == "dnd":
         adata_filtered = ad.read(args.adata_filtered_dir)
         adata_raw = ad.read(args.adata_raw_dir)
-        demux_adata = dsb_and_demux(
+        demux_adata = dnd(
             adata_filtered=adata_filtered,
             adata_raw=adata_raw,
             path_adata_out=args.output_path,

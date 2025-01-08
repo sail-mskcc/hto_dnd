@@ -1,7 +1,7 @@
 [project]
 name = "hto-dnd"
 version = "0.1.4"
-description = "A method to demultiplex hashtagged single-cell data by first applying a denoising and normalizing step adapted from DSB (Denoised and Scaled by Background)."
+description = "A method to demultiplex hashtagged single-cell data."
 dependencies = [
     "pandas >= 1.5.0",
     "numpy >= 1.21.0",
@@ -26,9 +26,10 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[tool.setuptools]
+packages = ["hto_dnd"]
+
 [project.scripts]
-dsb = "hto_dnd.cli:main"
-demux_dsb = "hto_dnd.cli:main"
 dnd = "hto_dnd.cli:main"
 
 [build-system]

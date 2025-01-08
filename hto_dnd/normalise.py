@@ -47,7 +47,6 @@ def normalise(
 
     # assertions
     assert is_integer_dtype(adata_hto.X), "Filtered counts must be integers."
-    assert adata_hto.shape[0] < adata_hto_raw.shape[0], "Filtered counts must be a subset of raw counts."
 
     # Setup
     if not inplace:
@@ -56,14 +55,17 @@ def normalise(
     # Init metadata
     adata_hto = init_meta(adata_hto)
 
-    # Identify barcodes that are in adata_raw but not in adata_filtered
+    # Subsets
     raw_barcodes = set(adata_hto_raw.obs_names)
     filtered_barcodes = set(adata_hto.obs_names)
     empty_barcodes = list(raw_barcodes - filtered_barcodes)
+    overlap_barcode = list(raw_barcodes & filtered_barcodes)  # check that naming is consistent
+
+    # Identify barcodes that are in adata_raw but not in adata_filtered
     if len(empty_barcodes) < 5:
-        raise AnnDataFormatError("adata_raw_missing_cells", len(empty_barcodes))
-    if len(filtered_barcodes) < 5:
-        raise AnnDataFormatError("adata_filtered_too_few_cells", len(filtered_barcodes))
+        raise AnnDataFormatError("adata_raw_missing_cells", empty_barcodes)
+    if len(overlap_barcode) < 5:
+        raise AnnDataFormatError("adata_no_overlapping_names", len(filtered_barcodes))
     logger.info(f"Detected '{len(empty_barcodes)}' empty droplets")
 
     # Get cell_protein_matrix
@@ -72,7 +74,7 @@ def normalise(
         adt = adt.toarray()
 
     # Get the empty droplets from adata_raw
-    adtu = adata_hto[empty_barcodes, :].X  # .T
+    adtu = adata_hto_raw[empty_barcodes, :].X  # .T
     if scipy.sparse.issparse(adtu):
         adtu = adtu.toarray()
 
@@ -88,8 +90,8 @@ def normalise(
     normalized_matrix = (adt_log - mu_empty) / sd_empty
 
     # Store meta information
-    adata = add_meta(
-        adata,
+    adata_hto = add_meta(
+        adata_hto,
         step="normalise",
         params={
             "pseudocount": pseudocount,
@@ -100,14 +102,14 @@ def normalise(
 
     # Checkpoint
     if add_key_normalise is not None:
-        adata.layers[add_key_normalise] = normalized_matrix
+        adata_hto.layers[add_key_normalise] = normalized_matrix
         logger.info(f"Normalized matrix stored in adata.layers['{add_key_normalise}']")
     else:
-        adata.X = normalized_matrix
+        adata_hto.X = normalized_matrix
         logger.info("Normalization completed.")
 
     # Log metadata
-    logger.debug(pformat(adata.uns["dnd"]))
+    logger.debug(pformat(adata_hto.uns["dnd"]))
 
     if not inplace:
-        return adata
+        return adata_hto

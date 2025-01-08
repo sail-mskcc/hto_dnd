@@ -31,7 +31,7 @@ def generate_mock_hto_data(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     assert n_htos >=2, "Number of HTOs must be at least 2"
 
     # Define cluster centers
-    # - off-diagonal is random around 0-5
+    # - off-diagonal is random around 0-3
     # - diagonal is random around 10
     hto_centers = np.random.uniform(0, 3, (n_htos, n_htos))
     hto_centers[np.diag_indices(n_htos)] = np.random.uniform(8, 15, n_htos)

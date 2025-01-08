@@ -1,17 +1,21 @@
+import numpy as np
 
 class AnnDataFormatError(Exception):
-    def __init__(self, message, key, *args, **kwargs):
-        self.message = self.get_message(key, *args, **kwargs)
+    def __init__(self, key, *args, **kwargs):
+        message = self.get_message(key, *args, **kwargs)
         super().__init__(message)
 
     def get_message(self, key, *args, **kwargs):
         _func = {
             "adata_raw_missing_cells": self._adata_raw_missing_cells,
-            "adata_filtered_too_few_cells": self._adata_filtered_too_few_cells,
+            "adata_no_overlapping_names": self._adata_filtered_too_few_cells,
+            "adata_not_float": self._adata_not_float,
         }.get(key, self._default)
         return _func(*args, **kwargs)
 
     def _default(self, *args, **kwargs):
+        args = ", ".join(args)
+        kwargs = ", ".join([f"{k}={v}" for k, v in kwargs.items()])
         return f"Unknown error occurred. Args: {args}, kwargs: {kwargs}"
 
     def _adata_raw_missing_cells(self, empty_barcodes):
@@ -20,3 +24,6 @@ class AnnDataFormatError(Exception):
 
     def _adata_filtered_too_few_cells(self, n_cells):
         return f"Too few cells in 'adata_filtered': '{n_cells}'. "
+
+    def _adata_not_float(self, x):
+        return f"Input matrix must contain float values, got {x.dtype} ({', '.join(np.unique(x).astype(str))})"

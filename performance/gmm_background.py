@@ -4,7 +4,7 @@ import pandas as pd
 from line_profiler import profile
 
 from hto_dnd.data import generate_mock_hto_data
-from hto_dnd import remove_technical_noise
+from hto_dnd import denoise
 from hto_dnd.hto_dnd._cluster_background import _get_background_gmm, _get_background_kmeans, _get_background_kmeans_fast
 
 

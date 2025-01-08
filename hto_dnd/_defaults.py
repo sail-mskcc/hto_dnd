@@ -5,6 +5,7 @@ DEFAULTS = {
     "adata_hto_raw": None,
     "use_layer": None,
     "inplace": False,
+    "verbose": 1,
 
     # normalise
     "pseudocount": 10,
@@ -17,11 +18,10 @@ DEFAULTS = {
     "add_key_denoise": None,
 
     # demux
-    "method": "kmeans",
-    "layer": None,
-    "save_stats": False,
-    "inplace": False,
-    "verbose": 1,
+    "demux_method": "kmeans",
+    "add_key": "hash_id",
+    "add_key_doublet": "doublet_info",
+    "add_key_labels": "demux_labels",
 }
 
 DESCRIPTIONS = {
@@ -41,4 +41,10 @@ DESCRIPTIONS = {
     "add_key_denoise": f"Key to store the denoised data in the AnnData object. Default is {DEFAULTS['add_key_denoise']}.",
     "covariates": f"Matrix of covariates to use for denoising. Not recommended for general use. Default is {DEFAULTS['covariates']}.",
     "design": f"Design matrix to use for denoising. Not recommended for general use. Default is {DEFAULTS['design']}.",
+
+    # demux
+    "demux_method": f"Method to use for demultiplexing. Must be either 'kmeans', 'gmm' or 'otsu'. Default is {DEFAULTS['demux_method']}.",
+    "add_key": f"Column to store the demultiplexed cell type in the AnnData object. Default is {DEFAULTS['add_key']}.",
+    "add_key_doublet": f"Column to store the doublet information in the AnnData object. Default is {DEFAULTS['add_key_doublet']}.",
+    "add_key_labels": f"Adata layer to store the demultiplexed labels in the AnnData object. Default is {DEFAULTS['add_key_labels']}.",
 }

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import anndata as ad
 from scipy import sparse
-from hto_dnd.dsb_algorithm import remove_batch_effect, dsb
+from hto_dnd.hto_dnd.remove_technical_noise import remove_batch_effect, dsb
 
 @pytest.fixture
 def test_datasets():

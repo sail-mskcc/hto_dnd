@@ -4,7 +4,7 @@ import pandas as pd
 import anndata as ad
 import yaml
 from sklearn.datasets import make_blobs
-from hto_dnd.demux_dsb import cluster_and_evaluate, demux
+from hto_dnd.hto_dnd.demux import cluster_and_evaluate, demux
 
 def test_demux(mock_dsb_denoised_adata, tmp_path):
     """

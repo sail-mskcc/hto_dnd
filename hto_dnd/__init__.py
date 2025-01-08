@@ -1,5 +1,5 @@
-from .dsb_algorithm import dsb
-from .demux_dsb import demux
-from .dsb_and_demux import hto_dnd
+from .remove_technical_noise import dsb
+from .demux import demux
+from .dnd import dnd
 
-__all__ = ["dsb", "demux", "hto_dnd"]
+__all__ = ["dsb", "demux", "dnd"]

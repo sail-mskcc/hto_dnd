@@ -3,7 +3,7 @@ import numpy as np
 import anndata as ad
 import pytest
 
-from hto_dnd.hto_dnd.remove_technical_noise import dsb
+from hto_dnd import remove_technical_noise
 from hto_dnd.hto_dnd.demux import demux
 from hto_dnd._exceptions import AnnDataFormatError
 

@@ -1,29 +1,20 @@
-## In thif file, we implement DSB on raw data, where we have empty droplets. We the use the bimodal distribution of the HTOs to set a threshold for each HTO. This threshold is used to classify a cell into negative or non negative. If a cell is classified as non negative by more than one HTo, it's considered a doublet.
-
-import os
 import numpy as np
-import scipy
-from pprint import pformat
 from sklearn.linear_model import LinearRegression
 import anndata as ad
-import pandas as pd
 from pandas.api.types import is_integer_dtype
 
 from ._logging import get_logger
-from ._meta import init_meta, add_meta
-from ._exceptions import AnnDataFormatError
+from ._meta import add_meta
 from ._cluster_background import assert_background, estimate_background
 from ._defaults import DEFAULTS, DESCRIPTIONS
-from .pl.dsb_viz import create_visualization
 
 from line_profiler import profile
 
 def remove_batch_effect(
     x: np.ndarray,
-    covariates: np.ndarray = None,
-    design: np.ndarray = None,
-    add_key_denoise: str = None,
-    verbose: int = 1,
+    covariates: np.ndarray = DEFAULTS["covariates"],
+    design: np.ndarray = DEFAULTS["design"],
+    add_key_denoise: str = DEFAULTS["add_key_denoise"],
 ) -> np.ndarray:
     f"""Remove batch effects from a given matrix using linear regression.
 
@@ -38,7 +29,6 @@ def remove_batch_effect(
         design (ndarray, optional): Design matrix for the linear regression model. If not
             provided, uses a column vector of ones.
         add_key_denoise (str, optional): {DESCRIPTIONS["add_key_denoise"]}
-        verbose (int, optional): Verbosity level. Default is 1.
 
     Returns:
         ndarray: Matrix with batch effects removed.

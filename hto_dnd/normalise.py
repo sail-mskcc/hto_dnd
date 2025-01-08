@@ -6,9 +6,6 @@ from line_profiler import profile
 from ._logging import get_logger
 from ._meta import init_meta, add_meta
 from ._exceptions import AnnDataFormatError
-from ._cluster_background import assert_background, estimate_background
-from .pl.dsb_viz import create_visualization
-from .remove_technical_noise import remove_batch_effect
 from .tl.get_whitelist_background import is_integer_dtype
 from ._defaults import DEFAULTS, DESCRIPTIONS
 
@@ -21,9 +18,9 @@ def normalise(
     inplace: bool = DEFAULTS["inplace"],
     verbose: int = DEFAULTS["verbose"],
 ) -> ad.AnnData:
-    f"""Custom implementation of the DSB (Denoised and Scaled by Background) algorithm.
+    f"""Background aware HTO normalisation.
 
-    This function implements an adapted version of the DSB algorithm, which normalizes protein
+    This function implements an adapted version of the DSB algorithm (see citation), which normalizes protein
     expression data using empty droplets as background reference and optionally performs
     technical noise removal.
 

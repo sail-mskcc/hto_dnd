@@ -1,7 +1,7 @@
 """
 Can be used in this way:
 
-# Perform DSB normalization
+# Perform normalisation
 python cli.py dsb --adata-filtered-in path/to/filtered_data.h5ad --adata-raw-in path/to/raw_data.h5ad --adata-out path/to/output_data.h5ad --create-viz
 
 # Perform demultiplexing
@@ -14,11 +14,11 @@ hto-dnd --adata_filtered_dir path/to/filtered_data.h5ad --adata_raw_dir path/to/
 
 import argparse
 import anndata as ad
-from hto_dnd.hto_dnd.remove_technical_noise import dsb
+from hto_dnd import remove_technical_noise
 from hto_dnd.hto_dnd.demux import demux
 from hto_dnd.dnd import dnd
 
-def parse_dsb_arguments():
+def parse_normalisation_arguments():
     """Parse command line arguments for DSB analysis.
 
     This function sets up and parses command line arguments needed for DSB (Diagnostic

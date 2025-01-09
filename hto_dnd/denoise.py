@@ -11,8 +11,6 @@ from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._exceptions import AnnDataFormatError
 from ._utils import get_layer
 
-from line_profiler import profile
-
 def remove_batch_effect(
     x: np.ndarray,
     covariates: np.ndarray = DEFAULTS["covariates"],
@@ -55,7 +53,6 @@ def remove_batch_effect(
     return x_corrected, meta
 
 
-@profile
 def denoise(
     adata_hto: ad.AnnData,
     use_layer: str = DEFAULTS["use_layer"],

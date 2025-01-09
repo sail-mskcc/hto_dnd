@@ -1,7 +1,6 @@
 from pprint import pprint
 import numpy as np
 import pandas as pd
-from line_profiler import profile
 
 from hto_dnd.data import generate_mock_hto_data
 from hto_dnd import denoise
@@ -14,7 +13,6 @@ methods = {
     "kmeans-fast": _get_background_kmeans_fast,
 }
 
-@profile
 def main():
     # generate
     mock = generate_mock_hto_data(

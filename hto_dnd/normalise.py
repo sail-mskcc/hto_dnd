@@ -1,14 +1,12 @@
 from pprint import pformat
 import numpy as np
 import anndata as ad
-from line_profiler import profile
 from ._logging import get_logger
 from ._meta import init_meta, add_meta
 from ._exceptions import AnnDataFormatError
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._utils import get_layer
 
-@profile
 def normalise(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData,

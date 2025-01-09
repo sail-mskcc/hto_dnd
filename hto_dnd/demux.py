@@ -7,7 +7,6 @@ from pprint import pformat
 import scipy.sparse
 from skimage.filters import threshold_otsu
 import anndata as ad
-from line_profiler import profile
 
 from ._cluster_demux import cluster_and_evaluate, assert_demux
 from ._defaults import DEFAULTS, DESCRIPTIONS
@@ -15,7 +14,6 @@ from ._logging import get_logger
 from ._meta import add_meta
 from ._utils import get_layer
 
-@profile
 def demux(
     adata_hto: ad.AnnData,
     demux_method: str = DEFAULTS["demux_method"],

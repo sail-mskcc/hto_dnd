@@ -3,6 +3,7 @@ name = "hto-dnd"
 version = "0.1.4"
 description = "A method to demultiplex hashtagged single-cell data."
 dependencies = [
+    "click >= 8.0.0",
     "pandas >= 1.5.0",
     "numpy >= 1.21.0",
     "matplotlib >= 3.5.0",
@@ -30,7 +31,7 @@ classifiers = [
 packages = ["hto_dnd"]
 
 [project.scripts]
-dnd = "hto_dnd.cli:main"
+dnd = "hto_dnd.cli:cli"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 import scipy
 from pandas.api.types import is_float_dtype, is_integer_dtype
 from ._exceptions import AnnDataFormatError
@@ -50,6 +51,20 @@ def get_layer(
 
     return adata, x
 
+
+def subset_whitelist(adata, whitelist, _required_prop=0.9):
+    """Subset whitelist, even when not all barcodes are present in the data."""
+    # get whitelist
+    logger = get_logger("_utils", level=1)
+    whitelist = pd.Series(whitelist)
+    whitelist_select = whitelist[whitelist.isin(adata.obs.index)]
+    whitelist_pct = len(whitelist_select) / len(whitelist) * 100
+
+    # assert
+    assert whitelist_pct >= _required_prop, f"Whitelist coverage is too low: {whitelist_pct:.1f}%"
+    if whitelist_pct < 1:
+        logger.warning(f"Some whitelisted barcodes were not found: {whitelist_pct:.1f}%")
+    return adata[whitelist_select]
 
 def test_write(path, create_folder=True, _require_write=False):
     """Test if file can be written before running demultiplexing."""

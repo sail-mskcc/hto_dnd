@@ -13,13 +13,13 @@ DEFAULTS = {
 
     # normalise
     "pseudocount": 10,
-    "add_key_normalise": "normalised",
+    "add_key_normalise": None,
 
     # denoise
     "background_method": "kmeans-fast",
     "covariates": None,
     "design": None,
-    "add_key_denoise": "denoised",
+    "add_key_denoise": None,
 
     # demux
     "demux_method": "kmeans",
@@ -68,13 +68,13 @@ OPTIONS = {
 
     # normalise
     "pseudocount": click.option("--pseudocount", type=int, default=DEFAULTS["pseudocount"], help=DESCRIPTIONS["pseudocount"]),
-    "add_key_normalise": click.option("--add-key-normalise", type=str, default=DEFAULTS["add_key_normalise"], help=DESCRIPTIONS["add_key_normalise"]),
+    "add_key_normalise": click.option("--add-key-normalise", type=str, default="normalised", help=DESCRIPTIONS["add_key_normalise"]),  # (!) <-- changed from DEFAULTS
 
     # denoise
     "background_method": click.option("--background-method", type=str, default=DEFAULTS["background_method"], help=DESCRIPTIONS["background_method"]),
-    "add_key_denoise": click.option("--add-key-denoise", type=str, default=DEFAULTS["add_key_denoise"], help=DESCRIPTIONS["add_key_denoise"]),
     "covariates": click.option("--covariates", type=click.Path(exists=True), help="NOT YET SUPPORT IN CLI"),
     "design": click.option("--design", type=click.Path(exists=True), help="NOT YET SUPPORT IN CLI"),
+    "add_key_denoise": click.option("--add-key-denoise", type=str, default="denoised", help=DESCRIPTIONS["add_key_denoise"]),  # (!) <-- changed from DEFAULTS
 
     # demux
     "demux_method": click.option("--demux-method", type=str, default=DEFAULTS["demux_method"], help=DESCRIPTIONS["demux_method"]),

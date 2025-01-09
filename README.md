@@ -1,4 +1,4 @@
-## `HTO DND - Demultiplex Hashtag Data`
+# HTO DND - Demultiplex Hashtag Data
 
 [![PyPI version](https://badge.fury.io/py/hto-dnd.svg)](https://badge.fury.io/py/hto-dnd)
 [![Build Status](https://github.com/sail-mskcc/hto_dnd/actions/workflows/python-package.yml/badge.svg)](https://github.com/sail-mskcc/hto_dnd/actions/workflows/python-package.yml)
@@ -12,7 +12,7 @@ It normalises based on observed background signal and denoises the data to remov
 
 The package supports command-line interface (CLI) usage and Python imports.
 
-![HTO DND](media/pipeline_v0.png)
+![HTO DND](./media/pipeline_v0.png)
 
 ## Installation
 
@@ -42,6 +42,11 @@ The python API is built around AnnData. it is highly recommended two work with t
 
 ```python
 import hto_dnd as hto
+
+# get mockdata
+mockdata = hto.data.generate_hto(n_cells=1000, n_hto=3)
+adata_hto = mockdata["filtered"]
+adata_hto_raw = mockdata["raw"]
 
 # denoise, normalize, and demultiplex
 adata_demux = hto.dnd(

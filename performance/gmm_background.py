@@ -2,8 +2,6 @@ from pprint import pprint
 import numpy as np
 import pandas as pd
 
-from hto_dnd.data import generate_mock_hto_data
-from hto_dnd import denoise
 from hto_dnd.hto_dnd._cluster_background import _get_background_gmm, _get_background_kmeans, _get_background_kmeans_fast
 
 
@@ -15,7 +13,7 @@ methods = {
 
 def main():
     # generate
-    mock = generate_mock_hto_data(
+    mock = generate_hto(
         n_cells=1000,
         n_htos=8,
     )

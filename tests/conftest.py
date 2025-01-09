@@ -1,7 +1,7 @@
 import os
 import shutil
 import pytest
-from hto_dnd.data import generate_mock_hto_data
+from hto_dnd.data import generate_hto
 
 @pytest.fixture(scope='module')
 def mock_hto_data(request):
@@ -13,7 +13,7 @@ def mock_hto_data(request):
     noise_level = request.param.get("noise_level", 0.5)
 
     # Generate data
-    mock = generate_mock_hto_data(n_cells=n_cells, n_htos=n_htos, noise_level=noise_level)
+    mock = generate_hto(n_cells=n_cells, n_htos=n_htos, noise_level=noise_level)
 
     # Save data
     path = "temp"

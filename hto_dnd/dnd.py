@@ -49,12 +49,12 @@ def dnd(
         if adata_hto.endswith(".h5ad"):
             logger.info(f"Reading adata from {adata_hto}")
             adata_hto = ad.read_h5ad(adata_hto)
-        elif adata_hto.endswith(".csv"):
+        elif adata_hto.endswith(".csv") or adata_hto.endswith(".csv.gz"):
             logger.info(f"Reading whitelist from {adata_hto}")
             whitelist = pd.read_csv(adata_hto, header=None, index_col=0).index.tolist()
             adata_hto = adata_hto_raw[whitelist]
         else:
-            raise ValueError(f"Unknown file format for adata_hto: {adata_hto}")
+            raise ValueError(f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)")
 
     # ASSERTIONS
     # - check that output path is writeable (and .h5ad)

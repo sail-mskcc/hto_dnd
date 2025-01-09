@@ -1,108 +1,104 @@
-# hto_dnd
+## `HTO DND - Demultiplex Hashtag Data`
 
-`hto_dnd` is a Python package designed for demultiplexing single-cell data after normalizing it using an adapted DSB (Denoised and Scaled by Background) algorithm. It simplifies workflows for processing single-cell data, incorporating robust denoising and demultiplexing techniques. The package supports command-line interface (CLI) usage and Python imports for programmatic access.
+[![PyPI version](https://badge.fury.io/py/hto-dnd.svg)](https://badge.fury.io/py/hto-dnd)
+[![Build Status](https://github.com/sail-mskcc/hto_dnd/actions/workflows/python-package.yml/badge.svg)](https://github.com/sail-mskcc/hto_dnd/actions/workflows/python-package.yml)
 
----
+`hto_dnd` is a Python package designed for efficient and accurate demultiplexing of hash-tagged oligonucleotides (HTOs) in single-cell data.
+It normalises based on observed background signal and denoises the data to remove batch effects and noise:
 
-## Features
-
-- **DSB Normalization**: Normalize ADT data using a refined DSB algorithm that removes batch effects and scales data for noise reduction.
+- **Normalization**: Normalize HTO data using background signal, inspired by the DSB method (see citation below).
+- **Denoising**: Remove batch effects and noise from the data by regressing out cell by cell variation.
 - **Demultiplexing**: Cluster and classify cells into singlets, doublets, or negatives using clustering methods like k-means or Gaussian Mixture Models (GMM).
-- **Integrated Workflow**: Perform DSB normalization and demultiplexing seamlessly in a single step.
-- **Visualization**: Generate distribution plots for raw and normalized data.
 
----
+The package supports command-line interface (CLI) usage and Python imports.
+
+![HTO DND](media/pipeline_v0.png)
 
 ## Installation
 
-Install `hto_dnd` using pip:
+Using `pip`:
 
 ```bash
 pip install hto-dnd
 ```
 
+From source:
+
+```bash
+git clone https://github.com/sail-mskcc/hto_dnd.git
+cd hto_dnd
+pip install .
+```
+
 ## Usage
-### Command-Line Interface (CLI)
-The package provides a CLI with three primary commands:
-
-1. DSB Normalization:
-
-```bash
-python cli.py dsb --adata-filtered-in path/to/filtered_data.h5ad \
-                  --adata-raw-in path/to/raw_data.h5ad \
-                  --adata-out path/to/output_data.h5ad \
-                  --create-viz
-```
-  - `--adata-filtered-in`: Path to filtered input AnnData file.
-  - `--adata-raw-in`: Path to raw input AnnData file.
-  - `--adata-out`: Path to output AnnData file.
-  - `--create-viz`: Optional flag to generate visualization plots.
-
-2. Demultiplexing:
-
-```bash
-python cli.py demux --dsb-denoised-adata-dir path/to/dsb_normalized_data.h5ad \
-                    --method kmeans \
-                    --output-path path/to/demultiplexed_data.h5ad
-```
-  - `--dsb-denoised-adata-dir`: Path to DSB normalized AnnData file.
-  - `--method`: Clustering method (kmeans, gmm, or otsu, default is kmeans).
-  - `--output-path`: Path to save the demultiplexed output.
-
-3. DSB and Demultiplexing:
-
-```bash
-python cli.py dnd --adata_filtered_dir path/to/filtered_data.h5ad \
-                            --adata_raw_dir path/to/raw_data.h5ad \
-                            --output-path path/to/output_data.h5ad
-```
-Combines DSB normalization and demultiplexing into one step.
 
 ### Python API
-Import the package in your Python scripts for programmatic access:
 
-DSB Normalization:
+The python API is built around AnnData. it is highly recommended two work with three AnnData objects:
+
+* `adata_hto`: Filtered AnnData object with HTO data, containing only actual cells.
+* `adata_hto_raw`: Raw AnnData object with HTO data, containing actual cells and background signal.
+* `adata_gex`: Raw AnnData object with gene expression data. This is optional and can be used to construct a more informative background signal.
 
 ```python
-from hto_dnd import dsb
-import anndata as ad
+import hto_dnd as hto
 
-adata_filtered = ad.read("path/to/filtered_data.h5ad")
-adata_raw = ad.read("path/to/raw_data.h5ad")
-
-adata_denoised = dsb(adata_filtered, adata_raw, path_adata_out="path/to/output_data.h5ad", create_viz=True)
+# denoise, normalize, and demultiplex
+adata_demux = hto.dnd(
+  adata_hto,
+  adata_hto_background,
+  adata_gex=adata_gex,  # <-- optional, but recommended
+  min_umi=300,  # <-- keep HTO cells with at least 300 UMIs in GEX data
+)
 ```
 
-Demultiplexing:
+This function can also be run step by step, even `inplace`
 
 ```python
-from hto_dnd import demux
-import anndata as ad
+import hto_dnd as hto
 
-dsb_normalized_adata = ad.read("path/to/dsb_normalized_data.h5ad")
-demultiplexed_adata = demux(dsb_normalized_adata, method="gmm", layer="dsb_normalized", save_stats=True)
+# build background
+adata_hto_background = hto.tl.build_background(adata_hto_raw, adata_gex, min_umi=300)
+
+# normalise
+hto.normalise(adata_hto, adata_hto_background, inplace=True)
+
+# denoise
+hto.denoise(adata_hto, adata_gex, inplace=True)
+
+# demultiplex
+hto.demux(adata_hto, inplace=True)
 ```
 
-DSB and Demultiplexing:
 
-```python
-from hto_dnd import dnd
-import anndata as ad
+### Command-Line Interface (CLI)
 
-adata_filtered = ad.read("path/to/filtered_data.h5ad")
-adata_raw = ad.read("path/to/raw_data.h5ad")
+The CLI provides an API for the `dnd` scripts. Make sure to define `--path-out` to save the output.
 
-demuxed_adata = dnd(adata_filtered, adata_raw, path_adata_out="path/to/output_data.h5ad")
+```
+dnd \
+  --adata-hto /path/to/adata_hto.h5ad \
+  --adata-hto-raw /path/to/adata_hto_raw.h5ad \
+  --adata-gex /path/to/adata_gex.h5ad \
+  --path-out /path/to/output.h5ad \
+  --min-umi 300
 ```
 
 ### Visualization
+
+*In development*
+
 Use the `--create-viz` flag or call the `create_visualization` function in Python to generate plots comparing raw and normalized distributions.
 
 Example visualization command:
 
 ```bash
-python cli.py dsb --adata-filtered-in path/to/filtered_data.h5ad \
+dnd --adata-filtered-in path/to/filtered_data.h5ad \
                   --adata-raw-in path/to/raw_data.h5ad \
                   --adata-out path/to/output_data.h5ad \
                   --create-viz
 ```
+
+## Citation
+
+1. Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022). https://doi.org/10.1038/s41467-022-29356-8

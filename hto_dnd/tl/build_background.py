@@ -2,13 +2,15 @@ import numpy as np
 from pandas.api.types import is_integer_dtype
 from scipy.sparse import issparse
 from .._logging import get_logger
+from .._utils import get_layer
 
-def get_whitelist_background(
+def build_background(
     adata_hto,
     adata_gex,
-    layer=None,
+    use_layer=None,
     min_umi=300,
     verbose=1,
+    _run_assert=True,  # <- used for testing
 ):
     """Get a whitelist based on GEX counts.
 
@@ -19,14 +21,13 @@ def get_whitelist_background(
         verbose (int, optional): Verbosity level. Defaults to 1.
     """
     # assertions - gex inputs must be integers
-    if layer is None:
-        x = adata_gex.X
-    else:
-        x = adata_gex.layers[layer]
-    if issparse(x):
-        x = x.data
-    x = x[:1000]
-    assert is_integer_dtype(adata_gex.X) or np.array_equal(x, x.astype(int)), "GEX counts must be integers."
+    adata_gex, x = get_layer(
+        adata_gex,
+        use_layer=use_layer,
+        numpy=False,
+        inplace=False,
+        integer=True,
+    )
     logger = get_logger("utils", level=verbose)
 
     # get whitelist
@@ -48,4 +49,8 @@ def get_whitelist_background(
     )
     logger.info(msg)
 
-    return list(ids_background)
+    assert n != 0, f"No barcodes found in HTO data."
+    if _run_assert:
+        assert n > 100, f"No/only {n} barcodes found in HTO data."
+
+    return adata_hto[list(ids_background)]

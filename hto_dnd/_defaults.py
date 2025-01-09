@@ -5,6 +5,7 @@ DEFAULTS = {
     # general
     "adata_hto": None,
     "adata_hto_raw": None,
+    "adata_gex": None,
     "path_out": None,
     "use_layer": None,
     "inplace": False,
@@ -26,6 +27,9 @@ DEFAULTS = {
     "add_key_hashid": "hash_id",
     "add_key_doublet": "doublet_info",
     "add_key_labels": "demux_labels",
+
+    # build_background
+    "min_umi": 300,
 }
 
 # shared descriptions
@@ -33,6 +37,7 @@ DESCRIPTIONS = {
     # general
     "adata_hto": f"AnnData object containing unfiltered protein expression data.",
     "adata_hto_raw": f"AnnData object containing raw protein expression data.",
+    "adata_gex": f"AnnData object containing raw gene expression data.",
     "path_out": f"Path to save the output AnnData object. Default is {DEFAULTS['path_out']}.",
     "verbose": f"Verbosity level. Default is {DEFAULTS['verbose']}.",
     "inplace": f"Whether to perform the operation in place. Default is {DEFAULTS['inplace']}.",
@@ -54,6 +59,9 @@ DESCRIPTIONS = {
     "add_key_hashid": f"Column to store the demultiplexed cell type in the AnnData object. Default is {DEFAULTS['add_key_hashid']}.",
     "add_key_doublet": f"Column to store the doublet information in the AnnData object. Default is {DEFAULTS['add_key_doublet']}.",
     "add_key_labels": f"Adata layer to store the demultiplexed labels in the AnnData object. Default is {DEFAULTS['add_key_labels']}.",
+
+    # build_background
+    "min_umi": f"Minimum UMI count to consider a barcode. Default is {DEFAULTS['min_umi']}.",
 }
 
 # shared click cli options
@@ -61,6 +69,7 @@ OPTIONS = {
     # general
     "adata_hto": click.option("--adata-hto", "-f", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto"], required=True),
     "adata_hto_raw": click.option("--adata-hto-raw", "-r", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto_raw"], required=True),
+    "adata_gex": click.option("--adata-gex", "-g", type=click.Path(exists=True), help=DESCRIPTIONS["adata_gex"], required=False),
     "path_out": click.option("--path-out", "-o", type=click.Path(), help=DESCRIPTIONS["path_out"], default=DEFAULTS["path_out"], required=True),
     "verbose": click.option("-v", "--verbose", type=int, default=DEFAULTS["verbose"], help=DESCRIPTIONS["verbose"]),
     "inplace": click.option("--inplace", is_flag=True, default=DEFAULTS["inplace"], help=DESCRIPTIONS["inplace"]),
@@ -81,4 +90,7 @@ OPTIONS = {
     "add_key_hashid": click.option("--add-key", type=str, default=DEFAULTS["add_key_hashid"], help=DESCRIPTIONS["add_key_hashid"]),
     "add_key_doublet": click.option("--add-key-doublet", type=str, default=DEFAULTS["add_key_doublet"], help=DESCRIPTIONS["add_key_doublet"]),
     "add_key_labels": click.option("--add-key-labels", type=str, default=DEFAULTS["add_key_labels"], help=DESCRIPTIONS["add_key_labels"]),
+
+    # build_background
+    "min_umi": click.option("--min-umi", type=int, default=DEFAULTS["min_umi"], help=DESCRIPTIONS["min_umi"]),
 }

@@ -45,7 +45,7 @@ def get_layer(
         if (not is_float_dtype(x)) or np.any(x[:100] == np.round(x[:100])):
             raise AnnDataFormatError("adata_not_float", x)
     if integer:
-        if not is_integer_dtype(x):
+        if not is_integer_dtype(x) and np.array_equal(x, x.astype(int)):
             raise AnnDataFormatError("adata_not_int", x)
 
     return adata, x

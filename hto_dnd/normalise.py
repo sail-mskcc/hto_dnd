@@ -8,6 +8,7 @@ from ._meta import init_meta, add_meta
 from ._exceptions import AnnDataFormatError
 from .tl.get_whitelist_background import is_integer_dtype
 from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._utils import get_layer
 
 @profile
 def normalise(
@@ -15,6 +16,7 @@ def normalise(
     adata_hto_raw: ad.AnnData,
     pseudocount: int = DEFAULTS["pseudocount"],
     add_key_normalise: str = DEFAULTS["add_key_normalise"],
+    use_layer: str = DEFAULTS["use_layer"],
     inplace: bool = DEFAULTS["inplace"],
     verbose: int = DEFAULTS["verbose"],
 ) -> ad.AnnData:
@@ -30,6 +32,7 @@ def normalise(
         pseudocount (int, optional): {DESCRIPTIONS["pseudocount"]}
         background_method (str, optional): {DESCRIPTIONS["background_method"]}
         add_key_normalise (str, optional): {DESCRIPTIONS["add_key_normalise"]}
+        use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
         inplace (bool, optional): {DESCRIPTIONS["inplace"]}
         verbose (int, optional): {DESCRIPTIONS["verbose"]}
 
@@ -45,12 +48,22 @@ def normalise(
     logger.log_parameters(locals())
     logger.info("Starting normalization...")
 
-    # assertions
-    assert is_integer_dtype(adata_hto.X), "Filtered counts must be integers."
-
     # Setup
-    if not inplace:
-        adata_hto = adata_hto.copy()
+    adata_hto, adt = get_layer(
+        adata_hto,
+        use_layer=use_layer,
+        integer=True,
+        numpy=True,
+        inplace=inplace
+    )
+
+    adata_hto_raw, adtu = get_layer(
+        adata_hto_raw,
+        use_layer=use_layer,
+        integer=True,
+        numpy=True,
+        inplace=inplace
+    )
 
     # Init metadata
     adata_hto = init_meta(adata_hto)
@@ -67,16 +80,6 @@ def normalise(
     if len(overlap_barcode) < 5:
         raise AnnDataFormatError("adata_no_overlapping_names", len(filtered_barcodes))
     logger.info(f"Detected '{len(empty_barcodes)}' empty droplets")
-
-    # Get cell_protein_matrix
-    adt = adata_hto.X  # .T
-    if scipy.sparse.issparse(adt):
-        adt = adt.toarray()
-
-    # Get the empty droplets from adata_raw
-    adtu = adata_hto_raw[empty_barcodes, :].X  # .T
-    if scipy.sparse.issparse(adtu):
-        adtu = adtu.toarray()
 
     # Log transform both matrices
     adt_log = np.log(adt + pseudocount)

@@ -5,19 +5,21 @@ DEFAULTS = {
     # general
     "adata_hto": None,
     "adata_hto_raw": None,
+    "path_out": None,
     "use_layer": None,
     "inplace": False,
     "verbose": 1,
+    "_required_write": False,
 
     # normalise
     "pseudocount": 10,
-    "add_key_normalise": None,
+    "add_key_normalise": "normalised",
 
     # denoise
     "background_method": "kmeans-fast",
     "covariates": None,
     "design": None,
-    "add_key_denoise": None,
+    "add_key_denoise": "denoised",
 
     # demux
     "demux_method": "kmeans",
@@ -29,11 +31,13 @@ DEFAULTS = {
 # shared descriptions
 DESCRIPTIONS = {
     # general
+    "adata_hto": f"AnnData object containing unfiltered protein expression data.",
+    "adata_hto_raw": f"AnnData object containing raw protein expression data.",
+    "path_out": f"Path to save the output AnnData object. Default is {DEFAULTS['path_out']}.",
     "verbose": f"Verbosity level. Default is {DEFAULTS['verbose']}.",
     "inplace": f"Whether to perform the operation in place. Default is {DEFAULTS['inplace']}.",
     "use_layer": f"Layer to use for denoising. Default is {DEFAULTS['use_layer']}.",
-    "adata_hto": f"AnnData object containing unfiltered protein expression data.",
-    "adata_hto_raw": f"AnnData object containing raw protein expression data.",
+    "_required_write": f"Internal parameter. Writing adata is required when run through CLI. Default is {DEFAULTS['_required_write']}.",
 
     # normalise
     "pseudocount": f"Value to add to the counts matrix before log-transformation. Default is {DEFAULTS['pseudocount']}.",
@@ -47,7 +51,7 @@ DESCRIPTIONS = {
 
     # demux
     "demux_method": f"Method to use for demultiplexing. Must be either 'kmeans', 'gmm' or 'otsu'. Default is {DEFAULTS['demux_method']}.",
-    "add_key_hashid": f"Column to store the demultiplexed cell type in the AnnData object. Default is {DEFAULTS['add_key']}.",
+    "add_key_hashid": f"Column to store the demultiplexed cell type in the AnnData object. Default is {DEFAULTS['add_key_hashid']}.",
     "add_key_doublet": f"Column to store the doublet information in the AnnData object. Default is {DEFAULTS['add_key_doublet']}.",
     "add_key_labels": f"Adata layer to store the demultiplexed labels in the AnnData object. Default is {DEFAULTS['add_key_labels']}.",
 }
@@ -55,11 +59,12 @@ DESCRIPTIONS = {
 # shared click cli options
 OPTIONS = {
     # general
+    "adata_hto": click.option("--adata-hto", "-f", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto"], required=True),
+    "adata_hto_raw": click.option("--adata-hto-raw", "-r", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto_raw"], required=True),
+    "path_out": click.option("--path-out", "-o", type=click.Path(), help=DESCRIPTIONS["path_out"], default=DEFAULTS["path_out"], required=True),
     "verbose": click.option("-v", "--verbose", type=int, default=DEFAULTS["verbose"], help=DESCRIPTIONS["verbose"]),
     "inplace": click.option("--inplace", is_flag=True, default=DEFAULTS["inplace"], help=DESCRIPTIONS["inplace"]),
     "use_layer": click.option("--use-layer", type=str, default=DEFAULTS["use_layer"], help=DESCRIPTIONS["use_layer"]),
-    "adata_hto": click.option("--adata-hto", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto"]),
-    "adata_hto_raw": click.option("--adata-hto-raw", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto_raw"]),
 
     # normalise
     "pseudocount": click.option("--pseudocount", type=int, default=DEFAULTS["pseudocount"], help=DESCRIPTIONS["pseudocount"]),
@@ -68,12 +73,12 @@ OPTIONS = {
     # denoise
     "background_method": click.option("--background-method", type=str, default=DEFAULTS["background_method"], help=DESCRIPTIONS["background_method"]),
     "add_key_denoise": click.option("--add-key-denoise", type=str, default=DEFAULTS["add_key_denoise"], help=DESCRIPTIONS["add_key_denoise"]),
-    "covariates": click.option("--covariates", type=click.Path(exists=True), help=DESCRIPTIONS["covariates"]),
-    "design": click.option("--design", type=click.Path(exists=True), help=DESCRIPTIONS["design"]),
+    "covariates": click.option("--covariates", type=click.Path(exists=True), help="NOT YET SUPPORT IN CLI"),
+    "design": click.option("--design", type=click.Path(exists=True), help="NOT YET SUPPORT IN CLI"),
 
     # demux
     "demux_method": click.option("--demux-method", type=str, default=DEFAULTS["demux_method"], help=DESCRIPTIONS["demux_method"]),
-    "add_key_hashid": click.option("--add-key", type=str, default=DEFAULTS["add_key"], help=DESCRIPTIONS["add_key"]),
+    "add_key_hashid": click.option("--add-key", type=str, default=DEFAULTS["add_key_hashid"], help=DESCRIPTIONS["add_key_hashid"]),
     "add_key_doublet": click.option("--add-key-doublet", type=str, default=DEFAULTS["add_key_doublet"], help=DESCRIPTIONS["add_key_doublet"]),
     "add_key_labels": click.option("--add-key-labels", type=str, default=DEFAULTS["add_key_labels"], help=DESCRIPTIONS["add_key_labels"]),
 }

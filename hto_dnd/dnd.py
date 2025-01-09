@@ -55,6 +55,8 @@ def dnd(
     assert_background(background_method)
     assert_demux(demux_method)
     if _as_cli:
+        assert path_out is not None, "Output path must be provided using parameter --output-path"
+        assert path_out.endswith(".h5ad"), "Output path must end with .h5ad"
         assert add_key_normalise not in adata_hto.layers, f"Key {add_key_normalise} already exists in adata. Add option --add-key-normalise to change the key."
         assert add_key_denoise not in adata_hto.layers, f"Key {add_key_denoise} already exists in adata. Add option --add-key-denoise to change the key."
 

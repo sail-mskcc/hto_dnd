@@ -1,24 +1,23 @@
 import numpy as np
-from pandas.api.types import is_integer_dtype
-from scipy.sparse import issparse
 from .._logging import get_logger
 from .._utils import get_layer
+from .._defaults import DEFAULTS, DESCRIPTIONS
 
 def build_background(
     adata_hto,
     adata_gex,
-    use_layer=None,
-    min_umi=300,
-    verbose=1,
+    use_layer: str = DEFAULTS["use_layer"],
+    min_umi: int = DEFAULTS["min_umi"],
+    verbose: int = DEFAULTS["verbose"],
     _run_assert=True,  # <- used for testing
 ):
-    """Get a whitelist based on GEX counts.
+    f"""Get a whitelist based on GEX counts.
 
     Args:
-        adata_hto (AnnData): Raw data with HTO counts.
-        adata_gex (AnnData): GEX data, unfiltered.
-        min_umi (int, optional): Minimum UMI count to consider a barcode. Defaults to 300.
-        verbose (int, optional): Verbosity level. Defaults to 1.
+        adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
+        adata_gex (AnnData): {DESCRIPTIONS["adata_gex"]}
+        min_umi (int, optional): {DESCRIPTIONS["min_umi"]}
+        verbose (int, optional): {DESCRIPTIONS["verbose"]}
     """
     # assertions - gex inputs must be integers
     adata_gex, x = get_layer(

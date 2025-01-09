@@ -1,9 +1,10 @@
 import anndata as ad
 
+from . import tl
 from .normalise import normalise
 from .denoise import denoise
 from .demux import demux
-from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._defaults import DEFAULTS
 from ._utils import write_h5ad_safe, test_write
 from ._cluster_background import assert_background
 from ._cluster_demux import assert_demux
@@ -12,6 +13,7 @@ from ._logging import get_logger
 def dnd(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData,
+    adata_gex: ad.AnnData = None,
     path_out: str = None,
     _as_cli: bool = False,  # required when run as cli
     **kwargs
@@ -55,6 +57,18 @@ def dnd(
     if _as_cli:
         assert add_key_normalise not in adata_hto.layers, f"Key {add_key_normalise} already exists in adata. Add option --add-key-normalise to change the key."
         assert add_key_denoise not in adata_hto.layers, f"Key {add_key_denoise} already exists in adata. Add option --add-key-denoise to change the key."
+
+    # BUILD BACKGROUND HTO SET
+    if adata_gex is not None:
+        if isinstance(adata_gex, str):
+            logger.info(f"Reading adata from {adata_gex}")
+            adata_gex = ad.read_h5ad(adata_gex)
+        adata_hto_raw = tl.build_background(
+            adata_hto_raw,
+            adata_gex,
+            verbose=verbose,
+            min_umi=kwargs.get("min_umi", DEFAULTS["min_umi"]),
+        )
 
     # RUN
     adata_hto = normalise(

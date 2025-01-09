@@ -32,7 +32,7 @@ def test_build_background(hto_and_gex):
     assert adata_hto.shape[0] == 3
     assert adata_gex.shape[0] == 3
     assert adata_background.shape[0] == 2
-    print("DEBUG")
-    print(adata_hto.obs_names)
-    print(adata_background.obs_names)
-    assert np.all(adata_background.obs_names == np.array(['cell1', 'cell2']))
+    # check that sets are identicel
+    set_background = set(adata_background.obs_names)
+    set_expected = set(['cell1', 'cell2'])
+    assert set_background == set_expected

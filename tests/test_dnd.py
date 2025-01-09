@@ -3,12 +3,11 @@ import numpy as np
 import anndata as ad
 import pytest
 
-from hto_dnd import remove_technical_noise
-from hto_dnd.hto_dnd.demux import demux
+from hto_dnd import dnd
 from hto_dnd._exceptions import AnnDataFormatError
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
-def test_components(mock_hto_data):
+def test_dnd(mock_hto_data):
     """
     Test the full pipeline: data generation -> DSB -> demultiplexing.
     """
@@ -16,36 +15,20 @@ def test_components(mock_hto_data):
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
     adata_raw = mock_hto_data['raw']
-    path_denoised = mock_hto_data['path_denoised']
 
     # Step 1: Run DSB
-    adata = dsb(
-        adata_filtered=adata_filtered,
-        adata_raw=adata_raw,
-        path_adata_out=path_denoised,
+    adata_result = dnd(
+        adata_hto=adata_filtered,
+        adata_hto_raw=adata_raw,
         background_method="kmeans-fast",
         add_key_normalise="normalised",
         add_key_denoise="denoised",
-        create_viz=True,
         verbose=2,
     )
 
     # Verify DSB output
-    path_adata = adata.uns["dnd"]["paths"]["adata_denoised"]
-    adata_dnd = ad.read_h5ad(path_adata)
-    assert "normalised" in adata_dnd.layers, "Normalised layer not found in output"
-    assert "denoised" in adata_dnd.layers, "Denoised layer not found in output"
-
-    # Check if visualization file was created
-    path_viz = adata.uns["dnd"]["paths"]["viz"]
-    assert os.path.exists(path_viz), f"Visualization file not created at {path_viz}"
-
-    # Step 2: Run demultiplexing
-    adata_result = demux(
-        adata_dnd,
-        method="kmeans",
-        layer="denoised"
-    )
+    assert "normalised" in adata_result.layers, "Normalised layer not found in output"
+    assert "denoised" in adata_result.layers, "Denoised layer not found in output"
 
     # Verify demultiplexing output
     assert isinstance(adata_result, ad.AnnData), "Demultiplexing result is not an AnnData object"
@@ -79,14 +62,14 @@ def test_no_background(mock_hto_data):
 
     # Test with no background
     with pytest.raises(AnnDataFormatError):
-        adata = dsb(
-            adata_filtered=adata_filtered,
-            adata_raw=adata_filtered.copy(),
+        adata = dnd(
+            adata_hto=adata_filtered,
+            adata_hto_raw=adata_filtered.copy(),
         )
 
     # Test with too few cells
     with pytest.raises(AnnDataFormatError):
-        adata = dsb(
-            adata_filtered=adata_filtered[:2],
-            adata_raw=adata_raw,
+        adata = dnd(
+            adata_hto=adata_filtered[:2],
+            adata_hto_raw=adata_raw,
         )

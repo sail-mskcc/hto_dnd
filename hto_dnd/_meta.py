@@ -12,9 +12,11 @@ def init_meta(adata):
             "params": {"param1": value1, "param2": value2, ...},
         },
     """
+    initial_meta = {step: {} for step in SUPPORTED_STEPS}
+    existing_meta = adata.uns.get("dnd", {})
     adata.uns["dnd"] = {
-        **{step: {} for step in SUPPORTED_STEPS},
-        **adata.uns.get("dnd", {}),
+        **initial_meta,
+        **existing_meta,
     }
     return adata
 

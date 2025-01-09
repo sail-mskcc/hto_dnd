@@ -16,41 +16,61 @@ def test_dnd(mock_hto_data):
     adata_filtered = mock_hto_data['filtered']
     adata_raw = mock_hto_data['raw']
 
-    # Step 1: Run DSB
+    # Not in place
     adata_result = dnd(
         adata_hto=adata_filtered,
         adata_hto_raw=adata_raw,
         background_method="kmeans-fast",
         add_key_normalise="normalised",
         add_key_denoise="denoised",
-        verbose=2,
+        pseudocount=20,
+        inplace=False,
     )
 
-    # Verify DSB output
-    assert "normalised" in adata_result.layers, "Normalised layer not found in output"
-    assert "denoised" in adata_result.layers, "Denoised layer not found in output"
+    # In place
+    adata_filtered_copy = adata_filtered.copy()
+    dnd(
+        adata_hto=adata_filtered_copy,
+        adata_hto_raw=adata_raw,
+        background_method="kmeans-fast",
+        add_key_normalise="normalised",
+        add_key_denoise="denoised",
+        pseudocount=20,
+        inplace=True,
+    )
 
-    # Verify demultiplexing output
-    assert isinstance(adata_result, ad.AnnData), "Demultiplexing result is not an AnnData object"
-    assert 'hash_id' in adata_result.obs.columns, "'hash_id' column not found in demultiplexing result"
-    assert 'doublet_info' in adata_result.obs.columns, "'doublet_info' column not found in demultiplexing result"
-    assert 'metrics' in adata_result.uns["dnd"]["demux"], "Metrics not found in demultiplexing result"
+    # assert both
+    def assert_results(adata):
+        # Verify DSB output
+        assert "normalised" in adata.layers, "Normalised layer not found in output"
+        assert "denoised" in adata.layers, "Denoised layer not found in output"
 
-    # Check classifications
-    hash_ids = adata_result.var_names
-    classifications = adata_result.obs['hash_id'].value_counts()
-    assert len(classifications) > 1, "No classifications found"
-    assert all(classifications.index.isin(['Negative', 'Doublet'] + list(hash_ids))), "Invalid classifications found"
+        # Verify demultiplexing output
+        assert isinstance(adata, ad.AnnData), "Demultiplexing result is not an AnnData object"
+        assert 'hash_id' in adata.obs.columns, "'hash_id' column not found in demultiplexing result"
+        assert 'doublet_info' in adata.obs.columns, "'doublet_info' column not found in demultiplexing result"
+        assert 'metrics' in adata.uns["dnd"]["demux"], "Metrics not found in demultiplexing result"
+        assert 'pseudocount' in adata.uns["dnd"]["normalise"]["params"], "Pseudo count not found in normalisation result"
+        assert adata.uns["dnd"]["normalise"]["params"]["pseudocount"] == 20, "Pseudo count is not 20"
 
-    # Check if metrics exist for each HTO
-    metrics = adata_result.uns["dnd"]["demux"]["metrics"]
-    assert all(i in metrics for i in hash_ids), "Metrics missing for some HTOs"
+        # Check classifications
+        hash_ids = adata.var_names
+        classifications = adata.obs['hash_id'].value_counts()
+        assert len(classifications) > 1, "No classifications found"
+        assert all(classifications.index.isin(['Negative', 'Doublet'] + list(hash_ids))), "Invalid classifications found"
 
-    # Check overall accuracy
-    true_labels = adata_filtered.obs['hto_classification']
-    predicted_labels = adata_result.obs['hash_id']
-    overall_accuracy = np.mean(predicted_labels == true_labels)
-    assert overall_accuracy > 0.8, f"Overall accuracy is only {overall_accuracy:.2f}"
+        # Check if metrics exist for each HTO
+        metrics = adata.uns["dnd"]["demux"]["metrics"]
+        assert all(i in metrics for i in hash_ids), "Metrics missing for some HTOs"
+
+        # Check overall accuracy
+        true_labels = adata.obs['hto_classification']
+        predicted_labels = adata.obs['hash_id']
+        overall_accuracy = np.mean(predicted_labels == true_labels)
+        assert overall_accuracy > 0.8, f"Overall accuracy is only {overall_accuracy:.2f}"
+
+    assert_results(adata_result)
+    assert_results(adata_filtered_copy)
 
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)

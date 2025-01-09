@@ -69,9 +69,7 @@ def test_write(path, create_folder=True, _require_write=False):
     if _require_write:
         with open(path, "w") as f:
             f.write("test")
-
-    # remove
-    os.remove(path)
+        os.remove(path)
 
 
 def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):

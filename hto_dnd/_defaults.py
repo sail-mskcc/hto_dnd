@@ -26,7 +26,7 @@ DEFAULTS = {
     "demux_method": "kmeans",
     "add_key_hashid": "hash_id",
     "add_key_doublet": "doublet_info",
-    "add_key_labels": "demux_labels",
+    "add_key_labels": None,
 
     # build_background
     "min_umi": 300,

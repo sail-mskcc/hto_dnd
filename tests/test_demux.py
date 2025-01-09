@@ -33,7 +33,11 @@ def adata_hto():
     var_names = [f"hto_{i}" for i in range(x.shape[1])]
     obs_names = [f"cell_{i}" for i in range(x.shape[0])]
     true_labels = ["hto_0", "hto_1", "hto_2", "Doublet", "Doublet", "Negative", "Negative"]
-    adata = ad.AnnData(X=x, obs=pd.DataFrame({"true_labels": true_labels}, index=obs_names), var=pd.DataFrame(index=var_names))
+    true_doublet_info = ["", "", "", "hto_0,hto_1", "hto_1,hto_2", "", ""]
+    adata = ad.AnnData(X=x, obs=pd.DataFrame({
+        "true_labels": true_labels,
+        "true_doublet_info": true_doublet_info,
+    }, index=obs_names), var=pd.DataFrame(index=var_names))
     adata.layers["labels"] = labels
     return adata
 
@@ -67,6 +71,8 @@ def test_demux(adata_hto):
         # check classification
         assert all(adata_demux.obs["hash_id"] == adata_demux.obs["true_labels"])
         assert np.all(adata_demux.layers["demux_labels"] == adata_hto.layers["labels"])
+        # check doublet_info
+        assert np.all(adata_demux.obs["doublet_info"] == adata_demux.obs["true_doublet_info"])
 
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
@@ -88,7 +94,7 @@ def test_cluster_and_evaluate(mock_hto_data, demux_method):
         - The metrics dictionary contains 'threshold', 'inter_class_variance', and 'entropy'.
         - The threshold is a float greater than 0.
     Parameters:
-         mock_dsb_denoised_adata: An AnnData object containing the denoised data.
+         mock_hto_data: An AnnData object containing the denoised data.
          method: A string indicating the clustering method to use ("kmeans" or "gmm").
     """
 

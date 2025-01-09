@@ -86,12 +86,13 @@ def demux(
     result_df.loc[labels_df.sum(axis=1) >= 2, add_key_hashid] = "Doublet"
 
     # Get doublet info
-    result_df.loc[:, add_key_doublet] = result_df.apply(
-        lambda row: ",".join(row[row == 1].index.tolist()), axis=1
+    result_df.loc[:, add_key_doublet] = labels_df.apply(
+        lambda row: ",".join([r for r in row[row == 1].index if row.sum() >= 2]), axis=1
     )
 
     # Append to AnnData
-    adata_hto.layers[add_key_labels] = scipy.sparse.csr_matrix(labels_df.values)
+    if add_key_labels is not None:
+        adata_hto.layers[add_key_labels] = scipy.sparse.csr_matrix(labels_df.values)
     adata_hto.obs = pd.concat([adata_hto.obs, result_df], axis=1)
 
     # add metadata

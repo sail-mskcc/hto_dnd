@@ -67,6 +67,10 @@ def test_dnd(mock_hto_data):
         true_labels = adata.obs['hto_classification']
         predicted_labels = adata.obs['hash_id']
         overall_accuracy = np.mean(predicted_labels == true_labels)
+        print("DEBUG")
+        print(predicted_labels[:20])
+        print(true_labels[:20])
+        print(adata.to_df().head())
         assert overall_accuracy > 0.8, f"Overall accuracy is only {overall_accuracy:.2f}"
 
     assert_results(adata_result)

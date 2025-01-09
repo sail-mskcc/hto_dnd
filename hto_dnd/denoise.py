@@ -85,7 +85,7 @@ def denoise(
         verbose (int, optional): {DESCRIPTIONS["verbose"]}
 
     Returns:
-        ndarray: Matrix with batch effects removed.
+        ad.AnnData: An updated AnnData object with denoised protein expression data.
     """
     assert_background(
         method=background_method,

@@ -34,7 +34,7 @@ def normalise(
         verbose (int, optional): {DESCRIPTIONS["verbose"]}
 
     Returns:
-        AnnData: AnnData object with normalized protein expression data, either
+        ad.AnnData: AnnData object with normalized protein expression data, either
         in the original matrix or in a specified layer.
 
     Citation:

@@ -4,6 +4,7 @@ from .normalise import normalise
 from .denoise import denoise
 from .demux import demux
 from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._utils import write_h5ad_safe
 
 def dnd(
     adata_hto: ad.AnnData,
@@ -12,7 +13,7 @@ def dnd(
     path_out: str = None,
     **kwargs
 ):
-    """Perform DSB normalization and demultiplexing on the provided filtered and raw AnnData objects.
+    f"""Perform DSB normalization and demultiplexing on the provided filtered and raw AnnData objects.
 
     Args:
         adata_filtered (AnnData): AnnData object with filtered counts
@@ -54,14 +55,13 @@ def dnd(
         inplace=inplace,
         verbose=verbose,
         use_layer=add_key_denoise,
-        add_key=kwargs.get("add_key", DEFAULTS["add_key"]),
+        add_key=kwargs.get("add_key_hashid", DEFAULTS["add_key_hashid"]),
         add_key_doublet=kwargs.get("add_key_doublet", DEFAULTS["add_key_doublet"]),
         add_key_labels=kwargs.get("add_key_labels", DEFAULTS["add_key_labels"]),
         demux_method=kwargs.get("demux_method", DEFAULTS["demux_method"]),
     )
 
     # SAVE
-    if path_out is not None:
-        adata_hto.write_h5ad(path_out)
+    write_h5ad_safe(adata_hto, path_out, create_folder=True)
 
     return adata_hto

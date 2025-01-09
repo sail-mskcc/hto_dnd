@@ -20,7 +20,7 @@ def demux(
     adata_hto: ad.AnnData,
     demux_method: str = DEFAULTS["demux_method"],
     use_layer: str = DEFAULTS["use_layer"],
-    add_key: str = DEFAULTS["add_key"],
+    add_key_hashid: str = DEFAULTS["add_key_hashid"],
     add_key_doublet: str = DEFAULTS["add_key_doublet"],
     add_key_labels: str = DEFAULTS["add_key_labels"],
     inplace: bool = DEFAULTS["inplace"],
@@ -34,13 +34,13 @@ def demux(
         adata_hto (ad.AnnData): {DESCRIPTIONS["adata_hto"]}
         demux_method (str): {DESCRIPTIONS["demux_method"]}
         use_layer (str): {DESCRIPTIONS["use_layer"]}
-        add_key (str): {DESCRIPTIONS["add_key"]}
+        add_key_hashid (str): {DESCRIPTIONS["add_key_hashid"]}
         add_key_doublet (str): {DESCRIPTIONS["add_key_doublet"]}
         inplace (bool): {DESCRIPTIONS["inplace"]}
         verbose (int): {DESCRIPTIONS["verbose"]}
 
     Returns:
-        AnnData: An AnnData object containing the results of the demultiplexing.
+        AnnData: An AnnData object containing the results of the demultiplexing in .obs.
     """
 
     # debug - print parameters
@@ -80,12 +80,12 @@ def demux(
 
     # Init results
     labels_df = pd.DataFrame(classifications, index=df_umi.index)
-    result_df = pd.DataFrame("", index=labels_df.index, columns=[add_key, add_key_doublet])
+    result_df = pd.DataFrame("", index=labels_df.index, columns=[add_key_hashid, add_key_doublet])
 
     # Get cell labels
-    result_df.loc[:, add_key] = labels_df.idxmax(axis=1)
-    result_df.loc[labels_df.sum(axis=1) == 0, add_key] = "Negative"
-    result_df.loc[labels_df.sum(axis=1) >= 2, add_key] = "Doublet"
+    result_df.loc[:, add_key_hashid] = labels_df.idxmax(axis=1)
+    result_df.loc[labels_df.sum(axis=1) == 0, add_key_hashid] = "Negative"
+    result_df.loc[labels_df.sum(axis=1) >= 2, add_key_hashid] = "Doublet"
 
     # Get doublet info
     result_df.loc[:, add_key_doublet] = result_df.apply(
@@ -107,7 +107,7 @@ def demux(
         thresholds=thresholds,
     )
 
-    pct_doublet = (result_df[add_key] == "Doublet").mean() * 100
-    pct_negative = (result_df[add_key] == "Negative").mean() * 100
-    logger.info(f"Demultiplexing completed ({pct_doublet:.1f}% Doublets, {pct_negative:.1f}% Negatives). Hash IDs stored in '{add_key}'.")
+    pct_doublet = (result_df[add_key_hashid] == "Doublet").mean() * 100
+    pct_negative = (result_df[add_key_hashid] == "Negative").mean() * 100
+    logger.info(f"Demultiplexing completed ({pct_doublet:.1f}% Doublets, {pct_negative:.1f}% Negatives). Hash IDs stored in '{add_key_hashid}'.")
     return adata_hto

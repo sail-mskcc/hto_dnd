@@ -44,17 +44,20 @@ The python API is built around AnnData. it is highly recommended two work with t
 import hto_dnd as hto
 
 # get mockdata
-mockdata = hto.data.generate_hto(n_cells=1000, n_hto=3)
+mockdata = hto.data.generate_hto(n_cells=1000, n_htos=3, seed=10)
 adata_hto = mockdata["filtered"]
 adata_hto_raw = mockdata["raw"]
+adata_gex = mockdata["gex"]
 
 # denoise, normalize, and demultiplex
 adata_demux = hto.dnd(
   adata_hto,
-  adata_hto_background,
+  adata_hto_raw,
   adata_gex=adata_gex,  # <-- optional, but recommended
-  min_umi=300,  # <-- keep HTO cells with at least 300 UMIs in GEX data
+  min_umi=0,  # <-- keep HTO cells with at least 300 UMIs in GEX data
 )
+
+adata_demux.obs[["hash_id", "doublet_info"]].head()
 ```
 
 This function can also be run step by step, even `inplace`

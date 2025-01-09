@@ -46,7 +46,7 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     n_singlets = int(n_cells * 0.5)
     n_doublets = int(n_cells * 0.1)
     n_negatives = n_cells - n_singlets - n_doublets
-    n_empty = int(n_cells)  # 100% additional empty droplets
+    n_empty = int(n_cells) * 2  # 100% additional empty droplets used for background
 
     # Generate singlets
     singlets, singlet_labels = make_blobs(n_samples=n_singlets, n_features=n_htos,
@@ -113,8 +113,8 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     # Create GEX data (15 genes)
     # -> Sum is over 300 for each cell
     # -> Sum is below 100 for empty droplets
-    counts_cells = np.random.randint(290, 1000, n_cells)
-    counts_empty = np.random.randint(50, 100, n_empty)
+    counts_cells = np.random.randint(290, 1000, 2 * n_cells)
+    counts_empty = np.random.randint(50, 100, n_cells)
     counts = np.concatenate([counts_cells, counts_empty])
     p_distribute = np.random.uniform(0, 1, 15)
     p_distribute /= p_distribute.sum()

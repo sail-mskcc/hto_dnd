@@ -18,7 +18,7 @@ def dnd(
     _as_cli: bool = False,  # required when run as cli
     **kwargs
 ):
-    f"""Perform DSB normalization and demultiplexing on the provided filtered and raw AnnData objects.
+    f"""Perform normalization and demultiplexing on the provided filtered and raw AnnData objects.
 
     Args:
         adata_filtered (AnnData): AnnData object with filtered counts

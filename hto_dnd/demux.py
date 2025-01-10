@@ -70,13 +70,15 @@ def demux(
     thresholds = {}
 
     for hto in df_umi.columns:
+        logger.debug(f"Demultiplexing HTO '{hto}'...")
         data = df_umi[hto].values.reshape(-1, 1)
-        labels, threshold, hto_metrics = cluster_and_evaluate(data, demux_method=demux_method)
+        labels, threshold, hto_metrics = cluster_and_evaluate(data, demux_method=demux_method, verbose=verbose)
         thresholds[hto] = threshold
         metrics[hto] = hto_metrics
         classifications[hto] = labels
 
     # Init results
+    logger.debug("Assigning labels...")
     labels_df = pd.DataFrame(classifications, index=df_umi.index)
     result_df = pd.DataFrame("", index=labels_df.index, columns=[add_key_hashid, add_key_doublet])
 
@@ -86,6 +88,7 @@ def demux(
     result_df.loc[labels_df.sum(axis=1) >= 2, add_key_hashid] = "Doublet"
 
     # Get doublet info
+    logger.debug("Assigning doublet info...")
     result_df.loc[:, add_key_doublet] = labels_df.apply(
         lambda row: ",".join([r for r in row[row == 1].index if row.sum() >= 2]), axis=1
     )

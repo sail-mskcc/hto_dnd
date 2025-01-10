@@ -43,11 +43,11 @@ def dnd(
     # READ
     # Note - adata_hto can also be a whitelist of barcodes
     if isinstance(adata_hto_raw, str):
-        logger.info(f"Reading adata from {adata_hto_raw}")
+        logger.info(f"Reading raw hto adata from {adata_hto_raw}")
         adata_hto_raw = ad.read_h5ad(adata_hto_raw)
     if isinstance(adata_hto, str):
         if adata_hto.endswith(".h5ad"):
-            logger.info(f"Reading adata from {adata_hto}")
+            logger.info(f"Reading filtered adata from {adata_hto}")
             adata_hto = ad.read_h5ad(adata_hto)
         elif adata_hto.endswith(".csv") or adata_hto.endswith(".csv.gz"):
             logger.info(f"Reading whitelist from {adata_hto}")
@@ -72,7 +72,7 @@ def dnd(
     # BUILD BACKGROUND HTO SET
     if adata_gex is not None:
         if isinstance(adata_gex, str):
-            logger.info(f"Reading adata from {adata_gex}")
+            logger.info(f"Reading gex adata from {adata_gex}")
             adata_gex = ad.read_h5ad(adata_gex)
         adata_hto_raw = tl.build_background(
             adata_hto_raw,

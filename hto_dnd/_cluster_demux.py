@@ -8,6 +8,8 @@ from skimage.filters import threshold_otsu
 import scipy.stats
 from scipy.optimize import root_scalar
 
+from ._logging import get_logger
+
 
 SUPPORTED_DEMUX_METHODS = ["kmeans", "gmm", "otsu"]
 
@@ -18,14 +20,17 @@ def assert_demux(method):
 
 def _get_demux_kmeans(
     data,
+    logger,
 ):
     # predict
+    logger.debug("Clustering HTO data using K-means")
     model = KMeans(n_clusters=2, random_state=42, n_init=10)
     cluster = model.fit_predict(data)
     positive_cluster = np.argmax(model.cluster_centers_)
     labels = (cluster == positive_cluster).astype(int)
 
     # evaluate
+    logger.debug("Evaluating K-means clustering")
     threshold = np.mean(model.cluster_centers_)
     silhouette = silhouette_score(data, labels)
     davies_bouldin = davies_bouldin_score(data, labels)
@@ -35,14 +40,17 @@ def _get_demux_kmeans(
 
 def _get_demux_gmm(
     data,
+    logger,
 ):
     # predict
+    logger.debug("Clustering HTO data using GMM")
     model = GaussianMixture(n_components=2, random_state=42)
     cluster = model.fit_predict(data)
     positive_cluster = np.argmax(model.means_)
     labels = (cluster == positive_cluster).astype(int)
 
     # Extract GMM parameters - intersection of two Gaussians
+    logger.debug("Evaluating GMM clustering")
     means, variances, weights = map(np.ravel, (model.means_, model.covariances_, model.weights_))
     sorted_indices = np.argsort(means)
     mu1, mu2 = means[sorted_indices]
@@ -61,13 +69,16 @@ def _get_demux_gmm(
 
 def _get_demux_otsu(
     data,
+    logger,
 ):
     # predict
+    logger.debug("Thresholding HTO data using Otsu's method")
     data = data.flatten()
     threshold = threshold_otsu(data)
     labels = (data > threshold).astype(int)
 
     # evaluate
+    logger.debug("Evaluating Otsu thresholding")
     background = data[labels == 0]
     signal = data[labels == 1]
     # Inter-class variance (which Otsu's method maximizes)
@@ -87,7 +98,8 @@ def _get_demux_otsu(
 
 def cluster_and_evaluate(
     data,
-    demux_method="kmeans"
+    demux_method="kmeans",
+    verbose=1,
 ):
     """Perform clustering to identify positive populations for each HTO.
 
@@ -106,11 +118,12 @@ def cluster_and_evaluate(
             - int: The index of the positive cluster
             - dict: A dictionary containing various goodness of fit metrics
     """
+    logger = get_logger("demux", level=verbose)
     if demux_method == "kmeans":
-        return _get_demux_kmeans(data)
+        return _get_demux_kmeans(data, logger)
     elif demux_method == "gmm":
-        return _get_demux_gmm(data)
+        return _get_demux_gmm(data, logger)
     elif demux_method == "otsu":
-        return _get_demux_otsu(data)
+        return _get_demux_otsu(data, logger)
     else:
         raise ValueError(f"Method '{demux_method}' is not supported. Must be one of {SUPPORTED_DEMUX_METHODS}")

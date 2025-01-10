@@ -9,6 +9,37 @@ from ._exceptions import AnnDataFormatError
 from ._meta import init_meta
 from ._logging import get_logger
 
+def _assert_float(x):
+    if not is_float_dtype(x):
+        # check if just malformed int
+        if scipy.sparse.issparse(x):
+            x_test = x.data[:1000]
+            x_test = x_test[x_test != 0]
+            if np.any(x_test == np.round(x_test)):
+                raise AnnDataFormatError("adata_not_float", x_test)
+        elif isinstance(x, np.ndarray):
+            x_test = x[:1000]
+            x_test = x_test[x_test != 0]
+            if np.any(x_test == np.round(x_test)):
+                raise AnnDataFormatError("adata_not_float", x_test)
+        else:
+            raise AnnDataFormatError("adata_not_float", x)
+
+def _assert_int(x):
+    if not is_integer_dtype(x):
+        # check if just malformed float
+        if scipy.sparse.issparse(x):
+            x_test = x.data[:1000]
+            if np.any(x_test != np.round(x_test)):
+                raise AnnDataFormatError("adata_not_int", x)
+        elif isinstance(x, np.ndarray):
+            x_test = x[:1000]
+            if np.any(x_test != np.round(x_test)):
+                raise AnnDataFormatError("adata_not_int")
+        else:
+            raise AnnDataFormatError("adata_not_int", x)
+
+
 def get_layer(
     adata,
     use_layer,
@@ -45,11 +76,10 @@ def get_layer(
 
     # assertions
     if float:
-        if (not is_float_dtype(x)) or np.any(x[:100] == np.round(x[:100])):
-            raise AnnDataFormatError("adata_not_float", x)
+        _assert_float(x)
+
     if integer:
-        if not is_integer_dtype(x):
-            raise AnnDataFormatError("adata_not_int", x)
+        _assert_int(x)
 
     return adata, x
 

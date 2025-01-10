@@ -44,7 +44,7 @@ def get_layer(
     adata,
     use_layer,
     numpy,
-    inplace,
+    inplace: bool=False,
     float: bool=False,
     integer: bool=False,
 ):

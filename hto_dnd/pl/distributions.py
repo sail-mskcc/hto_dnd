@@ -28,14 +28,16 @@ def _format(x):
     else:
         return f"{np.expm1(x) / 1000000:.0f}M"
 
-def plot_distributions_log(
-    adata, ax=None,
+def distribution(
+    adata,
+    ax=None,
     layer=None,
     cmap="tab20",
     title="",
     xmin=None,
     remove_legend=False,
     params_legend={},
+    use_log=True,
     **kwargs
 ):
     # defaults
@@ -48,8 +50,10 @@ def plot_distributions_log(
 
     # prep data
     df_long = adata.to_df(layer).melt()
-    df_long.loc[:, "value_log"] = _symmetric_log1p(df_long.value)
-    df_long.head()
+    if use_log:
+        df_long.loc[:, "value_set"] = _symmetric_log1p(df_long.value)
+    else:
+        df_long.loc[:, "value_set"] = df_long.value
 
     # plot
     if ax is None:
@@ -59,7 +63,7 @@ def plot_distributions_log(
     ax = sns.kdeplot(
         df_long,
         hue="variable",
-        x="value_log",
+        x="value_set",
         palette=cmap,
         ax=ax,
         **kwargs
@@ -68,11 +72,14 @@ def plot_distributions_log(
     ax.set_title(title)
     ax.yaxis.set_ticks([])
     ax.set_ylabel("")
-    ax.set_xlabel("Logged Antibody Count")
 
-    # ticks in raw counts
-    log_ticks = _symmetric_log1p([-100000, -1000, -10, -1, 0, 1, 10, 100, 1000, 10000, 100000])  # Replace with dynamic range if needed
-    ax.xaxis.set_major_locator(ticker.FixedLocator(log_ticks))
+    # log transform
+    if use_log:
+        ax.set_xlabel("Logged Antibody Count")
+        log_ticks = _symmetric_log1p([-100000, -1000, -10, -1, 0, 1, 10, 100, 1000, 10000, 100000])  # Replace with dynamic range if needed
+        ax.xaxis.set_major_locator(ticker.FixedLocator(log_ticks))
+    else:
+        ax.set_xlabel("Antibody Count")
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: _format(x)))
 
     if remove_legend:

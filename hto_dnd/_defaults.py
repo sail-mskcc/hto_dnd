@@ -21,6 +21,7 @@ DEFAULTS = {
     "covariates": None,
     "design": None,
     "add_key_denoise": None,
+    "denoise_version": "v1",
 
     # demux
     "demux_method": "kmeans",
@@ -31,7 +32,7 @@ DEFAULTS = {
     # build_background
     "min_umi": 300,
     "next_k_cells": 10000,
-    "background_version": "v2",
+    "background_version": "v2"
 }
 
 # shared descriptions
@@ -55,6 +56,7 @@ DESCRIPTIONS = {
     "add_key_denoise": f"Key to store the denoised data in the AnnData object. Default is {DEFAULTS['add_key_denoise']}.",
     "covariates": f"Matrix of covariates to use for denoising. Not recommended for general use. Default is {DEFAULTS['covariates']}.",
     "design": f"Design matrix to use for denoising. Not recommended for general use. Default is {DEFAULTS['design']}.",
+    "denoise_version": f"Version of the denoising algorithm. Must be either 'v1' or 'v2'. Default is {DEFAULTS['denoise_version']}.",
 
     # demux
     "demux_method": f"Method to use for demultiplexing. Must be either 'kmeans', 'gmm' or 'otsu'. Default is {DEFAULTS['demux_method']}.",
@@ -88,6 +90,7 @@ OPTIONS = {
     "covariates": click.option("--covariates", type=click.Path(exists=True), help="NOT YET SUPPORT IN CLI"),
     "design": click.option("--design", type=click.Path(exists=True), help="NOT YET SUPPORT IN CLI"),
     "add_key_denoise": click.option("--add-key-denoise", type=str, default="denoised", help=DESCRIPTIONS["add_key_denoise"]),  # (!) <-- changed from DEFAULTS
+    "denoise_version": click.option("--denoise-version", type=str, default=DEFAULTS["denoise_version"], help=DESCRIPTIONS["denoise_version"]),
 
     # demux
     "demux_method": click.option("--demux-method", type=str, default=DEFAULTS["demux_method"], help=DESCRIPTIONS["demux_method"]),

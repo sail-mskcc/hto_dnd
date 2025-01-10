@@ -20,6 +20,7 @@ def _log_background(n_selected, n, logger, _run_assert=True):
 
 def build_background(
     background_version,
+    _run_assert=True,
     **kwargs,
 ):
     f"""
@@ -34,10 +35,11 @@ def build_background(
     """
     if background_version == "v1":
         return build_background_v1(
-            adata_hto=kwargs["adata_hto"],
+            adata_hto_raw=kwargs["adata_hto_raw"],
             adata_gex=kwargs["adata_gex"],
             min_umi=kwargs.get("min_umi", DEFAULTS["min_umi"]),
             verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
+            _run_assert=_run_assert,
         )
     elif background_version == "v2":
         return build_background_v2(
@@ -45,13 +47,14 @@ def build_background(
             adata_hto=kwargs["adata_hto"],
             next_k_cells=kwargs.get("next_k_cells", DEFAULTS["next_k_cells"]),
             verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
+            _run_assert=_run_assert,
         )
     else:
         raise ValueError(f"Invalid version: {background_version}. Must be 'v1' or 'v2'.")
 
 
 def build_background_v1(
-    adata_hto,
+    adata_hto_raw,
     adata_gex,
     use_layer: str = DEFAULTS["use_layer"],
     min_umi: int = DEFAULTS["min_umi"],
@@ -61,7 +64,7 @@ def build_background_v1(
     f"""Get a whitelist based on GEX counts.
 
     Args:
-        adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
+        adata_hto_raw (AnnData): {DESCRIPTIONS["adata_hto_raw"]}
         adata_gex (AnnData): {DESCRIPTIONS["adata_gex"]}
         min_umi (int, optional): {DESCRIPTIONS["min_umi"]}
         verbose (int, optional): {DESCRIPTIONS["verbose"]}
@@ -81,12 +84,13 @@ def build_background_v1(
     ids_selected = set(adata_gex.obs_names[counts > min_umi])
 
     # subset to intersection
-    ids_background = ids_selected.intersection(set(adata_hto.obs_names))
+    ids_background = ids_selected.intersection(set(adata_hto_raw.obs_names))
 
     # logs
     _log_background(len(ids_selected), len(ids_background), logger, _run_assert)
 
-    return adata_hto[list(ids_background)]
+    return adata_hto_raw[list(ids_background)]
+
 
 def build_background_v2(
     adata_hto,
@@ -94,6 +98,7 @@ def build_background_v2(
     use_layer: str = DEFAULTS["use_layer"],
     next_k_cells: int = DEFAULTS["next_k_cells"],
     verbose: int = DEFAULTS["verbose"],
+    _run_assert=True,  # <- used for testing
 ):
     f"""
     Build background by choosing the next k largest cells from the raw HTO data
@@ -121,6 +126,8 @@ def build_background_v2(
     )
     # get top k from each column
     background = set(whitelist)
+    next_k_cells = min(next_k_cells, x.shape[0] - 1)
+    assert next_k_cells > 0, f"It seems that there are no cells in the raw HTO data that are not already in the filtered HTO data."
     for i in range(x.shape[1]):
         # find value such that there are 'next_k_cells' cells larger than it
         cutoff = np.sort(x[:, i])[::-1][next_k_cells]
@@ -129,6 +136,6 @@ def build_background_v2(
         background = background.union(add_cells)
 
     # logs
-    _log_background(len(background), adata_hto_raw.shape[0], logger, _run_assert=True)
+    _log_background(len(background), adata_hto_raw.shape[0], logger, _run_assert=_run_assert)
 
     return adata_hto_raw[list(background)]

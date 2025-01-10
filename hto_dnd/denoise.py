@@ -4,54 +4,14 @@ import scipy
 import anndata as ad
 from pandas.api.types import is_integer_dtype, is_float_dtype
 
-from ._logging import get_logger
-from ._meta import add_meta
 from ._cluster_background import assert_background, estimate_background
+from ._remove_batch_effect import remove_batch_effect
+
+from ._meta import add_meta
+from ._logging import get_logger
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._exceptions import AnnDataFormatError
 from ._utils import get_layer
-
-def remove_batch_effect(
-    x: np.ndarray,
-    covariates: np.ndarray = DEFAULTS["covariates"],
-    design: np.ndarray = DEFAULTS["design"],
-) -> np.ndarray:
-
-    # assertions
-    assert isinstance(x, np.ndarray), "Input matrix must be a NumPy array"
-    if design is None:
-        design = np.ones((x.shape[0], 1))
-    else:
-        design = np.asarray(design)
-
-    # Process covariates (in our case, this is the background means)
-    if covariates is not None:
-        covariates = np.asarray(covariates).reshape(-1, 1)
-
-    # Combine design and covariates
-    X_combined = np.column_stack([design, covariates])
-
-    # Fit linear model
-    model = LinearRegression(fit_intercept=False)
-    model.fit(X_combined, x)
-
-    # Extract coefficients related to batch effects
-    beta = model.coef_[:, design.shape[1] :]
-    # beta = model.coef_
-
-    # Broadcast the multiplication. here beta is the coefficient of the regression and covariates is the baclground means. their multiplication is just the prediction of how much technical noise there is and then after we predict that, we subtract it from x (the normalized matrix) to get the corrected matrix
-    correction = covariates @ beta.T
-
-    # Subtract the correction from x to remove the batch effect
-    x_corrected = x - correction
-
-    # Store metadata
-    meta = {
-        "coefs": model.coef_,
-    }
-
-    return x_corrected, meta
-
 
 def denoise(
     adata_hto: ad.AnnData,
@@ -59,6 +19,7 @@ def denoise(
     background_method: str = DEFAULTS["background_method"],
     add_key_denoise: str = DEFAULTS["add_key_denoise"],
     covariates: np.ndarray = DEFAULTS["covariates"],
+    denoise_version: str = DEFAULTS["denoise_version"],
     design: np.ndarray = DEFAULTS["design"],
     inplace: bool = DEFAULTS["inplace"],
     verbose: int = DEFAULTS["verbose"],
@@ -117,7 +78,8 @@ def denoise(
     # 2. Remove Batch Effect
     logger.debug("Removing technical noise")
     norm_adt, meta_batch_model = remove_batch_effect(
-        x,
+        denoise_version,
+        x=x,
         covariates=covariates,
         design=design,
     )

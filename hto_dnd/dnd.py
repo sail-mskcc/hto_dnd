@@ -32,6 +32,7 @@ def dnd(
     # SET PARAMS
     inplace = get_arg("inplace", kwargs, DEFAULTS)
     verbose = get_arg("verbose", kwargs, DEFAULTS)
+    denoise_version = get_arg("denoise_version", kwargs, DEFAULTS)
     add_key_normalise = get_arg("add_key_normalise", kwargs, DEFAULTS)
     add_key_denoise = get_arg("add_key_denoise", kwargs, DEFAULTS)
     demux_method = get_arg("demux_method", kwargs, DEFAULTS)
@@ -105,6 +106,7 @@ def dnd(
         use_layer=add_key_normalise,
         add_key_denoise=add_key_denoise,
         background_method=background_method,
+        denoise_version=denoise_version,
         covariates=get_arg("covariates", kwargs, DEFAULTS),
         design=get_arg("design", kwargs, DEFAULTS),
     )

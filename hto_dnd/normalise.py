@@ -78,7 +78,7 @@ def normalise(
     logger.info(f"Filtered adata: {n_filtered / 1000:.1f}K cells | Background adata: {n_background / 1000:.1f}K cells")
     logger.debug(f"Background cells: {n_background / 1000:f}K cells | Overlapping cells: {len(overlap_barcode) / 1000:f}K cells")
     if pct_background > 80:
-        logger.warning(f"Only few barcodes are used for normalization: {empty_barcodes / 1000:.1f}K ({pct_background:.1f}%)")
+        logger.warning(f"Only few barcodes are used for normalization: {n_background / 1000:.1f}K ({pct_background:.1f}%)")
 
     # Identify barcodes that are in adata_raw but not in adata_filtered
     if len(empty_barcodes) < 5:

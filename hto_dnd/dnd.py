@@ -6,7 +6,7 @@ from .normalise import normalise
 from .denoise import denoise
 from .demux import demux
 from ._defaults import DEFAULTS
-from ._utils import write_h5ad_safe, test_write, subset_whitelist
+from ._utils import write_h5ad_safe, test_write, subset_whitelist, get_arg
 from ._cluster_background import assert_background
 from ._cluster_demux import assert_demux
 from ._logging import get_logger
@@ -30,12 +30,13 @@ def dnd(
     """
 
     # SET PARAMS
-    inplace = kwargs.get("inplace", DEFAULTS["inplace"])
-    verbose = kwargs.get("verbose", DEFAULTS["verbose"])
-    add_key_normalise = kwargs.get("add_key_normalise", DEFAULTS["add_key_normalise"])
-    add_key_denoise = kwargs.get("add_key_denoise", DEFAULTS["add_key_denoise"])
-    background_method = kwargs.get("background_method", DEFAULTS["background_method"])
-    demux_method = kwargs.get("demux_method", DEFAULTS["demux_method"])
+    inplace = get_arg("inplace", kwargs, DEFAULTS)
+    verbose = get_arg("verbose", kwargs, DEFAULTS)
+    add_key_normalise = get_arg("add_key_normalise", kwargs, DEFAULTS)
+    add_key_denoise = get_arg("add_key_denoise", kwargs, DEFAULTS)
+    demux_method = get_arg("demux_method", kwargs, DEFAULTS)
+    background_method = get_arg("background_method", kwargs, DEFAULTS)
+    background_version = get_arg("background_version", kwargs, DEFAULTS)
 
     # LOGGER
     logger = get_logger("dnd", level=verbose)
@@ -55,6 +56,7 @@ def dnd(
             adata_hto = subset_whitelist(adata_hto_raw, whitelist)
         else:
             raise ValueError(f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)")
+
     # ASSERTIONS
     # - check that output path is writeable (and .h5ad)
     # - check that parameters are valid
@@ -70,14 +72,19 @@ def dnd(
 
     # BUILD BACKGROUND HTO SET
     if adata_gex is not None:
-        if isinstance(adata_gex, str):
+        # read gex
+        if isinstance(adata_gex, str) and background_version in ["v1"]:
             logger.debug(f"Reading gex adata from {adata_gex}")
             adata_gex = ad.read_h5ad(adata_gex)
+
+        # build background
         adata_hto_raw = tl.build_background(
-            adata_hto_raw,
-            adata_gex,
+            background_version,
+            adata_hto=adata_hto,
+            adata_hto_raw=adata_hto_raw,
+            adata_gex=adata_gex,
+            min_umi=get_arg("min_umi", kwargs, DEFAULTS),
             verbose=verbose,
-            min_umi=kwargs.get("min_umi", DEFAULTS["min_umi"]),
         )
 
     # RUN
@@ -87,8 +94,8 @@ def dnd(
         inplace=inplace,
         verbose=verbose,
         add_key_normalise=add_key_normalise,
-        use_layer=kwargs.get("use_layer", DEFAULTS["use_layer"]),
-        pseudocount=kwargs.get("pseudocount", DEFAULTS["pseudocount"]),
+        use_layer=get_arg("use_layer", kwargs, DEFAULTS),
+        pseudocount=get_arg("pseudocount", kwargs, DEFAULTS),
     )
 
     adata_hto = denoise(
@@ -98,8 +105,8 @@ def dnd(
         use_layer=add_key_normalise,
         add_key_denoise=add_key_denoise,
         background_method=background_method,
-        covariates=kwargs.get("covariates", DEFAULTS["covariates"]),
-        design=kwargs.get("design", DEFAULTS["design"]),
+        covariates=get_arg("covariates", kwargs, DEFAULTS),
+        design=get_arg("design", kwargs, DEFAULTS),
     )
 
     adata_hto = demux(
@@ -108,9 +115,9 @@ def dnd(
         verbose=verbose,
         use_layer=add_key_denoise,
         demux_method=demux_method,
-        add_key_hashid=kwargs.get("add_key_hashid", DEFAULTS["add_key_hashid"]),
-        add_key_doublet=kwargs.get("add_key_doublet", DEFAULTS["add_key_doublet"]),
-        add_key_labels=kwargs.get("add_key_labels", DEFAULTS["add_key_labels"]),
+        add_key_hashid=get_arg("add_key_hashid", kwargs, DEFAULTS),
+        add_key_doublet=get_arg("add_key_doublet", kwargs, DEFAULTS),
+        add_key_labels=get_arg("add_key_labels", kwargs, DEFAULTS),
     )
 
     # SAVE

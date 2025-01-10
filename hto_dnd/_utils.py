@@ -83,6 +83,9 @@ def get_layer(
 
     return adata, x
 
+def get_arg(v, kwargs, defaults):
+    """Get argument from kwargs or defaults."""
+    return kwargs.get(v, defaults[v])
 
 def subset_whitelist(adata, whitelist, _required_prop=0.9):
     """Subset whitelist, even when not all barcodes are present in the data."""

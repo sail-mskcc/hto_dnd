@@ -42,9 +42,10 @@ def build_background(
     n_selected = len(ids_selected)
     not_found = n_selected - n
     msg = (
-        f"# Raw: {n_raw / 1e3:.1f}K | "
-        f"# Background: {n / 1e3:.1f}K | "
-        f"# Not Found in HTO: {not_found}"
+        f"Building background whitelist: "
+        f"# Selected: {n_selected} | "
+        f"# Discarded: {n_selected - n} | "
+        f"# Not Found: {not_found}"
     )
     logger.info(msg)
 

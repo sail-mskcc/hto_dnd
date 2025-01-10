@@ -42,7 +42,7 @@ def normalise(
     # Get logger
     logger = get_logger("normalise", level=verbose)
     logger.log_parameters(locals())
-    logger.info("Starting normalization...")
+    logger.debug("Starting normalization...")
 
     # Setup
     adata_hto, adt = get_layer(
@@ -70,12 +70,21 @@ def normalise(
     empty_barcodes = list(raw_barcodes - filtered_barcodes)
     overlap_barcode = list(raw_barcodes & filtered_barcodes)  # check that naming is consistent
 
+    n_filtered = len(filtered_barcodes)
+    n_raw = len(raw_barcodes)
+    n_background = len(empty_barcodes)
+    pct_background = n_background / n_raw * 100
+
+    logger.info(f"Filtered adata: {n_filtered / 1000:.1f}K cells | Background adata: {n_background / 1000:.1f}K cells")
+    logger.debug(f"Background cells: {n_background / 1000:f}K cells | Overlapping cells: {len(overlap_barcode) / 1000:f}K cells")
+    if pct_background > 80:
+        logger.warning(f"Only few barcodes are used for normalization: {empty_barcodes / 1000:.1f}K ({pct_background:.1f}%)")
+
     # Identify barcodes that are in adata_raw but not in adata_filtered
     if len(empty_barcodes) < 5:
         raise AnnDataFormatError("adata_raw_missing_cells", empty_barcodes)
     if len(overlap_barcode) < 5:
         raise AnnDataFormatError("adata_no_overlapping_names", len(filtered_barcodes))
-    logger.info(f"Detected '{len(empty_barcodes)}' empty droplets")
 
     # Log transform both matrices
     adt_log = np.log(adt + pseudocount)
@@ -105,7 +114,7 @@ def normalise(
         logger.info(f"Normalized matrix stored in adata.layers['{add_key_normalise}']")
     else:
         adata_hto.X = normalized_matrix
-        logger.info("Normalization completed.")
+        logger.info("Normalization completed and stored in adata.X")
 
     # Log metadata
     logger.debug(pformat(adata_hto.uns["dnd"]))

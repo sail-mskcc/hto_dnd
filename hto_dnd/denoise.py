@@ -92,7 +92,7 @@ def denoise(
     # logger
     logger = get_logger("denoise", level=verbose)
     logger.log_parameters(locals())
-    logger.info("Starting denoising...")
+    logger.debug("Starting denoising...")
 
     # setup data
     adata_hto, x = get_layer(
@@ -105,7 +105,7 @@ def denoise(
 
     # 1. Build Background Data
     if covariates is None:
-        logger.info(f"Build background data using '{background_method}' method")
+        logger.debug(f"Build background data using '{background_method}' method")
         covariates, meta_background = estimate_background(
             matrix=x,
             method=background_method,
@@ -115,23 +115,15 @@ def denoise(
         meta_background = {}
 
     # 2. Remove Batch Effect
-    logger.info("Removing technical noise")
+    logger.debug("Removing technical noise")
     norm_adt, meta_batch_model = remove_batch_effect(
         x,
         covariates=covariates,
         design=design,
     )
 
-    # Finish
-    if add_key_denoise is not None:
-        adata_hto.layers[add_key_denoise] = norm_adt
-        logger.info(f"Denoised matrix stored in adata.layers['{add_key_denoise}']")
-    else:
-        adata_hto.X = norm_adt
-        logger.info("Denoised matrix stored in adata.X")
-
     # Store meta information (don't use 'debug' key)
-    logger.info("Technical noise removal completed.")
+    logger.debug("Technical noise removal completed.")
     meta_background = {k: v for k, v in meta_background.items() if k != "debug"}
     adata_hto = add_meta(
         adata_hto,
@@ -143,5 +135,14 @@ def denoise(
         batch_model=meta_batch_model,
         meta_background=meta_background,
     )
+
+    # Finish
+    if add_key_denoise is not None:
+        adata_hto.layers[add_key_denoise] = norm_adt
+        logger.info(f"Denoised matrix stored in adata.layers['{add_key_denoise}']")
+    else:
+        adata_hto.X = norm_adt
+        logger.info("Denoised matrix stored in adata.X")
+
 
     return adata_hto

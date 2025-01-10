@@ -72,7 +72,7 @@ def get_layer(
 
     # to numpy
     if scipy.sparse.issparse(x) and numpy:
-        x = np.asarray(x)
+        x = x.A
 
     # assertions
     if float:

@@ -64,7 +64,7 @@ def demux(
     assert all([t == float for t in df_umi.dtypes]), "Denoised data must be float."
 
     # Get classifications for each HTO
-    logger.info(f"Starting demultiplexing using '{demux_method}'...")
+    logger.debug(f"Starting demultiplexing using '{demux_method}'...")
     classifications = {}
     metrics = {}
     thresholds = {}

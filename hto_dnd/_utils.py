@@ -1,6 +1,8 @@
 import os
+import sys
 import numpy as np
 import pandas as pd
+import importlib
 import scipy
 from pandas.api.types import is_float_dtype, is_integer_dtype
 from ._exceptions import AnnDataFormatError
@@ -46,7 +48,7 @@ def get_layer(
         if (not is_float_dtype(x)) or np.any(x[:100] == np.round(x[:100])):
             raise AnnDataFormatError("adata_not_float", x)
     if integer:
-        if not is_integer_dtype(x) and np.array_equal(x, x.astype(int)):
+        if not is_integer_dtype(x):
             raise AnnDataFormatError("adata_not_int", x)
 
     return adata, x
@@ -112,3 +114,18 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
             raise e
         logger = get_logger("_utils", level=1)
         logger.error(f"Failed to write file: {path}")
+
+def reload_all(module):
+    """Reload a module and all its submodules."""
+    module_name = module.__name__
+
+    # Reload submodules
+    for submodule in list(sys.modules):
+        if submodule.startswith(module_name + "."):
+            try:
+                importlib.reload(sys.modules[submodule])
+            except ModuleNotFoundError:
+                print(f"Submodule '{submodule}' not found. Skipping.")
+
+    # Reload the parent module last
+    importlib.reload(module)

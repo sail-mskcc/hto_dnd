@@ -18,7 +18,7 @@ def _log_background(n_background, n_empty, logger, _run_assert=True):
 
 
 def build_background(
-    background_version: str,
+    background_version: str = DEFAULTS["background_version"],
     _run_assert: bool = True,
     **kwargs,
 ):
@@ -178,7 +178,7 @@ def build_background_v3(
 
     # get gex_counts
     logger.info("Getting GEX counts...")
-    adata_gex, x = get_layer(
+    adata_gex, _ = get_layer(
         adata_gex,
         use_layer=use_layer,
         numpy=False,
@@ -186,14 +186,15 @@ def build_background_v3(
         integer=True,
     )
     adata_gex.obs.loc[:, "counts"] = np.asarray(adata_gex.X.sum(axis=1)).flatten()
-    adata_gex.obs.loc[:, "cells"] = adata_gex.obs_names.isin(adata_hto.obs_names)
 
-    # get top k cells from non-whitelisted cells
+    # filter: not cells, but in hto_raw
     df_temp = adata_gex.obs
-    df_temp = df_temp[~df_temp.cells]
+    df_temp = df_temp[~df_temp.index.isin(adata_hto.obs_names)]
+    df_temp = df_temp[df_temp.index.isin(adata_hto_raw.obs_names)]
+
+    # select top k cells
     top_k_cells = df_temp.nlargest(k_gex_cells, "counts")
     whitelist = list(set(adata_hto.obs_names).union(set(top_k_cells.index)))
-
 
     # subset
     adata_background = subset_whitelist(adata_hto_raw, whitelist)

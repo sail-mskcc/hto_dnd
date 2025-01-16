@@ -150,7 +150,7 @@ def umi(
         key_groups = "var_name"
         df = pd.concat([df] * adata.shape[1], ignore_index=True)
         df.loc[:, key_groups] = np.repeat(adata.var_names, adata.shape[0])
-        df.loc[:, key_counts] = X.T.A.flatten()
+        df.loc[:, key_counts] = X.T.todense().flatten()
     else:
         # sum
         df.loc[:, key_counts] = np.asarray(X.sum(axis=1)).flatten()

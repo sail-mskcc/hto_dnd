@@ -26,4 +26,5 @@ class AnnDataFormatError(Exception):
         return f"Too few cells in 'adata_filtered': '{n_cells}'. "
 
     def _adata_not_float(self, x):
-        return f"Input matrix must contain float values, got {x.dtype} ({', '.join(np.unique(x).astype(str))})"
+        msg = f"Input matrix must contain float values, got {x.dtype} ({', '.join(np.unique(x).astype(str)[:10])})."
+        return msg

@@ -14,13 +14,13 @@ DEFAULTS = {
 
     # normalise
     "pseudocount": 10,
-    "add_key_normalise": None,
+    "add_key_normalise": "normalised",
 
     # denoise
     "background_method": "kmeans-fast",
     "covariates": None,
     "design": None,
-    "add_key_denoise": None,
+    "add_key_denoise": "denoised",
     "denoise_version": "v1",
 
     # demux
@@ -32,7 +32,8 @@ DEFAULTS = {
     # build_background
     "min_umi": 300,
     "next_k_cells": 10000,
-    "background_version": "v2"
+    "k_gex_cells": 10000,
+    "background_version": "v3"
 }
 
 # shared descriptions
@@ -67,6 +68,7 @@ DESCRIPTIONS = {
     # build_background
     "min_umi": f"Minimum UMI count to consider a barcode. Default is {DEFAULTS['min_umi']}.",
     "next_k_cells": f"Number of cells to add to the background. Default is {DEFAULTS['next_k_cells']}.",
+    "k_gex_cells": f"Number of cells to use for GEX-based background estimation. Default is {DEFAULTS['k_gex_cells']}.",
     "background_version": f"Version of the background building algorithm. Must be either 'v1' or 'v2'. Default is {DEFAULTS['background_version']}.",
 }
 
@@ -101,5 +103,6 @@ OPTIONS = {
     # build_background
     "min_umi": click.option("--min-umi", type=int, default=DEFAULTS["min_umi"], help=DESCRIPTIONS["min_umi"]),
     "next_k_cells": click.option("--next-k-cells", type=int, default=DEFAULTS["next_k_cells"], help=DESCRIPTIONS["next_k_cells"]),
+    "k_gex_cells": click.option("--k-gex-cells", type=int, default=DEFAULTS["k_gex_cells"], help=DESCRIPTIONS["k_gex_cells"]),
     "background_version": click.option("--background-version", type=str, default=DEFAULTS["background_version"], help=DESCRIPTIONS["background_version"]),
 }

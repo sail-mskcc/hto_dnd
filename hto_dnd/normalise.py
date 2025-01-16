@@ -65,26 +65,26 @@ def normalise(
     adata_hto = init_meta(adata_hto)
 
     # Subsets
-    raw_barcodes = set(adata_hto_raw.obs_names)
-    filtered_barcodes = set(adata_hto.obs_names)
-    empty_barcodes = list(raw_barcodes - filtered_barcodes)
-    overlap_barcode = list(raw_barcodes & filtered_barcodes)  # check that naming is consistent
+    barcodes_raw = set(adata_hto_raw.obs_names)
+    barcodes_filtered = set(adata_hto.obs_names)
+    barcodes_background = list(barcodes_raw - barcodes_filtered)
+    overlap_barcode = list(barcodes_raw & barcodes_filtered)  # check that naming is consistent
 
-    n_filtered = len(filtered_barcodes)
-    n_raw = len(raw_barcodes)
-    n_background = len(empty_barcodes)
+    n_filtered = len(barcodes_filtered)
+    n_raw = len(barcodes_raw)
+    n_background = len(barcodes_background)
     pct_background = n_background / n_raw * 100
 
     logger.info(f"Filtered adata: {n_filtered / 1000:.1f}K cells | Background adata: {n_background / 1000:.1f}K cells")
     logger.debug(f"Background cells: {n_background / 1000:f}K cells | Overlapping cells: {len(overlap_barcode) / 1000:f}K cells")
-    if pct_background > 80:
+    if pct_background < 10:
         logger.warning(f"Only few barcodes are used for normalization: {n_background / 1000:.1f}K ({pct_background:.1f}%)")
 
     # Identify barcodes that are in adata_raw but not in adata_filtered
-    if len(empty_barcodes) < 5:
-        raise AnnDataFormatError("adata_raw_missing_cells", empty_barcodes)
+    if len(barcodes_background) < 5:
+        raise AnnDataFormatError("adata_raw_missing_cells", barcodes_background)
     if len(overlap_barcode) < 5:
-        raise AnnDataFormatError("adata_no_overlapping_names", len(filtered_barcodes))
+        raise AnnDataFormatError("adata_no_overlapping_names", len(barcodes_filtered))
 
     # Log transform both matrices
     adt_log = np.log(adt + pseudocount)

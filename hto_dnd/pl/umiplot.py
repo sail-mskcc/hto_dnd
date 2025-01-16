@@ -32,21 +32,23 @@ def bucketize(
     assert df[key_values].min() >= 0 and df[key_values].max() <= 1, f"Values must be between 0 and 1"
 
     # add rank based on counts, descending
-    df.loc[:, "_rank"] = df[key_counts].rank(ascending=False)
+    df.loc[:, "_rank"] = np.log10(df[key_counts].rank(ascending=False) + 1)
     cuts = np.linspace(df["_rank"].min(), df["_rank"].max(), n_buckets+1)
-    labels = np.log10(cuts[1:])
+    labels = cuts[1:]
     df.loc[:, "_bucket"] = pd.cut(df["_rank"], bins=cuts, labels=labels, include_lowest=True)
     df.loc[:, "_bucket"] = df["_bucket"].round(2)
 
     # aggregate:
     # - mean 'key_counts'
     # - mean 'key_values'
-    df_agg = df.groupby(["_bucket"], observed=True).agg(
-        {
-            key_counts: "mean",
-            key_values: "mean",
-        }
-    ).reset_index()
+    df_agg = df.groupby(["_bucket"], observed=True).agg(**{
+        key_counts: (key_counts, "mean"),
+        key_values: (key_values, "mean"),
+        "cells": (key_counts, "size")
+    }).reset_index()
+
+    # filter buckets with at least 4 cells
+    df_agg = df_agg[df_agg["cells"] >= 4]
 
     # sort by bucket
     df_agg = df_agg.sort_values("_bucket")
@@ -57,7 +59,7 @@ def umi_one(
     ax: plt.Axes = None,
     key_counts: str = "counts",
     key_values: str = "_values_temp",
-    n_buckets=30,
+    n_buckets=50,
     color: str = "#1f77b4",  # blue
     color_fade="#D3D3D3",  # fade to lightgrey by default
     verbose: int = DEFAULTS["verbose"],
@@ -78,8 +80,11 @@ def umi_one(
     logger.debug(f"Aggregated df: {df_agg.shape}\n{df_agg.sort_values('_bucket').tail(10)}")
 
     # set color scale
-    cmap_fades = scale_cmap(color_fade, color, vmin=df_agg[key_values].min(), vmax=df_agg[key_values].max())
-    palette = [cmap_fades.to_rgba(v) for v in df_agg[key_values]]
+    if key_values == "_values_temp":
+        palette = [color] * df_agg.shape[0]
+    else:
+        cmap_fades = scale_cmap(color_fade, color, vmin=df_agg[key_values].min(), vmax=df_agg[key_values].max())
+        palette = [cmap_fades.to_rgba(i) for i in df_agg[key_values].unique()]
 
     ax = sns.scatterplot(
         data=df_agg,
@@ -104,7 +109,7 @@ def umi(
     key_values: str = "_values_temp",
     use_log: bool = True,
     each_var: bool = False,
-    n_buckets=30,
+    n_buckets=50,
     cmap=None,
     color_fade="#D3D3D3",  # fade to lightgrey by default
     verbose: int = DEFAULTS["verbose"],

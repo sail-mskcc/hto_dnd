@@ -83,6 +83,7 @@ def denoise(
         x=x,
         covariates=covariates,
         design=design,
+        verbose=verbose,
         kwargs_denoise=kwargs_denoise,
     )
 

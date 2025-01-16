@@ -5,6 +5,7 @@ from pandas.api.types import is_float_dtype
 from hto_dnd import normalise, denoise
 from hto_dnd._exceptions import AnnDataFormatError
 from hto_dnd._cluster_background import SUPPORTED_BACKGROUND_METHODS
+from hto_dnd._remove_batch_effect import SUPPORTED_DENOISE_VERSIONS
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_denoise(mock_hto_data):
@@ -116,14 +117,16 @@ def test_background_methods(mock_hto_data):
 
     # Run denoising
     for method in SUPPORTED_BACKGROUND_METHODS:
-        adata_denoised = denoise(
-            adata_hto=adata_norm,
-            background_method=method,
-            use_layer="normalised",
-            add_key_denoise="denoised",
-            inplace=False,
-        )
-        covariates_test = adata_denoised.uns["dnd"]["denoise"]["covariates"]
+        for denoise_version in SUPPORTED_DENOISE_VERSIONS:
+            adata_denoised = denoise(
+                adata_hto=adata_norm,
+                background_method=method,
+                use_layer="normalised",
+                add_key_denoise="denoised",
+                denoise_version=denoise_version,
+                inplace=False,
+            )
+            covariates_test = adata_denoised.uns["dnd"]["denoise"]["covariates"]
 
-        assert np.corrcoef(covariates_benchmark, covariates_test)[0, 1] > 0.9, \
-            "Covariates from kmeans and kmeans-fast should be highly correlated"
+            assert np.corrcoef(covariates_benchmark, covariates_test)[0, 1] > 0.9, \
+                "Covariates from kmeans and kmeans-fast should be highly correlated"

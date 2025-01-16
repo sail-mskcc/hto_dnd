@@ -4,10 +4,13 @@ from sklearn.svm import LinearSVR
 
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._utils import get_arg
+from ._logging import get_logger
 
+SUPPORTED_DENOISE_VERSIONS = ["v1", "v2"]
 
 def remove_batch_effect(
     denoise_version: str,
+    verbose: int = DEFAULTS["verbose"],
     **kwargs,
 ):
     f"""
@@ -16,7 +19,10 @@ def remove_batch_effect(
     - v1: Linear regression of x on covariates and design matrix.
     - v2: Support Vector Regression (SVR) of x on covariates.
     """
+    logger = get_logger("remove_batch_effect", level=verbose)
+
     if denoise_version == "v1":
+        logger.warning(f"Not recommended. Using denoise version: {denoise_version}. Plot 'hto_dnd.pl.technical_noise(adata)' to verify that the denoising is working as expected.")
         return remove_batch_effect_v1(
             x=kwargs["x"],
             covariates=kwargs["covariates"],

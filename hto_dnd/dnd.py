@@ -109,6 +109,7 @@ def dnd(
         denoise_version=denoise_version,
         covariates=get_arg("covariates", kwargs, DEFAULTS),
         design=get_arg("design", kwargs, DEFAULTS),
+        kwargs_denoise=get_arg("kwargs_denoise", kwargs, DEFAULTS),
     )
 
     adata_hto = demux(

@@ -23,6 +23,7 @@ def denoise(
     design: np.ndarray = DEFAULTS["design"],
     inplace: bool = DEFAULTS["inplace"],
     verbose: int = DEFAULTS["verbose"],
+    kwargs_denoise: dict = DEFAULTS["kwargs_denoise"],
     **kwargs,
 ):
     f"""Remove technical noise by regressing out cell-level background expression.
@@ -82,6 +83,7 @@ def denoise(
         x=x,
         covariates=covariates,
         design=design,
+        kwargs_denoise=kwargs_denoise,
     )
 
     # Store meta information (don't use 'debug' key)

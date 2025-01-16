@@ -22,6 +22,12 @@ DEFAULTS = {
     "design": None,
     "add_key_denoise": "denoised",
     "denoise_version": "v1",
+    "kwargs_denoise": {
+        "C": 1,
+        "epsilon": 1,
+        "loss": "squared_epsilon_insensitive",
+        "intercept_scaling": 1
+    },
 
     # demux
     "demux_method": "kmeans",
@@ -58,6 +64,7 @@ DESCRIPTIONS = {
     "covariates": f"Matrix of covariates to use for denoising. Not recommended for general use. Default is {DEFAULTS['covariates']}.",
     "design": f"Design matrix to use for denoising. Not recommended for general use. Default is {DEFAULTS['design']}.",
     "denoise_version": f"Version of the denoising algorithm. Must be either 'v1' or 'v2'. Default is {DEFAULTS['denoise_version']}.",
+    "kwargs_denoise": f"Additional parameters for the denoising algorithm. Default is {DEFAULTS['kwargs_denoise']}.",
 
     # demux
     "demux_method": f"Method to use for demultiplexing. Must be either 'kmeans', 'gmm' or 'otsu'. Default is {DEFAULTS['demux_method']}.",
@@ -93,6 +100,7 @@ OPTIONS = {
     "design": click.option("--design", type=click.Path(exists=True), help="NOT YET SUPPORT IN CLI"),
     "add_key_denoise": click.option("--add-key-denoise", type=str, default="denoised", help=DESCRIPTIONS["add_key_denoise"]),  # (!) <-- changed from DEFAULTS
     "denoise_version": click.option("--denoise-version", type=str, default=DEFAULTS["denoise_version"], help=DESCRIPTIONS["denoise_version"]),
+    # kwargs_denoise - dictionary cli not yet supported.
 
     # demux
     "demux_method": click.option("--demux-method", type=str, default=DEFAULTS["demux_method"], help=DESCRIPTIONS["demux_method"]),

@@ -26,6 +26,7 @@ def remove_batch_effect(
         return remove_batch_effect_v2(
             x=kwargs["x"],
             covariates=kwargs["covariates"],
+            kwargs_denoise=kwargs["kwargs_denoise"],
         )
     else:
         raise ValueError(f"Invalid version: {denoise_version}. Must be 'v1'.")
@@ -75,7 +76,7 @@ def remove_batch_effect_v1(
 def remove_batch_effect_v2(
     x,
     covariates,
-    **kwargs_denoise,
+    kwargs_denoise,
 ) -> np.ndarray:
 
     # assertions
@@ -89,7 +90,7 @@ def remove_batch_effect_v2(
         x_i = x[:, i]
 
         # Fit SVR model
-        model = LinearSVR(epsilon=0, fit_intercept=True, **kwargs_denoise)
+        model = LinearSVR(fit_intercept=True, **kwargs_denoise)
         model.fit(covariates, x_i)
         coefs.append([float(model.intercept_), float(model.coef_[0])])
 

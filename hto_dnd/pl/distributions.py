@@ -1,20 +1,25 @@
 import numpy as np
+import anndata as ad
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.ticker as ticker
 
-def _set_ylim(ax, xmin=1):
-    if xmin is None:
-        return ax
-    cutoff = 0
+def _set_lims(ax, xmin=1):
+    ### BROKEN
+    #if xmin is None:
+    #    return ax
+
+    cutoff_y = 0
     lines = ax.get_lines()
+
+    # ensure to include all ylims above xmin, but still cutoff at 99th percentile
     for i in range(len(lines)):
         x_data, y_data = lines[i].get_data()
         y_sub = y_data[x_data > xmin]
         if len(y_sub) == 0:
             continue
-        cutoff = max(cutoff, max(y_sub))
-    ax.set_ylim(0, cutoff * 1.1)
+        cutoff_y = max(cutoff_y, np.quantile(y_sub, 0.9999))
+    ax.set_ylim(0, cutoff_y * 1.3)
     return ax
 
 def _symmetric_log1p(x):
@@ -48,6 +53,11 @@ def distribution(
     }
     params_legend = {**defaults_legend, **params_legend}
 
+    defaults_kdeplot = {
+        "fill": True,
+    }
+    params_kdeplot = {**defaults_kdeplot, **kwargs}
+
     # prep data
     df_long = adata.to_df(layer).melt()
     if use_log:
@@ -66,9 +76,9 @@ def distribution(
         x="value_set",
         palette=cmap,
         ax=ax,
-        **kwargs
+        **params_kdeplot
     )
-    ax = _set_ylim(ax, xmin=xmin)
+    #ax = _set_lims(ax, xmin=xmin)
     ax.set_title(title)
     ax.yaxis.set_ticks([])
     ax.set_ylabel("")
@@ -78,9 +88,9 @@ def distribution(
         ax.set_xlabel("Logged Antibody Count")
         log_ticks = _symmetric_log1p([-100000, -1000, -10, -1, 0, 1, 10, 100, 1000, 10000, 100000])  # Replace with dynamic range if needed
         ax.xaxis.set_major_locator(ticker.FixedLocator(log_ticks))
+        ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: _format(x)))
     else:
         ax.set_xlabel("Antibody Count")
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: _format(x)))
 
     if remove_legend:
         ax.get_legend().remove()
@@ -90,3 +100,66 @@ def distribution(
         ax.legend(handles, labels, **params_legend)
 
     return ax
+
+
+def distribution_stages(
+    adata: ad.AnnData,
+    figsize=(8, 12),
+    layer_raw=None,
+    layer_normalised="normalised",
+    layer_denoised="denoised",
+    cmap="tab20",
+):
+
+    assert not (layer_raw == layer_normalised), "Raw and normalised layers must be different"
+    assert not (layer_raw == layer_denoised), "Raw and denoised layers must be different"
+
+    fig, axs = plt.subplots(3, 1, figsize=figsize)
+    plt.tight_layout()
+
+    def _plot_temp(
+        ax,
+        layer,
+        title,
+        use_log,
+    ):
+        ax = distribution(
+            adata,
+            ax=ax,
+            layer=layer,
+            cmap=cmap,
+            title=title,
+            fill=True,
+            xmin=None,
+            remove_legend=False,
+            use_log=use_log,
+        )
+        return ax
+
+    ax = axs[0]
+    ax = _plot_temp(
+        ax=ax,
+        layer=layer_raw,
+        title="Logged Raw Data",
+        use_log=True,
+    )
+    ax.set_xlabel("")
+
+    ax = axs[1]
+    ax = _plot_temp(
+        ax=ax,
+        layer=layer_normalised,
+        title="Normalised Data",
+        use_log=False,
+    )
+    ax.set_xlabel("")
+
+    ax = axs[2]
+    ax = _plot_temp(
+        ax=ax,
+        layer=layer_denoised,
+        title="Denoised Data",
+        use_log=False,
+    )
+
+    return axs

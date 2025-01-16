@@ -1,26 +1,25 @@
 import numpy as np
+import anndata as ad
 import scipy.sparse
 from .._logging import get_logger
-from .._utils import get_layer
+from .._utils import get_layer, subset_whitelist
 from .._defaults import DEFAULTS, DESCRIPTIONS
 
-def _log_background(n_selected, n, logger, _run_assert=True):
-    not_found = n_selected - n
+def _log_background(n_background, n_empty, logger, _run_assert=True):
     msg = (
-        f"Building background whitelist: "
-        f"# Selected: {n_selected} | "
-        f"# Discarded: {n_selected - n} | "
-        f"# Not Found: {not_found}"
+        f"Building set of background barcodes. "
+        f"# Background: {n_background} | "
+        f"# Empty: {n_empty} | "
     )
     logger.info(msg)
-    assert n != 0, f"No barcodes found in HTO data."
+    assert n_background != 0, f"No background barcodes found in HTO data."
     if _run_assert:
-        assert n > 100, f"No/only {n} barcodes found in HTO data."
+        assert n_background > 100, f"Only {n_background} barcodes found in HTO data."
 
 
 def build_background(
-    background_version,
-    _run_assert=True,
+    background_version: str,
+    _run_assert: bool = True,
     **kwargs,
 ):
     f"""
@@ -49,13 +48,22 @@ def build_background(
             verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
             _run_assert=_run_assert,
         )
+    elif background_version == "v3":
+        return build_background_v3(
+            adata_hto=kwargs["adata_hto"],
+            adata_hto_raw=kwargs["adata_hto_raw"],
+            adata_gex=kwargs["adata_gex"],
+            k_gex_cells=kwargs.get("k_gex_cells", DEFAULTS["k_gex_cells"]),
+            verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
+            _run_assert=_run_assert,
+        )
     else:
         raise ValueError(f"Invalid version: {background_version}. Must be 'v1' or 'v2'.")
 
 
 def build_background_v1(
-    adata_hto_raw,
-    adata_gex,
+    adata_hto_raw: ad.AnnData,
+    adata_gex: ad.AnnData,
     use_layer: str = DEFAULTS["use_layer"],
     min_umi: int = DEFAULTS["min_umi"],
     verbose: int = DEFAULTS["verbose"],
@@ -87,14 +95,16 @@ def build_background_v1(
     ids_background = ids_selected.intersection(set(adata_hto_raw.obs_names))
 
     # logs
-    _log_background(len(ids_selected), len(ids_background), logger, _run_assert)
+    n_background = len(ids_background)
+    n_empty = adata_hto_raw.shape[0] - n_background
+    _log_background(n_background, n_empty, logger, _run_assert=_run_assert)
 
     return adata_hto_raw[list(ids_background)]
 
 
 def build_background_v2(
-    adata_hto,
-    adata_hto_raw,
+    adata_hto: ad.AnnData,
+    adata_hto_raw: ad.AnnData,
     use_layer: str = DEFAULTS["use_layer"],
     next_k_cells: int = DEFAULTS["next_k_cells"],
     verbose: int = DEFAULTS["verbose"],
@@ -136,6 +146,61 @@ def build_background_v2(
         background = background.union(add_cells)
 
     # logs
-    _log_background(len(background), adata_hto_raw.shape[0], logger, _run_assert=_run_assert)
+    n_background = len(background)
+    n_empty = adata_hto_raw.shape[0] - n_background
+    _log_background(n_background, n_empty, logger, _run_assert=_run_assert)
 
     return adata_hto_raw[list(background)]
+
+
+def build_background_v3(
+    adata_hto: ad.AnnData,
+    adata_hto_raw: ad.AnnData,
+    adata_gex: ad.AnnData,
+    k_gex_cells: int = DEFAULTS["k_gex_cells"],
+    use_layer: str = DEFAULTS["use_layer"],
+    verbose: int = DEFAULTS["verbose"],
+    _run_assert=True,  # <- used for testing
+):
+    f"""
+    Choose the k cells with the highest total counts from the GEX data that are not whitelisted.
+
+    Args:
+        adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
+        adata_hto_raw (AnnData): {DESCRIPTIONS["adata_hto_raw"]}
+        adata_gex (AnnData): {DESCRIPTIONS["adata_gex"]}
+        k_gex_cells (int, optional): {DESCRIPTIONS["k_gex_cells"]}
+        use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
+        verbose (int, optional): {DESCRIPTIONS["verbose"]}
+    """
+
+    logger = get_logger("utils", level=verbose)
+
+    # get gex_counts
+    logger.info("Getting GEX counts...")
+    adata_gex, x = get_layer(
+        adata_gex,
+        use_layer=use_layer,
+        numpy=False,
+        inplace=False,
+        integer=True,
+    )
+    adata_gex.obs.loc[:, "counts"] = np.asarray(adata_gex.X.sum(axis=1)).flatten()
+    adata_gex.obs.loc[:, "cells"] = adata_gex.obs_names.isin(adata_hto.obs_names)
+
+    # get top k cells from non-whitelisted cells
+    df_temp = adata_gex.obs
+    df_temp = df_temp[~df_temp.cells]
+    top_k_cells = df_temp.nlargest(k_gex_cells, "counts")
+    whitelist = list(set(adata_hto.obs_names).union(set(top_k_cells.index)))
+
+
+    # subset
+    adata_background = subset_whitelist(adata_hto_raw, whitelist)
+
+    # log
+    n_background = adata_background.shape[0]
+    n_empty = adata_hto_raw.shape[0] - n_background
+    _log_background(n_background, n_empty, logger, _run_assert=_run_assert)
+
+    return adata_background

@@ -101,7 +101,7 @@ def subset_whitelist(adata, whitelist, _required_prop=0.9):
         logger.warning(f"Some whitelisted barcodes were not found: {whitelist_pct:.1f}%")
     return adata[whitelist_select]
 
-def test_write(path, create_folder=True, _require_write=False):
+def test_write(path, filetype, create_folder=True, _require_write=False):
     """Test if file can be written before running demultiplexing."""
 
     # skip
@@ -109,7 +109,7 @@ def test_write(path, create_folder=True, _require_write=False):
         return
 
     # naming
-    assert path.endswith(".h5ad"), "Output path must end with .h5ad"
+    assert path.endswith(f".{filetype}"), "Output path must end with .h5ad"
 
     # create folder
     if create_folder:

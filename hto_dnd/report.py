@@ -1,74 +1,91 @@
-def create_report():
-    # Save outputs (try catch to return the adata object even if saving fails)
-    try:
-        # create paths (first, so that we can save the paths in the metadata)
-        paths = {}
-        path_viz = os.path.join(os.getcwd(), "dsb_viz.png")
-        if path_adata_out is not None:
-            os.makedirs(os.path.dirname(path_adata_out), exist_ok=True)
-            path_viz = os.path.join(
-                os.path.dirname(path_adata_out),
-                os.path.basename(path_adata_out).split(".")[0] + "_dsb_viz.png",
-            )
-            paths["adata_denoised"] = path_adata_out
-        if create_viz:
-            os.makedirs(os.path.dirname(path_viz), exist_ok=True)
-            paths["viz"] = path_viz
-        adata = add_meta(adata, step="paths", **paths)
+import os
+import matplotlib.pyplot as plt
+import matplotlib.backends.backend_pdf
 
-        # save adata
-        if path_adata_out is not None:
-            adata.write_h5ad(path_adata_out)
-            logger.info(f"AnnData object saved to '{path_adata_out}'")
+import hto_dnd.pl as pl
+from ._defaults import DEFAULTS
+from ._logging import get_logger
 
-        # save visualization
-        if create_viz:
-            create_visualization(adata, path_viz)
-            logger.info(f"Visualization plot saved to '{path_viz}'")
+REPORT_PLT_DEFAULTS = {
+    "dpi": 300
+}
 
-    except Exception as e:
-        logger.error(f"Failed to save outputs: '{e}'")
+def create_report(
+    adata_hto,
+    adata_background,
+    adata_hto_raw,
+    adata_gex,
+    path_out,
+    use_key_normalise: str = DEFAULTS["add_key_normalise"],
+    use_key_denoise: str = DEFAULTS["add_key_denoise"],
+    verbose: int = DEFAULTS["verbose"],
+):
+    f"""
+    Create a report to produce the following plots:
+    - umiplot
+    - umi_gex_hto
+    - distributions_stages
+    - technical_noise
 
-
-
-def numpy_to_python(obj):
-    """Convert NumPy types to native Python types.
-
-    Args:
-        obj (object): The object to convert.
-
-    Returns:
-        object: The converted object.
+    This requires some specialised inputs. This function is best used as part of
+    dnd().
     """
-    if isinstance(obj, np.generic):
-        return obj.item()
-    elif isinstance(obj, dict):
-        return {k: numpy_to_python(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [numpy_to_python(i) for i in obj]
-    else:
-        return obj
 
+    # setup
+    logger = get_logger("report", level=verbose)
+    logger.info(f"Creating report at '{path_out}'")
 
-def write_stats(result_df, metrics, output_file="stats.yml"):
-    """Write statistics and metrics to a YAML file.
+    assert path_out.endswith(".pdf"), "Path must end with .pdf"
+    os.makedirs(os.path.dirname(path_out), exist_ok=True)
+    pdf = matplotlib.backends.backend_pdf.PdfPages(path_out)
 
-    Args:
-        result_df (pd.DataFrame): The result DataFrame containing the hashID and Doublet_Info columns.
-        metrics (dict): A dictionary containing the metrics for each HTO.
-        output_file (str): The output file path. Default is 'stats.yml'.
+    # preprocess
+    adata_background.obs.loc[:, "filtered"] = adata_background.obs_names.isin(adata_hto.obs_names)
 
-    Returns:
-        None
-    """
-    stats = result_df.groupby(by="hashID").size().to_dict()
-    stats["Total"] = len(result_df)
+    # plot umiplot
+    fig_umiplot, ax = plt.subplots(1, 1, figsize=(8, 4), **REPORT_PLT_DEFAULTS)
 
-    # Convert NumPy values to native Python types
-    metrics = numpy_to_python(metrics)
+    ax = pl.umi(
+        adata_background,
+        key_values="filtered",
+        each_var=True,
+        verbose=1,
+        ax=ax,
+    )
+    pdf.savefig(fig_umiplot)
 
-    output_dict = {"stats": stats, "metrics": metrics}
+    # umi_gex_hto
+    fig_umi_gex_hto, axs = plt.subplots(1, 2, figsize=(8, 4), **REPORT_PLT_DEFAULTS)
 
-    # Write stats and metrics to the YAML file
-    with open(output_file, "wt") as fout:
-        yaml.dump(output_dict, fout, sort_keys=False, default_flow_style=False)
+    df = pl.umi_gex_hto(
+        adata_hto=adata_hto,
+        adata_background=adata_background,
+        adata_hto_raw=adata_hto_raw,
+        adata_gex=adata_gex,
+        axs=axs,
+    )
+    pdf.savefig(fig_umi_gex_hto)
+
+    # distributions_stages
+    fig_distributions_stages, axs = plt.subplots(3, 1, figsize=(8, 12), **REPORT_PLT_DEFAULTS)
+
+    axs = pl.distribution_stages(
+        adata=adata_hto,
+        use_key_normalise=use_key_normalise,
+        use_key_denoise=use_key_denoise,
+        axs=axs,
+    )
+    pdf.savefig(fig_distributions_stages)
+
+    # technical_noise
+    for i in range(adata_hto.shape[1]):
+        fig_technical_noise, axs = plt.subplots(2, 2, figsize=(8, 4), **REPORT_PLT_DEFAULTS)
+
+        axs = pl.technical_noise(
+            adata=adata_hto,
+            var=i,
+            use_key_normalise=use_key_normalise,
+            use_key_denoised=use_key_denoise,
+            axs=axs,
+        )
+        pdf.savefig(fig_technical_noise)

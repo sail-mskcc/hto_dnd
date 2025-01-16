@@ -206,4 +206,6 @@ def umi(
             )
 
     ax.set_xlabel("Log UMI Rank")
+    if key_values == "_values_temp":
+        ax.get_legend().remove()
     return ax

@@ -10,12 +10,14 @@ from ._utils import write_h5ad_safe, test_write, subset_whitelist, get_arg
 from ._cluster_background import assert_background
 from ._cluster_demux import assert_demux
 from ._logging import get_logger
+from .report import create_report
 
 def dnd(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData,
     adata_gex: ad.AnnData = None,
     path_out: str = None,
+    path_report: str = None,
     _as_cli: bool = False,  # required when run as cli
     **kwargs
 ):
@@ -62,7 +64,8 @@ def dnd(
     # - check that output path is writeable (and .h5ad)
     # - check that parameters are valid
     # - check that keys do not exist in adata if run as cli
-    test_write(path_out, create_folder=True, _require_write=_as_cli)
+    test_write(path_out, filetype="h5ad", create_folder=True, _require_write=_as_cli)
+    test_write(path_report, filetype="pdf", create_folder=True, _require_write=_as_cli)
     assert_background(background_method)
     assert_demux(demux_method)
     if _as_cli:
@@ -125,5 +128,17 @@ def dnd(
 
     # SAVE
     write_h5ad_safe(adata_hto, path_out, create_folder=True, _require_write=_as_cli)
+
+    # REPORT
+    if path_report:
+        create_report(
+            adata_hto=adata_hto,
+            adata_background=adata_hto_raw,
+            adata_hto_raw=adata_hto_raw,
+            adata_gex=adata_gex,
+            path_out=path_report,
+            use_key_normalise=add_key_normalise,
+            use_key_denoise=add_key_denoise,
+        )
 
     return adata_hto

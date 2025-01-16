@@ -7,6 +7,7 @@ DEFAULTS = {
     "adata_hto_raw": None,
     "adata_gex": None,
     "path_out": None,
+    "path_report": None,
     "use_layer": None,
     "inplace": False,
     "verbose": 1,
@@ -38,7 +39,7 @@ DEFAULTS = {
     # build_background
     "min_umi": 300,
     "next_k_cells": 10000,
-    "k_gex_cells": 10000,
+    "k_gex_cells": 40000,
     "background_version": "v3"
 }
 
@@ -49,6 +50,7 @@ DESCRIPTIONS = {
     "adata_hto_raw": f"AnnData object containing raw protein expression data.",
     "adata_gex": f"AnnData object containing raw gene expression data.",
     "path_out": f"Path to save the output AnnData object. Default is {DEFAULTS['path_out']}.",
+    "path_report": f"Path to save the output report. Only created if not None. Default is {DEFAULTS['path_report']}.",
     "verbose": f"Verbosity level. Default is {DEFAULTS['verbose']}.",
     "inplace": f"Whether to perform the operation in place. Default is {DEFAULTS['inplace']}.",
     "use_layer": f"Layer to use for denoising. Default is {DEFAULTS['use_layer']}.",
@@ -86,6 +88,7 @@ OPTIONS = {
     "adata_hto_raw": click.option("--adata-hto-raw", "-r", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto_raw"], required=True),
     "adata_gex": click.option("--adata-gex", "-g", type=click.Path(exists=True), help=DESCRIPTIONS["adata_gex"], required=False),
     "path_out": click.option("--path-out", "-o", type=click.Path(), help=DESCRIPTIONS["path_out"], default=DEFAULTS["path_out"], required=True),
+    "path_report": click.option("--path-report", "-p", type=click.Path(), help=DESCRIPTIONS["path_report"], default=DEFAULTS["path_report"]),
     "verbose": click.option("-v", "--verbose", type=int, default=DEFAULTS["verbose"], help=DESCRIPTIONS["verbose"]),
     "inplace": click.option("--inplace", is_flag=True, default=DEFAULTS["inplace"], help=DESCRIPTIONS["inplace"]),
     "use_layer": click.option("--use-layer", type=str, default=DEFAULTS["use_layer"], help=DESCRIPTIONS["use_layer"]),

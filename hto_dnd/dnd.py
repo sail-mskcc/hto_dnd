@@ -10,7 +10,7 @@ from ._utils import write_h5ad_safe, test_write, subset_whitelist, get_arg
 from ._cluster_background import assert_background
 from ._cluster_demux import assert_demux
 from ._logging import get_logger
-from .report import create_report
+from .report import report_safe
 
 def dnd(
     adata_hto: ad.AnnData,
@@ -130,15 +130,18 @@ def dnd(
     write_h5ad_safe(adata_hto, path_out, create_folder=True, _require_write=_as_cli)
 
     # REPORT
-    if path_report:
-        create_report(
+    if add_key_normalise is None or add_key_denoise is None:
+        logger.warning("Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoise' (--add-key-denoise) to generate report.")
+    else:
+        report_safe(
             adata_hto=adata_hto,
             adata_background=adata_hto_raw,
             adata_hto_raw=adata_hto_raw,
             adata_gex=adata_gex,
-            path_out=path_report,
+            path_report=path_report,
             use_key_normalise=add_key_normalise,
             use_key_denoise=add_key_denoise,
+            verbose=verbose,
         )
 
     return adata_hto

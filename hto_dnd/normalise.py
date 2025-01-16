@@ -91,8 +91,8 @@ def normalise(
     adtu_log = np.log(adtu + pseudocount)
 
     # Calculate mean and sd of log-transformed empty droplets for each protein
-    mu_empty = np.mean(adtu_log, axis=0)
-    sd_empty = np.std(adtu_log, axis=0)
+    mu_empty = np.array(np.mean(adtu_log, axis=0)).flatten()
+    sd_empty = np.array(np.std(adtu_log, axis=0)).flatten()
 
     # Normalize the cell protein matrix
     normalized_matrix = (adt_log - mu_empty) / sd_empty
@@ -103,7 +103,7 @@ def normalise(
         step="normalise",
         params={
             "pseudocount": pseudocount,
-            "background": adata_hto_raw.obs_names,
+            "background": adata_hto_raw.obs_names.values,
         },
         mu_empty=mu_empty,
         sd_empty=sd_empty,

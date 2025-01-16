@@ -145,12 +145,12 @@ def umi(
 
     # concatenate if each_ver
     if each_var:
-        assert adata.shape[1] < 10, f"Number of vars must be less than 10"
+        assert adata.shape[1] < 19, f"Number of vars must be less than 19, got {adata.shape[1]}"
         assert not key_groups != "_groups_temp", f"Can't use 'each_var' with 'key_groups', as variable names are used as groups"
         key_groups = "var_name"
         df = pd.concat([df] * adata.shape[1], ignore_index=True)
         df.loc[:, key_groups] = np.repeat(adata.var_names, adata.shape[0])
-        df.loc[:, key_counts] = X.T.todense().flatten()
+        df.loc[:, key_counts] = np.array(X.T.todense()).flatten()
     else:
         # sum
         df.loc[:, key_counts] = np.asarray(X.sum(axis=1)).flatten()
@@ -163,7 +163,6 @@ def umi(
 
         # get
         if use_log:
-            print("LOGGING")
             df.loc[:, key_counts] = np.log1p(df[key_counts].astype(float))
 
         # plot
@@ -178,6 +177,7 @@ def umi(
             verbose=verbose,
             **kwargs
         )
+        ax.get_legend().remove()
     else:
         # set colors
         groups = df[key_groups].unique()
@@ -205,7 +205,11 @@ def umi(
                 **kwargs
             )
 
-    ax.set_xlabel("Log UMI Rank")
-    if key_values == "_values_temp":
+        # add legend
         ax.get_legend().remove()
+        handles = [plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=cmap[group], label=group) for group in groups]
+        ax.legend(handles=handles, title=key_groups, loc="lower left")
+
+
+    ax.set_xlabel("Log UMI Rank")
     return ax

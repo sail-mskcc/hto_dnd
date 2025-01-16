@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 import importlib
 import scipy
+import matplotlib.pyplot as plt
 from pandas.api.types import is_float_dtype, is_integer_dtype
+from matplotlib.backends.backend_pdf import PdfPages
 from ._exceptions import AnnDataFormatError
 from ._meta import init_meta
 from ._logging import get_logger
@@ -121,7 +123,6 @@ def test_write(path, filetype, create_folder=True, _require_write=False):
             f.write("test")
         os.remove(path)
 
-
 def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
     """Write AnnData object to h5ad file safely.
 
@@ -140,13 +141,24 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
         if create_folder:
             os.makedirs(os.path.dirname(path), exist_ok=True)
 
+        # all categorical columns to str
+        for k in adata.obs.columns:
+            if pd.api.types.is_categorical_dtype(adata.obs[k]):
+                adata.obs[k] = adata.obs[k].astype(str)
+
+
+
+        # overwrite
+        if os.path.exists(path):
+            os.remove(path)
+
         # write
         adata.write_h5ad(path)
     except Exception as e:
         if _require_write:
             raise e
         logger = get_logger("_utils", level=1)
-        logger.error(f"Failed to write file: {path}")
+        logger.error(f"Failed to write file: {path} ({e})")
 
 def reload_all(module):
     """Reload a module and all its submodules."""
@@ -162,3 +174,21 @@ def reload_all(module):
 
     # Reload the parent module last
     importlib.reload(module)
+
+def savepdf(
+    pdf: PdfPages,
+    path: str,
+    fig: plt.Figure,
+    show: bool = False
+):
+    # open pdf
+    if pdf is None and path is not None:
+        pdf = PdfPages(path)
+
+    # save
+    if pdf is not None:
+        pdf.savefig(fig)
+
+    # display
+    if not show:
+        plt.close()

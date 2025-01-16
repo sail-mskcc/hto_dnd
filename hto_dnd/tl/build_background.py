@@ -193,6 +193,7 @@ def build_background_v3(
     df_temp = df_temp[df_temp.index.isin(adata_hto_raw.obs_names)]
 
     # select top k cells
+    k_gex_cells = min(k_gex_cells, df_temp.shape[0])
     top_k_cells = df_temp.nlargest(k_gex_cells, "counts")
     whitelist = list(set(adata_hto.obs_names).union(set(top_k_cells.index)))
 

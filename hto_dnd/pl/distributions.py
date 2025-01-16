@@ -108,15 +108,17 @@ def distribution_stages(
     adata: ad.AnnData,
     figsize=(8, 12),
     layer_raw=None,
-    layer_normalised=DEFAULTS["add_key_normalise"],
-    layer_denoised=DEFAULTS["add_key_denoise"],
+    use_key_normalise=DEFAULTS["add_key_normalise"],
+    use_key_denoise=DEFAULTS["add_key_denoise"],
     cmap="tab20",
+    axs=None,
 ):
 
-    assert not (layer_raw == layer_normalised), "Raw and normalised layers must be different"
-    assert not (layer_raw == layer_denoised), "Raw and denoised layers must be different"
+    assert not (layer_raw == use_key_normalise), "Raw and normalised layers must be different"
+    assert not (layer_raw == use_key_denoise), "Raw and denoised layers must be different"
 
-    fig, axs = plt.subplots(3, 1, figsize=figsize)
+    if axs is None:
+        fig, axs = plt.subplots(3, 1, figsize=figsize)
     plt.tight_layout()
 
     def _plot_temp(
@@ -150,7 +152,7 @@ def distribution_stages(
     ax = axs[1]
     ax = _plot_temp(
         ax=ax,
-        layer=layer_normalised,
+        layer=use_key_normalise,
         title="Normalised Data",
         use_log=False,
     )
@@ -159,7 +161,7 @@ def distribution_stages(
     ax = axs[2]
     ax = _plot_temp(
         ax=ax,
-        layer=layer_denoised,
+        layer=use_key_denoise,
         title="Denoised Data",
         use_log=False,
     )

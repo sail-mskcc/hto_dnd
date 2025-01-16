@@ -10,17 +10,19 @@ from .._defaults import DEFAULTS
 def technical_noise(
     adata: ad.AnnData,
     var,
-    use_layer_normalise: str = DEFAULTS["add_key_normalise"],
-    use_layer_denoised: str = DEFAULTS["add_key_denoise"],
+    use_key_normalise: str = DEFAULTS["add_key_normalise"],
+    use_key_denoise: str = DEFAULTS["add_key_denoise"],
     axs: plt.Axes = None,
 ):
 
     # assert
     if isinstance(var, int):
         i = var
+        varname = adata.var_names[i]
     elif isinstance(var, str):
         assert var in adata.var_names, f"Variable {var} not found in adata.var_names"
         i = np.where(adata.var_names == var)[0][0]
+        varname = var
     else:
         raise ValueError("'var' must be either an integer index or a var_name")
 
@@ -31,8 +33,8 @@ def technical_noise(
     # get data
     df = pd.DataFrame({
         "noise": adata.uns["dnd"]["denoise"]["covariates"],
-        "normalised": adata.layers["normalised"][:, i],
-        "denoised": adata.layers["denoised"][:, i],
+        "normalised": adata.layers[use_key_normalise][:, i],
+        "denoised": adata.layers[use_key_denoise][:, i],
     }, index=adata.obs_names)
     coefs = adata.uns["dnd"]["denoise"]["batch_model"]["coefs"][i]
 
@@ -57,6 +59,7 @@ def technical_noise(
     sns.scatterplot(df, x="noise", y="normalised", linewidth=0, s=5, alpha=.5, ax=ax)
     sns.lineplot(df_line, x="x", y="y", c="black", ax=ax)
     ax.axhline(threshold_normalised, c="grey", linestyle="--")
+    ax.set_title(f"{varname} normalised")
 
     ax = axs[1, 0]
     sns.scatterplot(df, x="noise", y="denoised", linewidth=0, s=5, alpha=.5, ax=ax)
@@ -66,6 +69,7 @@ def technical_noise(
     ax = axs[0, 1]
     sns.kdeplot(data=df, y="normalised", ax=ax, fill=True)
     ax.axhline(threshold_denoised, c="grey", linestyle="--")
+    ax.set_title(f"{varname} denoised")
 
     ax = axs[1, 1]
     sns.kdeplot(data=df, y="denoised", ax=ax, fill=True)

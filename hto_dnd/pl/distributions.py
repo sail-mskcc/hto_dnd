@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.ticker as ticker
 
+from .._defaults import DEFAULTS
+
 def _set_lims(ax, xmin=1):
     ### BROKEN
     #if xmin is None:
@@ -106,8 +108,8 @@ def distribution_stages(
     adata: ad.AnnData,
     figsize=(8, 12),
     layer_raw=None,
-    layer_normalised="normalised",
-    layer_denoised="denoised",
+    layer_normalised=DEFAULTS["add_key_normalise"],
+    layer_denoised=DEFAULTS["add_key_denoise"],
     cmap="tab20",
 ):
 

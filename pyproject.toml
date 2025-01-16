@@ -1,6 +1,6 @@
 [project]
 name = "hto-dnd"
-version = "1.0.0.a0"
+version = "1.0.0.a1"
 description = "A method to demultiplex hashtagged single-cell data."
 dependencies = [
     "click >= 8.0.0",

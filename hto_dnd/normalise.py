@@ -103,6 +103,7 @@ def normalise(
         step="normalise",
         params={
             "pseudocount": pseudocount,
+            "background": adata_hto_raw.obs_names,
         },
         mu_empty=mu_empty,
         sd_empty=sd_empty,

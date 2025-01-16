@@ -49,6 +49,7 @@ def test_dnd(mock_hto_data):
         assert isinstance(adata, ad.AnnData), "Demultiplexing result is not an AnnData object"
         assert 'hash_id' in adata.obs.columns, "'hash_id' column not found in demultiplexing result"
         assert 'doublet_info' in adata.obs.columns, "'doublet_info' column not found in demultiplexing result"
+        assert len(adata.obs.columns) == 5, f"Expected columns cell_id', 'cell_type', 'hto_classification', 'hash_id', 'doublet_info'. Unexpected columns in demultiplexing result: {adata.obs.columns}"
         assert 'metrics' in adata.uns["dnd"]["demux"], "Metrics not found in demultiplexing result"
         assert 'pseudocount' in adata.uns["dnd"]["normalise"]["params"], "Pseudo count not found in normalisation result"
         assert adata.uns["dnd"]["normalise"]["params"]["pseudocount"] == 20, "Pseudo count is not 20"

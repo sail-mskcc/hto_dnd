@@ -67,7 +67,7 @@ def _get_demux_kmeans(
     threshold = np.mean(model.cluster_centers_)
     silhouette = silhouette_score(data, labels)
     davies_bouldin = davies_bouldin_score(data, labels)
-    metrics = {"silhouette_score": silhouette, "davies_bouldin_index": davies_bouldin}
+    metrics = {"silhouette_score": float(silhouette), "davies_bouldin_index": float(davies_bouldin)}
 
     return labels, threshold, metrics
 
@@ -96,7 +96,7 @@ def _get_demux_gmm(
     # evaluate
     bic = model.bic(data)
     log_likelihood = model.score(data) * data.shape[0]
-    metrics = {"bic": bic, "log_likelihood": log_likelihood}
+    metrics = {"bic": float(bic), "log_likelihood": float(log_likelihood)}
 
     return labels, threshold, metrics
 
@@ -123,8 +123,8 @@ def _get_demux_otsu(
     hist_norm = hist / np.sum(hist)
     entropy = scipy.stats.entropy(hist_norm)
     metrics = {
-        "inter_class_variance": inter_class_variance,
-        "entropy": entropy
+        "inter_class_variance": float(inter_class_variance),
+        "entropy": float(entropy)
     }
 
     return labels, threshold, metrics

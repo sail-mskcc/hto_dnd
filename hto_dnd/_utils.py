@@ -73,8 +73,7 @@ def get_layer(
         x = adata.layers[use_layer]
 
     # to numpy
-    if scipy.sparse.issparse(x) and numpy:
-        x = x.todense()
+    x = to_dense_safe(x)
 
     # assertions
     if float:
@@ -198,3 +197,9 @@ def _assert_required_inputs(required, kwargs):
     for var in required:
         if var not in kwargs or kwargs[var] is None:
             raise ValueError(f"Missing required input: '{var}'")
+
+def to_dense_safe(x):
+    """Convert sparse matrix to dense matrix safely."""
+    if scipy.sparse.issparse(x):
+        return x.todense()
+    return x

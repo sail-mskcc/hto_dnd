@@ -108,6 +108,7 @@ def test_cluster_and_evaluate(mock_hto_data, demux_method):
     )
     adata_denoised = denoise(
         adata_normalised,
+        denoise_version="v1",
         add_key_denoise="denoised",
         use_layer="normalised"
     )

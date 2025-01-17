@@ -6,7 +6,7 @@ import seaborn as sns
 from matplotlib.colors import Normalize, LinearSegmentedColormap
 from matplotlib.cm import ScalarMappable
 
-from .._utils import get_layer
+from .._utils import get_layer, to_dense_safe
 from .._logging import get_logger
 from .._defaults import DEFAULTS, DESCRIPTIONS
 
@@ -150,7 +150,7 @@ def umi(
         key_groups = "var_name"
         df = pd.concat([df] * adata.shape[1], ignore_index=True)
         df.loc[:, key_groups] = np.repeat(adata.var_names, adata.shape[0])
-        df.loc[:, key_counts] = np.array(X.T.todense()).flatten()
+        df.loc[:, key_counts] = np.array(to_dense_safe(X.T)).flatten()
     else:
         # sum
         df.loc[:, key_counts] = np.asarray(X.sum(axis=1)).flatten()

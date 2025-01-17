@@ -73,7 +73,7 @@ def demux(
         logger.debug(f"Demultiplexing HTO '{hto}'...")
         data = df_umi[hto].values.reshape(-1, 1)
         labels, threshold, hto_metrics = cluster_and_evaluate(data, demux_method=demux_method, verbose=verbose)
-        thresholds[hto] = threshold
+        thresholds[hto] = float(threshold)
         metrics[hto] = hto_metrics
         classifications[hto] = labels
 

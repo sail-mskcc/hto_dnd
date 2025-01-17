@@ -5,11 +5,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.cluster import KMeans
 
+from .._cluster_demux import cluster_and_evaluate
 from .._defaults import DEFAULTS
 
 def technical_noise(
     adata: ad.AnnData,
     var,
+    demux_method: str = None,
     use_key_normalise: str = DEFAULTS["add_key_normalise"],
     use_key_denoise: str = DEFAULTS["add_key_denoise"],
     axs: plt.Axes = None,
@@ -44,6 +46,10 @@ def technical_noise(
     df_line = pd.DataFrame({"x": x, "y": y})
 
     # get thresholds
+    demux_method = adata.uns["dnd"].get("demux", {}).get("params", {}).get("demux_method", DEFAULTS["demux_method"])
+    _, threshold_normalised, _ = cluster_and_evaluate(df[["normalised"]].values.reshape(-1, 1), demux_method=demux_method, verbose=0)
+    _, threshold_denoised, _ = cluster_and_evaluate(df[["denoised"]].values.reshape(-1, 1), demux_method=demux_method, verbose=0)
+
     kmeans = KMeans(n_clusters=2, random_state=42).fit(df[["normalised"]])
     threshold_normalised = kmeans.cluster_centers_.mean()
 

@@ -192,3 +192,9 @@ def savepdf(
     # display
     if not show:
         plt.close()
+
+def _assert_required_inputs(required, kwargs):
+    """Assert that all required inputs are present and not None."""
+    for var in required:
+        if var not in kwargs or kwargs[var] is None:
+            raise ValueError(f"Missing required input: '{var}'")

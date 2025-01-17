@@ -25,6 +25,7 @@ def test_cli(mock_hto_data):
             "--adata-hto", path_filtered,
             "--adata-hto-raw", path_raw,
             "--path-out", path_out,
+            "--background-version", "v2",
             "--demux-method", "otsu",
         ]
     )

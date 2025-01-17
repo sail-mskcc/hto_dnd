@@ -6,15 +6,32 @@ from ._meta import init_meta, add_meta
 from ._exceptions import AnnDataFormatError
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._utils import get_layer
+from .tl import build_background
+
+def assert_normalisation(df, logger, max_spread=1.5, qs=[.1, .99]):
+    """Assert that normalised values are within a certain spread."""
+    spans = []
+    # get spread of each column
+    for c in df.columns:
+        q = df[c].quantile(qs).values
+        diff = float(q[1] - q[0])
+        spans.append(diff)
+    ratio = max(spans) / min(spans)
+    if ratio > max_spread:
+        logger.warning(f"Spread of normalised values is too high: {ratio:.2f}. This may cause issues when estimate cell-by-cell covariates.")
 
 def normalise(
     adata_hto: ad.AnnData,
-    adata_hto_raw: ad.AnnData,
+    adata_hto_raw: ad.AnnData = None,
+    adata_gex: ad.AnnData = None,
+    adata_background: ad.AnnData = None,
     pseudocount: int = DEFAULTS["pseudocount"],
+    background_version: str = DEFAULTS["background_version"],
     add_key_normalise: str = DEFAULTS["add_key_normalise"],
     use_layer: str = DEFAULTS["use_layer"],
     inplace: bool = DEFAULTS["inplace"],
     verbose: int = DEFAULTS["verbose"],
+    **kwargs_background,
 ) -> ad.AnnData:
     f"""Background aware HTO normalisation.
 
@@ -25,6 +42,8 @@ def normalise(
     Args:
         adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
         adata_hto_raw (AnnData): {DESCRIPTIONS["adata_hto_raw"]}
+        adata_gex (AnnData, optional): {DESCRIPTIONS["adata_gex"]}
+        adata_background (AnnData, optional): {DESCRIPTIONS["adata_background"]}
         pseudocount (int, optional): {DESCRIPTIONS["pseudocount"]}
         background_method (str, optional): {DESCRIPTIONS["background_method"]}
         add_key_normalise (str, optional): {DESCRIPTIONS["add_key_normalise"]}
@@ -44,6 +63,17 @@ def normalise(
     logger.log_parameters(locals())
     logger.debug("Starting normalization...")
 
+    # Get background if not provided
+    adata_background = build_background(
+        background_version=background_version,
+        adata_hto=adata_hto,
+        adata_hto_raw=adata_hto_raw,
+        adata_gex=adata_gex,
+        adata_background=adata_background,
+        verbose=verbose,
+        **kwargs_background,
+    )
+
     # Setup
     adata_hto, adt = get_layer(
         adata_hto,
@@ -53,8 +83,8 @@ def normalise(
         inplace=inplace
     )
 
-    adata_hto_raw, adtu = get_layer(
-        adata_hto_raw,
+    adata_background, adtu = get_layer(
+        adata_background,
         use_layer=use_layer,
         integer=True,
         numpy=True,
@@ -65,23 +95,22 @@ def normalise(
     adata_hto = init_meta(adata_hto)
 
     # Subsets
-    barcodes_raw = set(adata_hto_raw.obs_names)
     barcodes_filtered = set(adata_hto.obs_names)
-    barcodes_background = list(barcodes_raw - barcodes_filtered)
-    overlap_barcode = list(barcodes_raw & barcodes_filtered)  # check that naming is consistent
+    barcodes_background = set(adata_background.obs_names)
+    barcodes_background_only = barcodes_background.difference(barcodes_filtered)
+    overlap_barcode = list(barcodes_filtered & barcodes_background)  # check that naming is consistent
 
     n_filtered = len(barcodes_filtered)
-    n_raw = len(barcodes_raw)
     n_background = len(barcodes_background)
-    pct_background = n_background / n_raw * 100
+    pct_background = n_filtered / n_background * 100
 
-    logger.info(f"Filtered adata: {n_filtered / 1000:.1f}K cells | Background adata: {n_background / 1000:.1f}K cells")
+    logger.debug(f"Filtered adata: {n_filtered / 1000:.1f}K cells | Background adata: {n_background / 1000:.1f}K cells")
     logger.debug(f"Background cells: {n_background / 1000:f}K cells | Overlapping cells: {len(overlap_barcode) / 1000:f}K cells")
     if pct_background < 10:
         logger.warning(f"Only few barcodes are used for normalization: {n_background / 1000:.1f}K ({pct_background:.1f}%)")
 
     # Identify barcodes that are in adata_raw but not in adata_filtered
-    if len(barcodes_background) < 5:
+    if len(barcodes_background_only) < 5:
         raise AnnDataFormatError("adata_raw_missing_cells", barcodes_background)
     if len(overlap_barcode) < 5:
         raise AnnDataFormatError("adata_no_overlapping_names", len(barcodes_filtered))
@@ -97,18 +126,6 @@ def normalise(
     # Normalize the cell protein matrix
     normalized_matrix = (adt_log - mu_empty) / sd_empty
 
-    # Store meta information
-    adata_hto = add_meta(
-        adata_hto,
-        step="normalise",
-        params={
-            "pseudocount": pseudocount,
-            "background": adata_hto_raw.obs_names.values,
-        },
-        mu_empty=mu_empty,
-        sd_empty=sd_empty,
-    )
-
     # Checkpoint
     if add_key_normalise is not None:
         adata_hto.layers[add_key_normalise] = normalized_matrix
@@ -117,7 +134,22 @@ def normalise(
         adata_hto.X = normalized_matrix
         logger.info("Normalization completed and stored in adata.X")
 
+    # Assert
+    assert_normalisation(adata_hto.to_df(add_key_normalise), logger)
+
     # Log metadata
     logger.debug(pformat(adata_hto.uns["dnd"]))
+
+    # Store meta information
+    adata_hto = add_meta(
+        adata_hto,
+        step="normalise",
+        params={
+            "pseudocount": pseudocount,
+            "background": adata_background.obs_names.values,
+        },
+        mu_empty=mu_empty,
+        sd_empty=sd_empty,
+    )
 
     return adata_hto

@@ -19,7 +19,7 @@ def test_normalise(mock_hto_data):
     # Run normalisation
     adata_norm = normalise(
         adata_hto=adata_filtered,
-        adata_hto_raw=adata_raw,
+        adata_background=adata_raw,
         add_key_normalise=None,
         inplace=False,
     )
@@ -42,7 +42,7 @@ def test_normalise(mock_hto_data):
     adata_inplace = adata_filtered.copy()
     normalise(
         adata_hto=adata_inplace,
-        adata_hto_raw=adata_raw,
+        adata_background=adata_raw,
         add_key_normalise=None,
         pseudocount=20,
         inplace=True,
@@ -53,7 +53,7 @@ def test_normalise(mock_hto_data):
     # Test layers
     adata_norm = normalise(
         adata_hto=adata_filtered,
-        adata_hto_raw=adata_raw,
+        adata_background=adata_raw,
         add_key_normalise="norm",
         inplace=False,
     )
@@ -73,8 +73,9 @@ def test_faulty_data(mock_hto_data):
     with pytest.raises(AnnDataFormatError):
         adata_norm = normalise(
             adata_hto=adata_filtered,
-            adata_hto_raw=adata_filtered,
+            adata_background=adata_filtered,
             inplace=False,
+            _run_assert=False,
         )
 
     # Fail - no overlap
@@ -83,6 +84,6 @@ def test_faulty_data(mock_hto_data):
         obs_names = obs_names[~obs_names.isin(adata_filtered.obs_names)]
         adata_norm = normalise(
             adata_hto=adata_filtered,
-            adata_hto_raw=adata_raw[obs_names],
+            adata_background=adata_raw[obs_names],
             inplace=False,
         )

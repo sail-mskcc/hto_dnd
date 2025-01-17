@@ -18,6 +18,39 @@ def assert_demux(method):
         raise ValueError(f"Method '{method}' not supported. Choose from: {', '.join(SUPPORTED_DEMUX_METHODS)}")
 
 
+def cluster_and_evaluate(
+    data,
+    demux_method="kmeans",
+    verbose=1,
+):
+    """Perform clustering to identify positive populations for each HTO.
+
+    Methods:
+        - K-means: Silhouette score and Davies-Bouldin index
+        - GMM: BIC and log-likelihood
+        - Otsu: Inter-class variance and entropy
+
+    Args:
+        data (np.array): The input data used for clustering
+        method (str): Clustering method to use. Either 'kmeans' or 'gmm'. Default is 'kmeans'.
+
+    Returns:
+        tuple: A tuple containing:
+            - np.array: The cluster labels
+            - int: The index of the positive cluster
+            - dict: A dictionary containing various goodness of fit metrics
+    """
+    logger = get_logger("demux", level=verbose)
+    if demux_method == "kmeans":
+        return _get_demux_kmeans(data, logger)
+    elif demux_method == "gmm":
+        return _get_demux_gmm(data, logger)
+    elif demux_method == "otsu":
+        return _get_demux_otsu(data, logger)
+    else:
+        raise ValueError(f"Method '{demux_method}' is not supported. Must be one of {SUPPORTED_DEMUX_METHODS}")
+
+
 def _get_demux_kmeans(
     data,
     logger,
@@ -95,35 +128,3 @@ def _get_demux_otsu(
     }
 
     return labels, threshold, metrics
-
-def cluster_and_evaluate(
-    data,
-    demux_method="kmeans",
-    verbose=1,
-):
-    """Perform clustering to identify positive populations for each HTO.
-
-    Methods:
-        - K-means: Silhouette score and Davies-Bouldin index
-        - GMM: BIC and log-likelihood
-        - Otsu: Inter-class variance and entropy
-
-    Args:
-        data (np.array): The input data used for clustering
-        method (str): Clustering method to use. Either 'kmeans' or 'gmm'. Default is 'kmeans'.
-
-    Returns:
-        tuple: A tuple containing:
-            - np.array: The cluster labels
-            - int: The index of the positive cluster
-            - dict: A dictionary containing various goodness of fit metrics
-    """
-    logger = get_logger("demux", level=verbose)
-    if demux_method == "kmeans":
-        return _get_demux_kmeans(data, logger)
-    elif demux_method == "gmm":
-        return _get_demux_gmm(data, logger)
-    elif demux_method == "otsu":
-        return _get_demux_otsu(data, logger)
-    else:
-        raise ValueError(f"Method '{demux_method}' is not supported. Must be one of {SUPPORTED_DEMUX_METHODS}")

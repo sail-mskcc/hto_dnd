@@ -2,19 +2,26 @@ import numpy as np
 import anndata as ad
 import scipy.sparse
 from .._logging import get_logger
-from .._utils import get_layer, subset_whitelist
+from .._utils import get_layer, subset_whitelist, _assert_required_inputs
 from .._defaults import DEFAULTS, DESCRIPTIONS
+from .._exceptions import AnnDataFormatError
 
-def _log_background(n_background, n_empty, logger, _run_assert=True):
+def _assert_background(adata, _run_assert=True):
+    n = adata.shape[0]
+    if not _run_assert:
+        return
+    elif n == 0:
+        raise AnnDataFormatError("No background barcodes found in HTO data.")
+    elif n < 100:
+        raise AnnDataFormatError(f"Only {n} barcodes found in HTO data.")
+
+def _log_background(n_background, n_empty, logger):
     msg = (
         f"Building set of background barcodes. "
         f"# Background: {n_background} | "
         f"# Empty: {n_empty} | "
     )
     logger.info(msg)
-    assert n_background != 0, f"No background barcodes found in HTO data."
-    if _run_assert:
-        assert n_background > 100, f"Only {n_background} barcodes found in HTO data."
 
 
 def build_background(
@@ -32,8 +39,13 @@ def build_background(
     Returns:
         AnnData: Filtered AnnData object of background data
     """
-    if background_version == "v1":
-        return build_background_v1(
+    adata_background = kwargs.get("adata_background", None)
+    if adata_background is not None:
+        adata_background = adata_background
+    elif background_version == "v1":
+        required = ["adata_hto_raw", "adata_gex"]
+        _assert_required_inputs(required, kwargs)
+        adata_background = build_background_v1(
             adata_hto_raw=kwargs["adata_hto_raw"],
             adata_gex=kwargs["adata_gex"],
             min_umi=kwargs.get("min_umi", DEFAULTS["min_umi"]),
@@ -41,7 +53,9 @@ def build_background(
             _run_assert=_run_assert,
         )
     elif background_version == "v2":
-        return build_background_v2(
+        required = ["adata_hto", "adata_hto_raw"]
+        _assert_required_inputs(required, kwargs)
+        adata_background = build_background_v2(
             adata_hto_raw=kwargs["adata_hto_raw"],
             adata_hto=kwargs["adata_hto"],
             next_k_cells=kwargs.get("next_k_cells", DEFAULTS["next_k_cells"]),
@@ -49,7 +63,9 @@ def build_background(
             _run_assert=_run_assert,
         )
     elif background_version == "v3":
-        return build_background_v3(
+        required = ["adata_hto", "adata_hto_raw", "adata_gex"]
+        _assert_required_inputs(required, kwargs)
+        adata_background = build_background_v3(
             adata_hto=kwargs["adata_hto"],
             adata_hto_raw=kwargs["adata_hto_raw"],
             adata_gex=kwargs["adata_gex"],
@@ -59,6 +75,9 @@ def build_background(
         )
     else:
         raise ValueError(f"Invalid version: {background_version}. Must be 'v1' or 'v2'.")
+
+    _assert_background(adata_background, _run_assert=_run_assert)
+    return adata_background
 
 
 def build_background_v1(
@@ -97,7 +116,7 @@ def build_background_v1(
     # logs
     n_background = len(ids_background)
     n_empty = adata_hto_raw.shape[0] - n_background
-    _log_background(n_background, n_empty, logger, _run_assert=_run_assert)
+    _log_background(n_background, n_empty, logger)
 
     return adata_hto_raw[list(ids_background)]
 
@@ -141,14 +160,16 @@ def build_background_v2(
     for i in range(x.shape[1]):
         # find value such that there are 'next_k_cells' cells larger than it
         cutoff = np.sort(x[:, i])[::-1][next_k_cells]
-        sub = x[:, i] > cutoff
+        sub = np.array(x[:, i] > cutoff).flatten()
+        # get indices of top k cells
+        sub = np.where(sub)[0][:next_k_cells]
         add_cells = set(adata_empty.obs_names[sub])
         background = background.union(add_cells)
 
     # logs
     n_background = len(background)
     n_empty = adata_hto_raw.shape[0] - n_background
-    _log_background(n_background, n_empty, logger, _run_assert=_run_assert)
+    _log_background(n_background, n_empty, logger)
 
     return adata_hto_raw[list(background)]
 
@@ -177,7 +198,7 @@ def build_background_v3(
     logger = get_logger("utils", level=verbose)
 
     # get gex_counts
-    logger.info("Getting GEX counts...")
+    logger.debug("Getting GEX counts...")
     adata_gex, _ = get_layer(
         adata_gex,
         use_layer=use_layer,
@@ -203,6 +224,6 @@ def build_background_v3(
     # log
     n_background = adata_background.shape[0]
     n_empty = adata_hto_raw.shape[0] - n_background
-    _log_background(n_background, n_empty, logger, _run_assert=_run_assert)
+    _log_background(n_background, n_empty, logger)
 
     return adata_background

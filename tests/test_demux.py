@@ -99,9 +99,19 @@ def test_cluster_and_evaluate(mock_hto_data, demux_method):
     """
 
     adata_filtered = mock_hto_data['filtered']
-    adata_raw = mock_hto_data['raw']
-    adata_normalised = normalise(adata_filtered, adata_raw, add_key_normalise="normalised")
-    adata_denoised = denoise(adata_normalised, add_key_denoise="denoised", use_layer="normalised")
+    adata_hto_raw = mock_hto_data['raw']
+    adata_normalised = normalise(
+        adata_filtered,
+        adata_hto_raw=adata_hto_raw,
+        background_version="v2",
+        add_key_normalise="normalised"
+    )
+    adata_denoised = denoise(
+        adata_normalised,
+        add_key_denoise="denoised",
+        use_layer="normalised"
+    )
+    print("DEBUG", adata_denoised.uns["dnd"]["normalise"])
     X = adata_denoised.layers["denoised"]
 
     for i in range(X.shape[1]):

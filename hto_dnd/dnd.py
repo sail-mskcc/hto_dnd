@@ -1,5 +1,7 @@
 import pandas as pd
 import anndata as ad
+import warnings
+warnings.filterwarnings('ignore', module='anndata')
 
 from . import tl
 from .normalise import normalise
@@ -14,10 +16,12 @@ from .report import report_safe
 
 def dnd(
     adata_hto: ad.AnnData,
-    adata_hto_raw: ad.AnnData,
+    adata_hto_raw: ad.AnnData = None,
     adata_gex: ad.AnnData = None,
+    adata_background: ad.AnnData = None,
     path_out: str = None,
     path_report: str = None,
+    show_report: bool = False,
     _as_cli: bool = False,  # required when run as cli
     **kwargs
 ):
@@ -59,6 +63,9 @@ def dnd(
             adata_hto = subset_whitelist(adata_hto_raw, whitelist)
         else:
             raise ValueError(f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)")
+    if isinstance(adata_background, str):
+        logger.debug(f"Reading background adata from {adata_background}")
+        adata_background = ad.read_h5ad(adata_background)
 
     # ASSERTIONS
     # - check that output path is writeable (and .h5ad)
@@ -76,25 +83,17 @@ def dnd(
 
     # BUILD BACKGROUND HTO SET
     if adata_gex is not None:
-        # read gex
-        if isinstance(adata_gex, str) and background_version in ["v1"]:
+        if isinstance(adata_gex, str) and background_version in ["v1", "v3"]:
             logger.debug(f"Reading gex adata from {adata_gex}")
             adata_gex = ad.read_h5ad(adata_gex)
-
-        # build background
-        adata_hto_raw = tl.build_background(
-            background_version,
-            adata_hto=adata_hto,
-            adata_hto_raw=adata_hto_raw,
-            adata_gex=adata_gex,
-            min_umi=get_arg("min_umi", kwargs, DEFAULTS),
-            verbose=verbose,
-        )
 
     # RUN
     adata_hto = normalise(
         adata_hto=adata_hto,
         adata_hto_raw=adata_hto_raw,
+        adata_gex=adata_gex,
+        adata_background=adata_background,
+        background_version=background_version,
         inplace=inplace,
         verbose=verbose,
         add_key_normalise=add_key_normalise,
@@ -132,7 +131,7 @@ def dnd(
     # REPORT
     if add_key_normalise is None or add_key_denoise is None:
         logger.warning("Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoise' (--add-key-denoise) to generate report.")
-    else:
+    elif path_report is not None or show_report:
         report_safe(
             adata_hto=adata_hto,
             adata_background=adata_hto_raw,
@@ -141,6 +140,7 @@ def dnd(
             path_report=path_report,
             use_key_normalise=add_key_normalise,
             use_key_denoise=add_key_denoise,
+            show=show_report,
             verbose=verbose,
         )
 

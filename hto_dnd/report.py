@@ -8,7 +8,7 @@ from ._logging import get_logger
 from ._utils import savepdf, get_arg
 
 REPORT_PLT_DEFAULTS = {
-    "dpi": 300
+    "dpi": 150
 }
 
 def report_safe(
@@ -20,6 +20,8 @@ def report_safe(
     except Exception as e:
         logger = get_logger("report", level=get_arg("verbose", kwargs, DEFAULTS))
         logger.error(f"Failed to run report: {e}")
+        if kwargs["verbose"] >= 2:
+            raise e
 
 def report(
     adata_hto,
@@ -50,11 +52,11 @@ def report(
         show = True
         pdf = None
     else:
+        assert path_report.endswith(".pdf"), "Path must end with .pdf"
         logger.info(f"Creating report at '{path_report}'")
+        os.makedirs(os.path.dirname(path_report), exist_ok=True)
         pdf = matplotlib.backends.backend_pdf.PdfPages(path_report)
 
-    assert path_report.endswith(".pdf"), "Path must end with .pdf"
-    os.makedirs(os.path.dirname(path_report), exist_ok=True)
 
     # preprocess
     adata_background = adata_background.copy()

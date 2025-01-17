@@ -23,6 +23,7 @@ def test_dnd(mock_hto_data):
         background_method="kmeans-fast",
         add_key_normalise="normalised",
         add_key_denoise="denoised",
+        background_version="v2",
         pseudocount=20,
         inplace=False,
     )
@@ -35,6 +36,7 @@ def test_dnd(mock_hto_data):
         background_method="kmeans-fast",
         add_key_normalise="normalised",
         add_key_denoise="denoised",
+        background_version="v2",
         pseudocount=20,
         inplace=True,
     )
@@ -90,6 +92,7 @@ def test_no_background(mock_hto_data):
         adata = dnd(
             adata_hto=adata_filtered,
             adata_hto_raw=adata_filtered.copy(),
+            adata_gex=adata_filtered.copy(),
         )
 
     # Test with too few cells
@@ -97,4 +100,5 @@ def test_no_background(mock_hto_data):
         adata = dnd(
             adata_hto=adata_filtered[:2],
             adata_hto_raw=adata_raw,
+            adata_gex=adata_filtered,
         )

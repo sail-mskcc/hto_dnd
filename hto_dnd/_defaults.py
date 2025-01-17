@@ -6,6 +6,7 @@ DEFAULTS = {
     "adata_hto": None,
     "adata_hto_raw": None,
     "adata_gex": None,
+    "adata_background": None,
     "path_out": None,
     "path_report": None,
     "use_layer": None,
@@ -22,7 +23,7 @@ DEFAULTS = {
     "covariates": None,
     "design": None,
     "add_key_denoise": "denoised",
-    "denoise_version": "v1",
+    "denoise_version": "v2",
     "kwargs_denoise": {
         "C": 1,
         "epsilon": 1,
@@ -49,6 +50,7 @@ DESCRIPTIONS = {
     "adata_hto": f"AnnData object containing unfiltered protein expression data.",
     "adata_hto_raw": f"AnnData object containing raw protein expression data.",
     "adata_gex": f"AnnData object containing raw gene expression data.",
+    "adata_background": f"AnnData object containing background data. Default is {DEFAULTS['adata_background']}.",
     "path_out": f"Path to save the output AnnData object. Default is {DEFAULTS['path_out']}.",
     "path_report": f"Path to save the output report. Only created if not None. Default is {DEFAULTS['path_report']}.",
     "verbose": f"Verbosity level. Default is {DEFAULTS['verbose']}.",
@@ -78,7 +80,7 @@ DESCRIPTIONS = {
     "min_umi": f"Minimum UMI count to consider a barcode. Default is {DEFAULTS['min_umi']}.",
     "next_k_cells": f"Number of cells to add to the background. Default is {DEFAULTS['next_k_cells']}.",
     "k_gex_cells": f"Number of cells to use for GEX-based background estimation. Default is {DEFAULTS['k_gex_cells']}.",
-    "background_version": f"Version of the background building algorithm. Must be either 'v1' or 'v2'. Default is {DEFAULTS['background_version']}.",
+    "background_version": f"Version of the background building algorithm. Must be either 'v1', 'v2' or 'v3'. 'v3' is recommended for best results. Default is {DEFAULTS['background_version']}.",
 }
 
 # shared click cli options
@@ -87,6 +89,7 @@ OPTIONS = {
     "adata_hto": click.option("--adata-hto", "-f", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto"], required=True),
     "adata_hto_raw": click.option("--adata-hto-raw", "-r", type=click.Path(exists=True), help=DESCRIPTIONS["adata_hto_raw"], required=True),
     "adata_gex": click.option("--adata-gex", "-g", type=click.Path(exists=True), help=DESCRIPTIONS["adata_gex"], required=False),
+    "adata_background": click.option("--adata-background", "-b", type=click.Path(exists=True), help=DESCRIPTIONS["adata_background"]),
     "path_out": click.option("--path-out", "-o", type=click.Path(), help=DESCRIPTIONS["path_out"], default=DEFAULTS["path_out"], required=True),
     "path_report": click.option("--path-report", "-p", type=click.Path(), help=DESCRIPTIONS["path_report"], default=DEFAULTS["path_report"]),
     "verbose": click.option("-v", "--verbose", type=int, default=DEFAULTS["verbose"], help=DESCRIPTIONS["verbose"]),

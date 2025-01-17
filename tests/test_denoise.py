@@ -21,6 +21,7 @@ def test_denoise(mock_hto_data):
         adata_hto=adata_filtered,
         adata_hto_raw=adata_raw,
         add_key_normalise="normalised",
+        background_version="v2",
         inplace=False,
     )
 
@@ -59,6 +60,7 @@ def test_denoise(mock_hto_data):
     normalise(
         adata_hto=adata_inplace,
         adata_hto_raw=adata_raw,
+        background_version="v2",
         add_key_normalise=None,
         inplace=True,
     )
@@ -101,7 +103,7 @@ def test_background_methods(mock_hto_data):
     # Run normalisation
     adata_norm = normalise(
         adata_hto=adata_filtered,
-        adata_hto_raw=adata_raw,
+        adata_background=adata_raw,
         add_key_normalise="normalised",
         inplace=False,
     )

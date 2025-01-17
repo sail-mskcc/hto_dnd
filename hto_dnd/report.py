@@ -75,16 +75,19 @@ def report(
     savepdf(pdf=pdf, path=path_report, fig=fig_umiplot, show=show)
 
     # umi_gex_hto
-    fig_umi_gex_hto, axs = plt.subplots(1, 2, figsize=(8, 4), **REPORT_PLT_DEFAULTS)
 
-    df = pl.umi_gex_hto(
-        adata_hto=adata_hto,
-        adata_background=adata_background,
-        adata_hto_raw=adata_hto_raw,
-        adata_gex=adata_gex,
-        axs=axs,
-    )
-    savepdf(pdf=pdf, path=path_report, fig=fig_umi_gex_hto, show=show)
+    if adata_gex is not None:
+        fig_umi_gex_hto, axs = plt.subplots(1, 2, figsize=(8, 4), **REPORT_PLT_DEFAULTS)
+        df = pl.umi_gex_hto(
+            adata_hto=adata_hto,
+            adata_background=adata_background,
+            adata_hto_raw=adata_hto_raw,
+            adata_gex=adata_gex,
+            axs=axs,
+        )
+        savepdf(pdf=pdf, path=path_report, fig=fig_umi_gex_hto, show=show)
+    else:
+        logger.info("Skipping umi_gex_hto plot as adata_gex is not provided")
 
     # distributions_stages
     fig_distributions_stages, axs = plt.subplots(3, 1, figsize=(8, 12), **REPORT_PLT_DEFAULTS)
@@ -99,7 +102,7 @@ def report(
 
     # technical_noise
     for i in range(adata_hto.shape[1]):
-        fig_technical_noise, axs = plt.subplots(2, 2, figsize=(8, 4), **REPORT_PLT_DEFAULTS)
+        fig_technical_noise, axs = plt.subplots(2, 2, figsize=(10, 10), gridspec_kw={"width_ratios": [3, 1]}, sharey="row", **REPORT_PLT_DEFAULTS)
 
         axs = pl.technical_noise(
             adata=adata_hto,

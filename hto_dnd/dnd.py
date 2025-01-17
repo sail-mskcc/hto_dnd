@@ -132,9 +132,15 @@ def dnd(
     if add_key_normalise is None or add_key_denoise is None:
         logger.warning("Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoise' (--add-key-denoise) to generate report.")
     elif path_report is not None or show_report:
+
+        # get background
+        if adata_background is None:
+            adata_background = subset_whitelist(adata_hto_raw, adata_hto.uns["dnd"]["normalise"]["params"]["background"])
+
+        # run report
         report_safe(
             adata_hto=adata_hto,
-            adata_background=adata_hto_raw,
+            adata_background=adata_background,
             adata_hto_raw=adata_hto_raw,
             adata_gex=adata_gex,
             path_report=path_report,

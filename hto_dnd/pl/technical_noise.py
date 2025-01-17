@@ -14,6 +14,7 @@ def technical_noise(
     demux_method: str = None,
     use_key_normalise: str = DEFAULTS["add_key_normalise"],
     use_key_denoise: str = DEFAULTS["add_key_denoise"],
+    kwargs_fig: dict = {},
     axs: plt.Axes = None,
 ):
 
@@ -50,16 +51,10 @@ def technical_noise(
     _, threshold_normalised, _ = cluster_and_evaluate(df[["normalised"]].values.reshape(-1, 1), demux_method=demux_method, verbose=0)
     _, threshold_denoised, _ = cluster_and_evaluate(df[["denoised"]].values.reshape(-1, 1), demux_method=demux_method, verbose=0)
 
-    kmeans = KMeans(n_clusters=2, random_state=42).fit(df[["normalised"]])
-    threshold_normalised = kmeans.cluster_centers_.mean()
-
-    kmeans = KMeans(n_clusters=2, random_state=42).fit(df[["denoised"]])
-    threshold_denoised = kmeans.cluster_centers_.mean()
-
-
     # plot
+    params_fig = {"figsize": (10, 10), "gridspec_kw": {"width_ratios": [3, 1]}, "sharey": "row"}
     if axs is None:
-        fig, axs = plt.subplots(2, 2, figsize=(10, 10), gridspec_kw={"width_ratios": [3, 1]})
+        fig, axs = plt.subplots(2, 2, **params_fig)
 
     ax = axs[0, 0]
     sns.scatterplot(df, x="noise", y="normalised", linewidth=0, s=5, alpha=.5, ax=ax)
@@ -70,11 +65,11 @@ def technical_noise(
     ax = axs[1, 0]
     sns.scatterplot(df, x="noise", y="denoised", linewidth=0, s=5, alpha=.5, ax=ax)
     ax.axhline(0, c="black")
-    ax.axhline(threshold_normalised, c="grey", linestyle="--")
+    ax.axhline(threshold_denoised, c="grey", linestyle="--")
 
     ax = axs[0, 1]
     sns.kdeplot(data=df, y="normalised", ax=ax, fill=True)
-    ax.axhline(threshold_denoised, c="grey", linestyle="--")
+    ax.axhline(threshold_normalised, c="grey", linestyle="--")
     ax.set_title(f"{varname} denoised")
 
     ax = axs[1, 1]

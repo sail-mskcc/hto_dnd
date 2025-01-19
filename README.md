@@ -1,7 +1,7 @@
 # HTO DND - Demultiplex Hashtag Data
 
 [![PyPI version](https://badge.fury.io/py/hto-dnd.svg)](https://badge.fury.io/py/hto-dnd)
-[![Build Status](https://github.com/sail-mskcc/hto_dnd/actions/workflows/python-package.yml/badge.svg)](https://github.com/sail-mskcc/hto_dnd/actions/workflows/python-package.yml)
+[![Build Status](https://github.com/sail-mskcc/hto_dnd/actions/workflows/python-package.yml/badge.svg)](https://github.com/sail-mskcc/hto_dnd/actions/workflows/test.yml)
 
 `hto_dnd` is a Python package designed for efficient and accurate demultiplexing of hash-tagged oligonucleotides (HTOs) in single-cell data.
 It normalises based on observed background signal and denoises the data to remove batch effects and noise:

@@ -1,5 +1,5 @@
 [project]
-name = "hto-dnd"
+name = "hto"
 version = "1.0.0.a1"
 description = "A method to demultiplex hashtagged single-cell data."
 dependencies = [
@@ -28,10 +28,10 @@ classifiers = [
 ]
 
 [tool.setuptools]
-packages = ["hto_dnd"]
+packages = ["hto"]
 
 [project.scripts]
-dnd = "hto_dnd.cli:cli"
+dnd = "hto.cli:cli"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

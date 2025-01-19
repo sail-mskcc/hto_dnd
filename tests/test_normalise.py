@@ -5,7 +5,7 @@ import pytest
 from pandas.api.types import is_float_dtype, is_integer_dtype
 
 from hto_dnd import normalise
-from hto_dnd._exceptions import AnnDataFormatError
+from hto._exceptions import AnnDataFormatError
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_normalise(mock_hto_data):

@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.backends.backend_pdf
 
-import hto_dnd.pl as pl
+import hto.pl as pl
 from ._defaults import DEFAULTS
 from ._logging import get_logger
 from ._utils import savepdf, get_arg

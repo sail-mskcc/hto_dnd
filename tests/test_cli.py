@@ -4,8 +4,8 @@ import pytest
 import numpy as np
 import anndata as ad
 
-from hto_dnd.cli import cli
-from hto_dnd._defaults import DEFAULTS
+from hto.cli import cli
+from hto._defaults import DEFAULTS
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_cli(mock_hto_data):

@@ -3,9 +3,9 @@ import pytest
 from pandas.api.types import is_float_dtype
 
 from hto_dnd import normalise, denoise
-from hto_dnd._exceptions import AnnDataFormatError
-from hto_dnd._cluster_background import SUPPORTED_BACKGROUND_METHODS
-from hto_dnd._remove_batch_effect import SUPPORTED_DENOISE_VERSIONS
+from hto._exceptions import AnnDataFormatError
+from hto._cluster_background import SUPPORTED_BACKGROUND_METHODS
+from hto._remove_batch_effect import SUPPORTED_DENOISE_VERSIONS
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_denoise(mock_hto_data):

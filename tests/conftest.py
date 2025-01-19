@@ -1,7 +1,7 @@
 import os
 import shutil
 import pytest
-from hto_dnd.data import generate_hto
+from hto.data import generate_hto
 
 @pytest.fixture(scope='module')
 def mock_hto_data(request):

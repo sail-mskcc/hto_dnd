@@ -6,8 +6,8 @@ import yaml
 from sklearn.datasets import make_blobs
 
 from hto_dnd import normalise, denoise, demux
-from hto_dnd._cluster_demux import SUPPORTED_DEMUX_METHODS, cluster_and_evaluate
-from hto_dnd._exceptions import AnnDataFormatError
+from hto._cluster_demux import SUPPORTED_DEMUX_METHODS, cluster_and_evaluate
+from hto._exceptions import AnnDataFormatError
 
 
 @pytest.fixture

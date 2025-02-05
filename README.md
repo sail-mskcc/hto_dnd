@@ -41,7 +41,7 @@ The python API is built around AnnData. it is highly recommended two work with t
 * `adata_gex`: Raw AnnData object with gene expression data. This is optional and can be used to construct a more informative background signal.
 
 ```python
-import hto_dnd as hto
+import hto
 
 # get mockdata
 mockdata = hto.data.generate_hto(n_cells=1000, n_htos=3, seed=10)
@@ -63,7 +63,7 @@ adata_demux.obs[["hash_id", "doublet_info"]].head()
 This function can also be run step by step, even `inplace`
 
 ```python
-import hto_dnd as hto
+import hto
 
 # build background
 adata_hto_background = hto.tl.build_background(adata_hto_raw, adata_gex, min_umi=300)

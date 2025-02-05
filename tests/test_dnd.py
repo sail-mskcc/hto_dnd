@@ -3,7 +3,7 @@ import numpy as np
 import anndata as ad
 import pytest
 
-from hto_dnd import dnd
+from hto import dnd
 from hto._exceptions import AnnDataFormatError
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)

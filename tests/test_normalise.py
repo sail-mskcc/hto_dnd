@@ -4,7 +4,7 @@ import anndata as ad
 import pytest
 from pandas.api.types import is_float_dtype, is_integer_dtype
 
-from hto_dnd import normalise
+from hto import normalise
 from hto._exceptions import AnnDataFormatError
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)

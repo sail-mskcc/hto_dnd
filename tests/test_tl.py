@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import anndata as ad
 
-import hto_dnd as hto
+import hto
 
 @pytest.fixture
 def hto_and_gex():

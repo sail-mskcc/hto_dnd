@@ -19,7 +19,7 @@ def dnd(
     adata_hto_raw: ad.AnnData = None,
     adata_gex: ad.AnnData = None,
     adata_background: ad.AnnData = None,
-    path_out: str = None,
+    adata_out: str = None,
     path_report: str = None,
     show_report: bool = False,
     _as_cli: bool = False,  # required when run as cli
@@ -71,21 +71,24 @@ def dnd(
     # - check that output path is writeable (and .h5ad)
     # - check that parameters are valid
     # - check that keys do not exist in adata if run as cli
-    test_write(path_out, filetype="h5ad", create_folder=True, _require_write=_as_cli)
+    test_write(adata_out, filetype="h5ad", create_folder=True, _require_write=_as_cli)
     test_write(path_report, filetype="pdf", create_folder=True, _require_write=_as_cli)
     assert_background(background_method)
     assert_demux(demux_method)
     if _as_cli:
-        assert path_out is not None, "Output path must be provided using parameter --output-path"
-        assert path_out.endswith(".h5ad"), "Output path must end with .h5ad"
+        assert adata_out is not None, "Output path must be provided using parameter --output-path"
+        assert adata_out.endswith(".h5ad"), "Output path must end with .h5ad"
         assert add_key_normalise not in adata_hto.layers, f"Key {add_key_normalise} already exists in adata. Add option --add-key-normalise to change the key."
         assert add_key_denoise not in adata_hto.layers, f"Key {add_key_denoise} already exists in adata. Add option --add-key-denoise to change the key."
 
-    # BUILD BACKGROUND HTO SET
+    # GET DATA
     if adata_gex is not None:
         if isinstance(adata_gex, str) and background_version in ["v1", "v3"]:
             logger.debug(f"Reading gex adata from {adata_gex}")
             adata_gex = ad.read_h5ad(adata_gex)
+
+    # LOG
+    logger.info(f"Starting DND: Normalise (build-background: {background_version}) -> Denoise (background-dection: {background_method} | version: {denoise_version}) -> Demux (method: {demux_method})")
 
     # RUN
     adata_hto = normalise(
@@ -126,7 +129,7 @@ def dnd(
     )
 
     # SAVE
-    write_h5ad_safe(adata_hto, path_out, create_folder=True, _require_write=_as_cli)
+    write_h5ad_safe(adata_hto, adata_out, create_folder=True, _require_write=_as_cli)
 
     # REPORT
     if add_key_normalise is None or add_key_denoise is None:

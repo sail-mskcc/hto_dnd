@@ -81,14 +81,14 @@ hto.demux(adata_hto, inplace=True)
 
 ### Command-Line Interface (CLI)
 
-The CLI provides an API for the `dnd` scripts. Make sure to define `--path-out` to save the output.
+The CLI provides an API for the `dnd` scripts. Make sure to define `--adata-out` to save the output.
 
 ```
 dnd \
   --adata-hto /path/to/adata_hto.h5ad \
   --adata-hto-raw /path/to/adata_hto_raw.h5ad \
   --adata-gex /path/to/adata_gex.h5ad \
-  --path-out /path/to/output.h5ad \
+  --adata-out /path/to/output.h5ad \
   --min-umi 300
 ```
 

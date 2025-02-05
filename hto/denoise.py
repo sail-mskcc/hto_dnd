@@ -89,7 +89,7 @@ def denoise(
 
     # Store meta information (don't use 'debug' key)
     logger.debug("Technical noise removal completed.")
-    meta_background = {k: v for k, v in meta_background.items() if k != "debug"}
+    #meta_background = {k: v for k, v in meta_background.items() if k != "debug"}
     adata_hto = add_meta(
         adata_hto,
         step="denoise",

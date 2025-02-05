@@ -15,7 +15,7 @@ def test_cli(mock_hto_data):
     # Get mock data
     path_filtered = mock_hto_data['path_filtered']
     path_raw = mock_hto_data['path_raw']
-    path_out = os.path.join(mock_hto_data['path'], "adata.h5ad")
+    adata_out = os.path.join(mock_hto_data['path'], "adata.h5ad")
 
     # run in cli
     runner = CliRunner()
@@ -24,15 +24,15 @@ def test_cli(mock_hto_data):
         [
             "--adata-hto", path_filtered,
             "--adata-hto-raw", path_raw,
-            "--path-out", path_out,
+            "--adata-out", adata_out,
             "--background-version", "v2",
             "--demux-method", "otsu",
         ]
     )
     assert result.exit_code == 0, f"Exit code is {result.exit_code}: {result.output} | {result.exception}"
-    assert os.path.exists(path_out)
+    assert os.path.exists(adata_out)
 
-    adata = ad.read_h5ad(path_out)
+    adata = ad.read_h5ad(adata_out)
     assert "normalised" in adata.layers.keys()
     assert "denoised" in adata.layers.keys()
     assert DEFAULTS["add_key_hashid"] in adata.obs.keys()
@@ -54,7 +54,7 @@ def test_faulty_inputs(mock_hto_data):
     # Get mock data
     path_filtered = mock_hto_data['path_filtered']
     path_raw = mock_hto_data['path_raw']
-    path_out = os.path.join(mock_hto_data['path'], "adata.h5ad")
+    adata_out = os.path.join(mock_hto_data['path'], "adata.h5ad")
 
     runner = CliRunner()
 
@@ -64,7 +64,7 @@ def test_faulty_inputs(mock_hto_data):
         [
             "--adata-hto", path_filtered,
             "--adata-hto-raw", path_raw,
-            "--path-out", "temp",
+            "--adata-out", "temp",
         ]
     )
     assert result.exit_code == 1, f"Exit code is {result.exit_code}: {result.output}"
@@ -75,7 +75,7 @@ def test_faulty_inputs(mock_hto_data):
         [
             "--adata-hto", path_filtered,
             "--adata-hto-raw", path_raw,
-            "--path-out", path_out,
+            "--adata-out", adata_out,
             "--demux-method", "wrong_method",
         ]
     )
@@ -90,7 +90,7 @@ def test_faulty_inputs(mock_hto_data):
         [
             "--adata-hto", path_filtered,
             "--adata-hto-raw", path_raw,
-            "--path-out", path_out,
+            "--adata-out", adata_out,
         ]
     )
     assert result.exit_code == 1, f"Exit code is {result.exit_code}: {result.output}"

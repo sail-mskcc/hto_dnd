@@ -73,7 +73,8 @@ def get_layer(
         x = adata.layers[use_layer]
 
     # to numpy
-    x = to_dense_safe(x)
+    if numpy:
+        x = to_dense_safe(x)
 
     # assertions
     if float:

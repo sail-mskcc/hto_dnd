@@ -1,6 +1,6 @@
 import click
-from hto_dnd import dnd
-from hto._defaults import DEFAULTS, DESCRIPTIONS, OPTIONS
+from hto import dnd
+from hto._defaults import OPTIONS
 
 # create function
 @click.command(

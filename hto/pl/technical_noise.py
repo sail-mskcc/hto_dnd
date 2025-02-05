@@ -1,3 +1,4 @@
+from typing import Union
 import numpy as np
 import pandas as pd
 import anndata as ad
@@ -7,18 +8,26 @@ from sklearn.cluster import KMeans
 
 from .._cluster_demux import cluster_and_evaluate
 from .._defaults import DEFAULTS
+from .._logging import get_logger
 
 def technical_noise(
     adata: ad.AnnData,
-    var,
+    var: Union[int, str] = None,
     demux_method: str = None,
     use_key_normalise: str = DEFAULTS["add_key_normalise"],
     use_key_denoise: str = DEFAULTS["add_key_denoise"],
     kwargs_fig: dict = {},
+    highlight: np.ndarray = None,
     axs: plt.Axes = None,
+    verbose: int = 1,
 ):
 
     # assert
+    if var is None:
+        logger = get_logger("technical_noise", level=verbose)
+        logger.error(f"Parameter 'var' must be provided. For example, set 'var=0' or 'var='{adata.var_names[0]}''")
+        return
+
     if isinstance(var, int):
         i = var
         varname = adata.var_names[i]
@@ -39,6 +48,10 @@ def technical_noise(
         "normalised": adata.layers[use_key_normalise][:, i],
         "denoised": adata.layers[use_key_denoise][:, i],
     }, index=adata.obs_names)
+    if highlight is not None:
+        df["highlight"] = highlight
+    else:
+        df["highlight"] = 0
     coefs = adata.uns["dnd"]["denoise"]["batch_model"]["coefs"][i]
 
     # get line
@@ -57,13 +70,14 @@ def technical_noise(
         fig, axs = plt.subplots(2, 2, **params_fig)
 
     ax = axs[0, 0]
-    sns.scatterplot(df, x="noise", y="normalised", linewidth=0, s=5, alpha=.5, ax=ax)
+    print(kwargs_fig)
+    sns.scatterplot(df, x="noise", y="normalised", hue="highlight", size="highlight", linewidth=0, s=5, alpha=.5, ax=ax, **kwargs_fig)
     sns.lineplot(df_line, x="x", y="y", c="black", ax=ax)
     ax.axhline(threshold_normalised, c="grey", linestyle="--")
     ax.set_title(f"{varname} normalised")
 
     ax = axs[1, 0]
-    sns.scatterplot(df, x="noise", y="denoised", linewidth=0, s=5, alpha=.5, ax=ax)
+    sns.scatterplot(df, x="noise", y="denoised", hue="highlight", size="highlight", linewidth=0, s=5, alpha=.5, ax=ax, **kwargs_fig)
     ax.axhline(0, c="black")
     ax.axhline(threshold_denoised, c="grey", linestyle="--")
 

@@ -103,11 +103,11 @@ def distribution(
 
     return ax
 
-
 def distribution_stages(
     adata: ad.AnnData,
     figsize=(8, 12),
     layer_raw=None,
+    highlight: int = None,
     use_key_normalise=DEFAULTS["add_key_normalise"],
     use_key_denoise=DEFAULTS["add_key_denoise"],
     cmap="tab20",
@@ -165,5 +165,27 @@ def distribution_stages(
         title="Denoised Data",
         use_log=False,
     )
+
+    # add lines
+    if highlight is not None:
+        # get cmap from ax
+        cmap = dict(zip(adata.var_names, sns.color_palette(cmap)))
+        var = adata.var_names
+
+        ax = axs[0]
+        for v in var:
+            value = adata[highlight, v].X.data
+            value = np.log1p(value)
+            ax.axvline(value, c=cmap[v])
+
+        ax = axs[1]
+        for v in var:
+            value = adata[highlight, v].layers[use_key_normalise]
+            ax.axvline(value, c=cmap[v])
+
+        ax = axs[2]
+        for v in var:
+            value = adata[highlight, v].layers[use_key_denoise]
+            ax.axvline(value, c=cmap[v])
 
     return axs

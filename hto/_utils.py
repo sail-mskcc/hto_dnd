@@ -9,6 +9,7 @@ from pandas.api.types import is_float_dtype, is_integer_dtype
 from matplotlib.backends.backend_pdf import PdfPages
 from ._exceptions import AnnDataFormatError
 from ._meta import init_meta
+from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._logging import get_logger
 
 def _assert_float(x):
@@ -135,28 +136,43 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
     # skip
     if path is None:
         return
-
     try:
         # create folder
         if create_folder:
             os.makedirs(os.path.dirname(path), exist_ok=True)
-
         # all categorical columns to str
         for k in adata.obs.columns:
             if pd.api.types.is_categorical_dtype(adata.obs[k]):
                 adata.obs[k] = adata.obs[k].astype(str)
-
-
-
         # overwrite
         if os.path.exists(path):
             os.remove(path)
-
         # write
         adata.write_h5ad(path)
     except Exception as e:
         if _require_write:
             raise e
+        logger = get_logger("_utils", level=1)
+        logger.error(f"Failed to write file: {path} ({e})")
+
+def write_csv_safe(
+    adata,
+    path,
+    key_hashid: str = DEFAULTS["add_key_hashid"],
+    key_doublet: str = DEFAULTS["add_key_doublet"],
+    create_folder: bool = True,
+):
+    """Write barcode, hashid, and doublet information to CSV file."""
+    try:
+        df = pd.DataFrame({
+            "barcode": adata.obs.index,
+            key_hashid: adata.obs[key_hashid],
+            key_doublet: adata.obs[key_doublet]
+        })
+        if create_folder:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+        df.to_csv(path, index=False)
+    except Exception as e:
         logger = get_logger("_utils", level=1)
         logger.error(f"Failed to write file: {path} ({e})")
 

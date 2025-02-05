@@ -8,7 +8,7 @@ from .normalise import normalise
 from .denoise import denoise
 from .demux import demux
 from ._defaults import DEFAULTS
-from ._utils import write_h5ad_safe, test_write, subset_whitelist, get_arg
+from ._utils import write_h5ad_safe, write_csv_safe, test_write, subset_whitelist, get_arg
 from ._cluster_background import assert_background
 from ._cluster_demux import assert_demux
 from ._logging import get_logger
@@ -20,6 +20,7 @@ def dnd(
     adata_gex: ad.AnnData = None,
     adata_background: ad.AnnData = None,
     adata_out: str = None,
+    csv_out: str = None,
     path_report: str = None,
     show_report: bool = False,
     _as_cli: bool = False,  # required when run as cli
@@ -39,6 +40,8 @@ def dnd(
     inplace = get_arg("inplace", kwargs, DEFAULTS)
     verbose = get_arg("verbose", kwargs, DEFAULTS)
     denoise_version = get_arg("denoise_version", kwargs, DEFAULTS)
+    add_key_hashid = get_arg("add_key_hashid", kwargs, DEFAULTS)
+    add_key_doublet = get_arg("add_key_doublet", kwargs, DEFAULTS)
     add_key_normalise = get_arg("add_key_normalise", kwargs, DEFAULTS)
     add_key_denoise = get_arg("add_key_denoise", kwargs, DEFAULTS)
     demux_method = get_arg("demux_method", kwargs, DEFAULTS)
@@ -72,12 +75,12 @@ def dnd(
     # - check that parameters are valid
     # - check that keys do not exist in adata if run as cli
     test_write(adata_out, filetype="h5ad", create_folder=True, _require_write=_as_cli)
+    test_write(csv_out, filetype="csv", create_folder=True, _require_write=_as_cli)
     test_write(path_report, filetype="pdf", create_folder=True, _require_write=_as_cli)
     assert_background(background_method)
     assert_demux(demux_method)
     if _as_cli:
         assert adata_out is not None, "Output path must be provided using parameter --output-path"
-        assert adata_out.endswith(".h5ad"), "Output path must end with .h5ad"
         assert add_key_normalise not in adata_hto.layers, f"Key {add_key_normalise} already exists in adata. Add option --add-key-normalise to change the key."
         assert add_key_denoise not in adata_hto.layers, f"Key {add_key_denoise} already exists in adata. Add option --add-key-denoise to change the key."
 
@@ -123,13 +126,14 @@ def dnd(
         verbose=verbose,
         use_layer=add_key_denoise,
         demux_method=demux_method,
-        add_key_hashid=get_arg("add_key_hashid", kwargs, DEFAULTS),
-        add_key_doublet=get_arg("add_key_doublet", kwargs, DEFAULTS),
+        add_key_hashid=add_key_hashid,
+        add_key_doublet=add_key_doublet,
         add_key_labels=get_arg("add_key_labels", kwargs, DEFAULTS),
     )
 
     # SAVE
     write_h5ad_safe(adata_hto, adata_out, create_folder=True, _require_write=_as_cli)
+    write_csv_safe(adata_hto, csv_out, key_hashid=add_key_hashid, key_doublet=add_key_doublet, create_folder=True)
 
     # REPORT
     if add_key_normalise is None or add_key_denoise is None:

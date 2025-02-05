@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pandas.api.types import is_float_dtype
 
-from hto_dnd import normalise, denoise
+from hto import normalise, denoise
 from hto._exceptions import AnnDataFormatError
 from hto._cluster_background import SUPPORTED_BACKGROUND_METHODS
 from hto._remove_batch_effect import SUPPORTED_DENOISE_VERSIONS

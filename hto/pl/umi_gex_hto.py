@@ -45,7 +45,7 @@ def umi_gex_hto(
 
     # plot
     if axs is None:
-        fig, axs = plt.subplots(1, 2, figsize=(8, 4), dpi=300)
+        fig, axs = plt.subplots(1, 2, figsize=(8, 4), dpi=150)
 
     ax = axs[0]
     ax_frac = ax.twinx()

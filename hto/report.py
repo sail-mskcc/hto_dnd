@@ -8,7 +8,7 @@ from ._logging import get_logger
 from ._utils import savepdf, get_arg
 
 REPORT_PLT_DEFAULTS = {
-    "dpi": 150
+    "dpi": 80
 }
 
 def report_safe(

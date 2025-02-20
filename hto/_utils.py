@@ -7,7 +7,7 @@ import scipy
 import matplotlib.pyplot as plt
 from pandas.api.types import is_float_dtype, is_integer_dtype
 from matplotlib.backends.backend_pdf import PdfPages
-from ._exceptions import AnnDataFormatError
+from ._exceptions import AnnDataFormatError, UserInputError
 from ._meta import init_meta
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._logging import get_logger
@@ -209,11 +209,40 @@ def savepdf(
     if not show:
         plt.close()
 
-def _assert_required_inputs(required, kwargs):
+def _assert_required_inputs(meta, key, kwargs, parameter):
     """Assert that all required inputs are present and not None."""
-    for var in required:
+
+    # init error message
+    error_msg = f"Available options for '{parameter}':\n"
+    # add line
+    error_msg += "".join(["-"] * 20) + f"\n{parameter}:\n"
+    for k, v in meta.items():
+        required = ", ".join(v["required"])
+        optional = ", ".join(v["optional"])
+        error_msg += f"  '{k}'\n"
+        error_msg += f"      Description: {v['description']}\n"
+        error_msg += f"      Required: {required}\n"
+        if len(optional) > 0:
+            error_msg += f"      Optional: {optional}\n"
+
+    # throw errors
+    if key not in meta:
+        msg = f"\nInvalid input: '{key}' for parameter '{parameter}'. " + error_msg
+        raise UserInputError(msg)
+    for var in meta[key]["required"]:
         if var not in kwargs or kwargs[var] is None:
-            raise ValueError(f"Missing required input: '{var}'")
+            msg = f"\nMissing required input: '{var}' for parameter '{parameter}'. " + error_msg
+            raise UserInputError(msg)
+
+def user_input_error_decorator(func):
+    """Catch UserInputError and print message instead of traceback."""
+    logger = get_logger("UserInputError", level=1)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except UserInputError as e:
+            logger.error(e)
+    return wrapper
 
 def to_dense_safe(x):
     """Convert sparse matrix to dense matrix safely."""

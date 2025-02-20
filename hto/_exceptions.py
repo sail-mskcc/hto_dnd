@@ -1,5 +1,8 @@
 import numpy as np
 
+class UserInputError(Exception):
+    pass
+
 class AnnDataFormatError(Exception):
     def __init__(self, key, *args, **kwargs):
         message = self.get_message(key, *args, **kwargs)

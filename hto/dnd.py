@@ -8,12 +8,13 @@ from .normalise import normalise
 from .denoise import denoise
 from .demux import demux
 from ._defaults import DEFAULTS
-from ._utils import write_h5ad_safe, write_csv_safe, test_write, subset_whitelist, get_arg
+from ._utils import write_h5ad_safe, write_csv_safe, test_write, subset_whitelist, get_arg, user_input_error_decorator
 from ._cluster_background import assert_background
 from ._cluster_demux import assert_demux
 from ._logging import get_logger
 from .report import report_safe
 
+@user_input_error_decorator
 def dnd(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData = None,

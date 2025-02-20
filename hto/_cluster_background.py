@@ -3,8 +3,30 @@ import numpy as np
 from itertools import chain
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
+from hto._utils import _assert_required_inputs
 
 SUPPORTED_BACKGROUND_METHODS = ["kmeans-fast", "kmeans", "gmm"]
+
+_background_method_meta = {
+    "kmeans-fast":
+        {
+            "description": "Simple heuristics for fast, row-wise KMeans with 2 clusters in pandas DataFrame. Recommended",
+            "required": [],
+            "optional": ["n_iter", "inits"],
+        },
+    "kmeans":
+        {
+            "description": "Fit a KMeans model to the input data and return the mean of the first cluster.",
+            "required": [],
+            "optional": [],
+        },
+    "gmm":
+        {
+            "description": "Fit a Gaussian Mixture Model to the input data and return the mean of the first component.",
+            "required": [],
+            "optional": ["kwargs_denoise"],
+        },
+}
 
 # ASSERTIONS
 def assert_background(method, **kwargs):
@@ -154,6 +176,7 @@ def estimate_background(
     method="kmeans-fast",
     **kwargs,
 ):
+    _assert_required_inputs(_background_method_meta, method, kwargs, "background_method")
     if method=="kmeans-fast":
         return _get_background_kmeans_fast(matrix, **kwargs)
     elif method=="kmeans":

@@ -194,14 +194,14 @@ def normalise_debug(
     # get q lower and q upper
     # scale data below q upper such that q lower is 0
     df = adata_hto.to_df(use_layer)
-    x = df.values.astype(float)
+    df = np.log1p(df)
+    x = df.values
     qs = df.quantile(background_quantiles).values
     for i in range(x.shape[1]):
         q = qs[:, i]
         xi = x[:, i]
         sub = xi <= q[1]
-        x[sub, i] = xi[sub] / (q[1] - q[0])
-
+        x[sub, i] = (xi[sub] - q[0]) / (q[1] - q[0]) * q[1]
 
     # store
     adata_hto.layers["normalised"] = x

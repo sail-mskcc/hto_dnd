@@ -58,6 +58,10 @@ def demux(
 
     # assertions
     assert_demux(demux_method)
+    if add_key_hashid in adata_hto.obs.columns:
+        logger.warning(f"Column '{add_key_hashid}' already exists in adata.obs. Overwriting and storing previous columns under '{add_key_hashid}_archive'.")
+        adata_hto.obs[f"{add_key_hashid}_archive"] = adata_hto.obs[add_key_hashid]
+        adata_hto.obs.drop(add_key_hashid, axis=1, inplace=True)
 
     # get data
     df_umi = adata_hto.to_df(layer=use_layer)

@@ -168,7 +168,7 @@ def normalise(
 
 def normalise_debug(
     adata_hto: ad.AnnData,
-    background_quantiles: Union[float, tuple] = 0.02,
+    background_quantile: float = DEFAULTS["background_quantile"],
     use_layer: str = DEFAULTS["use_layer"],
     verbose: int = DEFAULTS["verbose"],
 ):
@@ -179,31 +179,26 @@ def normalise_debug(
 
     Args:
         adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
-        background_quantiles (float, tuple, optional): {DESCRIPTIONS["background_quantiles"]}
+        background_quantile (float, tuple, optional): {DESCRIPTIONS["background_quantile"]}
         use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
         verbose (int, optional): {DESCRIPTIONS["verbose"]}
     """
     logger = get_logger("utils", level=verbose)
 
-    # assertions
-    if isinstance(background_quantiles, float):
-        background_quantiles = (background_quantiles, 1 - background_quantiles)
-    assert len(background_quantiles) == 2, "background_quantiles must be a float or tuple of length 2."
+    # estimate empty
+    df = adata_hto.to_df(use_layer)
+    adt_log = np.log1p(df).values
+
+    mu_empty = []
+    sd_empty = []
+    for i in range(adt_log.shape[1]):
+        q = np.quantile(adt_log[:, i], background_quantile)
+        mu_temp = np.mean(adt_log[adt_log[:, i] < q, i])
+        sd_temp = np.std(adt_log[adt_log[:, i] < q, i])
+        mu_empty.append(mu_temp)
+        sd_empty.append(sd_temp)
 
     # normalise
-    # get q lower and q upper
-    # scale data below q upper such that q lower is 0
-    df = adata_hto.to_df(use_layer)
-    df = np.log1p(df)
-    x = df.values
-    qs = df.quantile(background_quantiles).values
-    for i in range(x.shape[1]):
-        q = qs[:, i]
-        xi = x[:, i]
-        sub = xi <= q[1]
-        x[sub, i] = (xi[sub] - q[0]) / (q[1] - q[0]) * q[1]
-
-    # store
-    adata_hto.layers["normalised"] = x
-    logger.info("Normalised data stored in adata.layers['normalised']")
+    normalized_matrix = (adt_log - mu_empty) / sd_empty
+    adata_hto.layers["normalised"] = normalized_matrix
     return adata_hto

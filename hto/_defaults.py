@@ -18,7 +18,7 @@ DEFAULTS = {
     # normalise
     "pseudocount": 10,
     "add_key_normalise": "normalised",
-    "background_quantiles": (0.3, 0.95),
+    "background_quantile": 0.3,
 
     # denoise
     "background_method": "kmeans-fast",
@@ -64,7 +64,7 @@ DESCRIPTIONS = {
     # normalise
     "pseudocount": f"Value to add to the counts matrix before log-transformation. Default is {DEFAULTS['pseudocount']}.",
     "add_key_normalise": f"Key to store the normalized data in the AnnData object. Default is {DEFAULTS['add_key_normalise']}.",
-    "background_quantiles": f"Quantile to use for background estimation. Last resort only. Default is {DEFAULTS['background_quantiles']}.",
+    "background_quantile": f"Quantile to use for background estimation. Last resort only. Default is {DEFAULTS['background_quantile']}.",
 
     # denoise
     "background_method": f"Method to use for background estimation. Must be either 'kmeans-fast', 'gmm' or 'kmeans'. Default is {DEFAULTS['background_method']}.",

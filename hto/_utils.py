@@ -210,7 +210,34 @@ def savepdf(
         plt.close()
 
 def _assert_required_inputs(meta, key, kwargs, parameter):
-    """Assert that all required inputs are present and not None."""
+    """
+    Assert that all required inputs are present and not None.
+
+    Args:
+        meta (dict): Metadata for the parameter
+        key (str): Key to check
+        kwargs (dict): Input arguments
+        parameter (str): Parameter name used in error message
+
+    Example:
+    ```
+    meta = {
+        "v1": {
+            "description": "Description of v1",
+            "required": ["a", "b"],
+            "optional": ["c"]
+        }
+    }
+    key = "v1"
+    kwargs = {
+        "a": 1,
+        "b": 2,
+        "c": 3
+    }
+    _assert_required_inputs(meta, key, kwargs, parameter="version")
+    ```
+
+    """
 
     # init error message
     error_msg = f"Available options for '{parameter}':\n"

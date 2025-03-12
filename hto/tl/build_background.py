@@ -1,8 +1,7 @@
 import numpy as np
 import anndata as ad
-import scipy.sparse
 from .._logging import get_logger
-from .._utils import get_layer, subset_whitelist, _assert_required_inputs, log_parameter_meta
+from .._utils import get_layer, subset_whitelist, _assert_required_inputs
 from .._defaults import DEFAULTS, DESCRIPTIONS
 from .._exceptions import AnnDataFormatError
 
@@ -58,39 +57,31 @@ def build_background(
     Returns:
         AnnData: Filtered AnnData object of background data
     """
+    # don't do anything if adata_background is provided
     adata_background = kwargs.get("adata_background", None)
-    verbose = kwargs.get("verbose", DEFAULTS["verbose"])
-    _assert_required_inputs(_background_version_meta, background_version, kwargs, "background_version")
     if adata_background is not None:
-        # don't do anything if adata_background is provided
         adata_background = adata_background
-    elif background_version == "v1":
-        required = ["adata_hto_raw", "adata_gex"]
+    # assert inputs
+    _assert_required_inputs(_background_version_meta, background_version, kwargs, "background_version")
+    params_required = {k: kwargs[k] for k in _background_version_meta[background_version]["required"]}
+    params_optional = {k: kwargs.get(k, DEFAULTS[k]) for k in _background_version_meta[background_version]["optional"]}
+    if background_version == "v1":
         adata_background = build_background_v1(
-            adata_hto_raw=kwargs["adata_hto_raw"],
-            adata_gex=kwargs["adata_gex"],
-            min_umi=kwargs.get("min_umi", DEFAULTS["min_umi"]),
+            **params_required,
+            **params_optional,
             verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
-            _run_assert=_run_assert,
         )
     elif background_version == "v2":
-        required = ["adata_hto", "adata_hto_raw"]
         adata_background = build_background_v2(
-            adata_hto_raw=kwargs["adata_hto_raw"],
-            adata_hto=kwargs["adata_hto"],
-            next_k_cells=kwargs.get("next_k_cells", DEFAULTS["next_k_cells"]),
+            **params_required,
+            **params_optional,
             verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
-            _run_assert=_run_assert,
         )
     elif background_version == "v3":
-        required = ["adata_hto", "adata_hto_raw", "adata_gex"]
         adata_background = build_background_v3(
-            adata_hto=kwargs["adata_hto"],
-            adata_hto_raw=kwargs["adata_hto_raw"],
-            adata_gex=kwargs["adata_gex"],
-            k_gex_cells=kwargs.get("k_gex_cells", DEFAULTS["k_gex_cells"]),
+            **params_required,
+            **params_optional,
             verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
-            _run_assert=_run_assert,
         )
     else:
         raise ValueError(f"Invalid version: {background_version}. Must be 'v1' or 'v2'.")
@@ -105,7 +96,6 @@ def build_background_v1(
     use_layer: str = DEFAULTS["use_layer"],
     min_umi: int = DEFAULTS["min_umi"],
     verbose: int = DEFAULTS["verbose"],
-    _run_assert=True,  # <- used for testing
 ):
     f"""Get a whitelist based on GEX counts.
 
@@ -146,7 +136,6 @@ def build_background_v2(
     use_layer: str = DEFAULTS["use_layer"],
     next_k_cells: int = DEFAULTS["next_k_cells"],
     verbose: int = DEFAULTS["verbose"],
-    _run_assert=True,  # <- used for testing
 ):
     f"""
     Build background by choosing the next k largest cells from the raw HTO data
@@ -200,7 +189,6 @@ def build_background_v3(
     k_gex_cells: int = DEFAULTS["k_gex_cells"],
     use_layer: str = DEFAULTS["use_layer"],
     verbose: int = DEFAULTS["verbose"],
-    _run_assert=True,  # <- used for testing
 ):
     f"""
     Choose the k cells with the highest total counts from the GEX data that are not whitelisted.

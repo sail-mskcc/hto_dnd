@@ -10,7 +10,7 @@ from ._remove_batch_effect import remove_batch_effect
 from ._meta import add_meta
 from ._logging import get_logger
 from ._defaults import DEFAULTS, DESCRIPTIONS
-from ._exceptions import AnnDataFormatError
+from ._exceptions import UserInputError
 from ._utils import get_layer
 
 def denoise(

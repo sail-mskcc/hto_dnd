@@ -1,12 +1,22 @@
 from pprint import pformat
 import numpy as np
 import anndata as ad
+from typing import Union
 from ._logging import get_logger
 from ._meta import init_meta, add_meta
 from ._exceptions import AnnDataFormatError
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._utils import get_layer
 from .tl import build_background
+
+
+_normalise_version_meta = {
+    "v1": {
+        "required": ["adata_hto"],
+        "optional": ["adata_hto_raw", "adata_gex", "adata_background"],
+        "description": "Background aware HTO normalisation.",
+    }
+}
 
 def assert_normalisation(df, logger, max_spread=1.5, qs=[.1, .99]):
     """Assert that normalised values are within a certain spread."""
@@ -152,4 +162,48 @@ def normalise(
         sd_empty=sd_empty,
     )
 
+    return adata_hto
+
+
+
+def normalise_debug(
+    adata_hto: ad.AnnData,
+    background_quantiles: Union[float, tuple] = 0.02,
+    use_layer: str = DEFAULTS["use_layer"],
+    verbose: int = DEFAULTS["verbose"],
+):
+    f"""
+    If no background data or GEX data is available, align the quantiles of the
+    filtered HTO data from 0 to 1. This is clearly not recommended, but is provided as a last
+    resort option.
+
+    Args:
+        adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
+        background_quantiles (float, tuple, optional): {DESCRIPTIONS["background_quantiles"]}
+        use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
+        verbose (int, optional): {DESCRIPTIONS["verbose"]}
+    """
+    logger = get_logger("utils", level=verbose)
+
+    # assertions
+    if isinstance(background_quantiles, float):
+        background_quantiles = (background_quantiles, 1 - background_quantiles)
+    assert len(background_quantiles) == 2, "background_quantiles must be a float or tuple of length 2."
+
+    # normalise
+    # get q lower and q upper
+    # scale data below q upper such that q lower is 0
+    df = adata_hto.to_df(use_layer)
+    x = df.values.astype(float)
+    qs = df.quantile(background_quantiles).values
+    for i in range(x.shape[1]):
+        q = qs[:, i]
+        xi = x[:, i]
+        sub = xi <= q[1]
+        x[sub, i] = xi[sub] / (q[1] - q[0])
+
+
+    # store
+    adata_hto.layers["normalised"] = x
+    logger.info("Normalised data stored in adata.layers['normalised']")
     return adata_hto

@@ -1,7 +1,7 @@
 from . import tl
 from . import data
 from . import pl
-from .normalise import normalise
+from .normalise import normalise, normalise_debug
 from .denoise import denoise
 from .demux import demux
 from .dnd import dnd

@@ -1,6 +1,6 @@
 [project]
 name = "hto"
-version = "1.0.0.a1"
+version = "1.0.0.a3"
 description = "A method to demultiplex hashtagged single-cell data."
 dependencies = [
     "click >= 8.0.0",

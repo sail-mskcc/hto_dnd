@@ -1,5 +1,6 @@
 import pandas as pd
 import anndata as ad
+import scanpy as sc
 import warnings
 warnings.filterwarnings('ignore', module='anndata')
 
@@ -89,7 +90,7 @@ def dnd(
     if adata_gex is not None:
         if isinstance(adata_gex, str) and background_version in ["v1", "v3"]:
             logger.debug(f"Reading gex adata from {adata_gex}")
-            adata_gex = ad.read_h5ad(adata_gex)
+            adata_gex = sc.read_10x_h5(adata_gex)
 
     # LOG
     logger.info(f"Starting DND: Normalise (build-background: {background_version}) -> Denoise (background-dection: {background_method} | version: {denoise_version}) -> Demux (method: {demux_method})")

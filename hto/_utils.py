@@ -99,7 +99,12 @@ def subset_whitelist(adata, whitelist, _required_prop=0.9):
     whitelist_pct = len(whitelist_select) / len(whitelist) * 100
 
     # assert
-    assert whitelist_pct >= _required_prop, f"Whitelist coverage is too low: {whitelist_pct:.1f}%"
+    if whitelist_pct < _required_prop:
+        msg = f"Too view of the whitelist barcodes were found in the data: {whitelist_pct:.1f}%"
+        msg += f"\n- Example whitelist selected from filtered hto data: {whitelist[:3].tolist()}"
+        msg += f"\n- Example background cell ids from raw hto or gex data: {adata.obs_names[:3].tolist()}"
+        msg += f"\nPlease make sure that whitelist barcodes are present in the data."
+        raise UserInputError(msg)
     if whitelist_pct < 1:
         logger.warning(f"Some whitelisted barcodes were not found: {whitelist_pct:.1f}%")
     return adata[whitelist_select]
@@ -153,7 +158,7 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
         if _require_write:
             raise e
         logger = get_logger("_utils", level=1)
-        logger.error(f"Failed to write file: {path} ({e})")
+        logger.error(f"Failed to write h5ad file: {path} ('{e}')")
 
 def write_csv_safe(
     adata,
@@ -163,6 +168,8 @@ def write_csv_safe(
     create_folder: bool = True,
 ):
     """Write barcode, hashid, and doublet information to CSV file."""
+    if path is None:
+        return
     try:
         df = pd.DataFrame({
             "barcode": adata.obs.index,
@@ -174,7 +181,7 @@ def write_csv_safe(
         df.to_csv(path, index=False)
     except Exception as e:
         logger = get_logger("_utils", level=1)
-        logger.error(f"Failed to write file: {path} ({e})")
+        logger.error(f"Failed to write csv file: {path} ({e})")
 
 def reload_all(module):
     """Reload a module and all its submodules."""

@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import pandas as pd
 import anndata as ad
@@ -18,7 +19,7 @@ def bucketize(
     df: pd.DataFrame,
     key_counts: str = "counts",
     key_values: str = "_values_temp",
-    n_buckets=50
+    n_buckets=150
 ):
     """
     Aggregate buckets based on counts. Group if provided. Aggregate mean if values provided.
@@ -35,7 +36,7 @@ def bucketize(
     df.loc[:, "_rank"] = np.log10(df[key_counts].rank(ascending=False) + 1)
     cuts = np.linspace(df["_rank"].min(), df["_rank"].max(), n_buckets+1)
     labels = cuts[1:]
-    df.loc[:, "_bucket"] = pd.cut(df["_rank"], bins=cuts, labels=labels, include_lowest=True)
+    df.loc[:, "_bucket"] = pd.cut(df["_rank"], bins=cuts, labels=labels, include_lowest=True).astype(float)
     df.loc[:, "_bucket"] = df["_bucket"].round(2)
 
     # aggregate:
@@ -81,7 +82,7 @@ def umi_one(
 
     # set color scale
     if key_values == "_values_temp":
-        palette = [color] * df_agg.shape[0]
+        palette = [color] * len(df_agg[key_values].unique())
     else:
         cmap_fades = scale_cmap(color_fade, color, vmin=df_agg[key_values].min(), vmax=df_agg[key_values].max())
         palette = [cmap_fades.to_rgba(i) for i in df_agg[key_values].unique()]
@@ -99,6 +100,25 @@ def umi_one(
     # rotate xticks by 0-90 degrees, and only show every 5th
     return ax
 
+
+def _add_log10_axis(ax: plt.Axes, key_counts: str = "counts"):
+    """
+    Add a log10 axis to the plot.
+    """
+    # add logged axis label
+    ax.set_ylabel(f"Log10 {key_counts}")
+    ax.set_xlabel(f"Log10 {key_counts} Rank")
+    # xticks
+    max_i = math.floor(ax.get_xlim()[1])
+    xtick_positions = np.log10(np.array([10, 100, 1000, 10000, 100000, 1000000][:max_i]) + 1)
+    xtick_labels = ["10", "100", "1k", "10k", "100k", "1M"][:max_i]
+    ax.set_xticks(xtick_positions)
+    ax.set_xticklabels(xtick_labels)
+    # yticks
+    yticks = ax.get_yticks()
+    ax.set_yticks(yticks)
+    ax.set_yticklabels([f"{int(10**i):,}" for i in yticks])
+    return ax
 
 def umi(
     adata: ad.AnnData,
@@ -153,7 +173,7 @@ def umi(
         df.loc[:, key_counts] = np.array(to_dense_safe(X.T)).flatten()
     else:
         # sum
-        df.loc[:, key_counts] = np.asarray(X.sum(axis=1)).flatten()
+        df.loc[:, key_counts] = np.asarray(X.sum(axis=1), dtype=np.float64).flatten()
 
     # plot
     if key_groups == "_groups_temp":
@@ -163,7 +183,7 @@ def umi(
 
         # get
         if use_log:
-            df.loc[:, key_counts] = np.log1p(df[key_counts].astype(float))
+            df.loc[:, key_counts] = np.log10(df[key_counts].astype(float) + 1)
 
         # plot
         ax = umi_one(
@@ -191,7 +211,7 @@ def umi(
             # get
             df_temp = df[df[key_groups] == group].copy()
             if use_log:
-                df_temp[key_counts] = np.log1p(df_temp[key_counts])
+                df_temp[key_counts] = np.log10(df_temp[key_counts] + 1)
 
             ax = umi_one(
                 df_temp,
@@ -210,6 +230,8 @@ def umi(
         handles = [plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=cmap[group], label=group) for group in groups]
         ax.legend(handles=handles, title=key_groups, loc="lower left")
 
+    if use_log:
+        ax = _add_log10_axis(ax, key_counts=key_counts)
 
     ax.set_xlabel("Log UMI Rank")
     return ax

@@ -112,7 +112,6 @@ def test_cluster_and_evaluate(mock_hto_data, demux_method):
         add_key_denoise="denoised",
         use_layer="normalised"
     )
-    print("DEBUG", adata_denoised.uns["dnd"]["normalise"])
     X = adata_denoised.layers["denoised"]
 
     for i in range(X.shape[1]):

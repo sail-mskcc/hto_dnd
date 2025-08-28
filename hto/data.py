@@ -60,7 +60,7 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
         doublet = (hto_centers[hto1] + hto_centers[hto2]) * np.random.uniform(0.5, 1)
         doublet += np.random.normal(0, 0.2, n_htos)
         doublets.append(doublet)
-        doublet_labels.append("Doublet")
+        doublet_labels.append("doublet")
     doublets = np.array(doublets)
 
     # Generate negatives
@@ -79,11 +79,11 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     hto_ids = [f'HTO_{i+1}' for i in range(n_htos)]
 
     singlet_labels = [f'{hto_ids[i]}' for i in singlet_labels]
-    negative_labels = ['Negative'] * n_negatives
-    empty_labels = ['Empty'] * n_empty
+    negative_labels = ['negative'] * n_negatives
+    empty_labels = ['empty'] * n_empty
     raw_labels = np.array(singlet_labels + doublet_labels + negative_labels + empty_labels)
-    raw_cell_types = np.array(['Singlet'] * n_singlets + doublet_labels + negative_labels + empty_labels)
-    subset_filterd = raw_cell_types != 'Empty'
+    raw_cell_types = np.array(['singlet'] * n_singlets + doublet_labels + negative_labels + empty_labels)
+    subset_filterd = raw_cell_types != 'empty'
 
     # Ensure non-negative values
     raw_data = np.maximum(raw_data, 0)
@@ -105,6 +105,7 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
 
     raw_adata = ad.AnnData(
         X=raw_data,
+        dtype="int32",
         obs=obs,
         var=var,
     )
@@ -124,6 +125,7 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     gex = np.round(gex).astype(int)
     gex_adata = ad.AnnData(
         X=gex,
+        dtype="float32",
         obs=obs,
     )
 

@@ -4,6 +4,7 @@ from itertools import chain
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from hto._utils import _assert_required_inputs
+from hto._logging import get_logger
 
 SUPPORTED_BACKGROUND_METHODS = ["kmeans-fast", "kmeans", "gmm"]
 
@@ -63,6 +64,12 @@ def _get_background_kmeans(normalized_matrix, **kwargs):
 # CUSTOM KMEANS
 def _converge(matrix, center_lower, center_upper, n_iter):
     """Converge to the background noise vectors."""
+    # assert dimensions
+    assert matrix.ndim == 2, "Matrix must be a 2D numpy array."
+    assert isinstance(matrix, np.ndarray), "Matrix must be a numpy array."
+    assert center_lower.shape == (matrix.shape[0], ), f"Center lower must have shape ({matrix.shape[0]}, ), got {center_lower.shape}."
+    assert center_upper.shape == (matrix.shape[0], ), f"Center upper must have shape ({matrix.shape[0]}, ), got {center_upper.shape}."
+
     # converge
     for _ in range(n_iter):
         row_mid = (center_lower + center_upper) / 2
@@ -71,8 +78,13 @@ def _converge(matrix, center_lower, center_upper, n_iter):
         center_upper = np.sum(np.where(assignment, matrix, 0), axis=1) / np.sum(assignment, axis=1)
 
     # inertia
-    inertia = np.sum(np.where(~assignment, (matrix - center_lower[:, np.newaxis])**2, 0), axis=1)
-    inertia += np.sum(np.where(assignment, (matrix - center_upper[:, np.newaxis])**2, 0), axis=1)
+    inertia = np.sum(np.where(~assignment, np.array(matrix - center_lower[:, np.newaxis])**2, 0), axis=1)
+    inertia += np.sum(np.where(assignment, np.array(matrix - center_upper[:, np.newaxis])**2, 0), axis=1)
+
+    # assertions (numpy updates change specific behavious)
+    assert center_lower.shape == (matrix.shape[0], ), f"Center lower must have shape ({matrix.shape[0]},), got {center_lower.shape}."
+    assert center_upper.shape == (matrix.shape[0], ), f"Center upper must have shape ({matrix.shape[0]},), got {center_upper.shape}."
+    assert inertia.shape == (matrix.shape[0], ), f"Inertia must have shape ({matrix.shape[0],},), got {inertia.shape}."
     return center_lower, center_upper, inertia
 
 def _init_strategies(normalized_matrix, method, *args, **kwargs):
@@ -138,6 +150,8 @@ def _get_background_kmeans_fast(matrix, n_iter=5, inits=None):
     background = _get_background_kmeans_fast(matrix)
     ```
     """
+    # debug logger
+    logger = get_logger("hto._cluster_background", level=1)
 
     # init
     assert isinstance(matrix, np.ndarray), "Matrix must be a numpy array."
@@ -145,6 +159,7 @@ def _get_background_kmeans_fast(matrix, n_iter=5, inits=None):
         inits = _all_inits(matrix)
     intertia_min = np.repeat(np.inf, matrix.shape[0])
     center_lower_min = np.zeros(matrix.shape[0])
+    center_upper_min = np.zeros(matrix.shape[0])
 
     # get iterator
     inits = chain(*[_init_strategies(matrix, **init) for init in inits])
@@ -154,8 +169,17 @@ def _get_background_kmeans_fast(matrix, n_iter=5, inits=None):
         center_lower, center_upper, inertia = _converge(matrix, *center_inits, n_iter=n_iter)
         # update if better
         center_lower_min = np.where(inertia < intertia_min, center_lower, center_lower_min)
-        center_upper_min = np.where(inertia < intertia_min, center_upper, center_upper)
+        center_upper_min = np.where(inertia < intertia_min, center_upper, center_upper_min)
         intertia_min = np.minimum(inertia, intertia_min)
+        # debug
+        logger.debug(
+            "inertia", inertia.shape,
+            "inertia_min",  intertia_min.shape,
+            "center_lower", center_lower.shape,
+            "center_lower_min", center_lower_min.shape,
+            "inertia_min type", type(intertia_min),
+            "center_lower_min type", type(center_lower_min),
+        )
 
     # store data
     assignment = matrix > ((center_lower_min + center_upper_min) / 2).reshape(-1, 1)
@@ -176,7 +200,15 @@ def estimate_background(
     method="kmeans-fast",
     **kwargs,
 ):
-    _assert_required_inputs(_background_method_meta, method, kwargs, "background_method")
+    # assert inputs
+    _assert_required_inputs(
+        meta=_background_method_meta, 
+        key=method, 
+        kwargs=kwargs, 
+        parameter="background_method"
+    )
+
+    # get background
     if method=="kmeans-fast":
         return _get_background_kmeans_fast(matrix, **kwargs)
     elif method=="kmeans":

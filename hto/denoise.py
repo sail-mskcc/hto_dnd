@@ -93,6 +93,7 @@ def denoise(
     adata_hto = add_meta(
         adata_hto,
         step="denoise",
+        layer=add_key_denoise,
         params={
             "background_method": background_method,
         },

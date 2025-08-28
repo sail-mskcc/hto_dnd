@@ -3,7 +3,7 @@ import anndata as ad
 from .._logging import get_logger
 from .._utils import get_layer, subset_whitelist, _assert_required_inputs
 from .._defaults import DEFAULTS, DESCRIPTIONS
-from .._exceptions import AnnDataFormatError
+from .._exceptions import AnnDataFormatError, UserInputError
 
 
 _background_version_meta = {
@@ -59,13 +59,14 @@ def build_background(
     """
     # don't do anything if adata_background is provided
     adata_background = kwargs.get("adata_background", None)
-    if adata_background is not None:
-        adata_background = adata_background
+    
     # assert inputs
     _assert_required_inputs(_background_version_meta, background_version, kwargs, "background_version")
     params_required = {k: kwargs[k] for k in _background_version_meta[background_version]["required"]}
     params_optional = {k: kwargs.get(k, DEFAULTS[k]) for k in _background_version_meta[background_version]["optional"]}
-    if background_version == "v1":
+    if adata_background is not None:
+        adata_background = adata_background
+    elif background_version == "v1":
         adata_background = build_background_v1(
             **params_required,
             **params_optional,
@@ -84,7 +85,7 @@ def build_background(
             verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
         )
     else:
-        raise ValueError(f"Invalid version: {background_version}. Must be 'v1' or 'v2'.")
+        raise ValueError(f"Invalid version: {background_version}. Must be 'v1', 'v2' or 'v3'.")
 
     _assert_background(adata_background, _run_assert=_run_assert)
     return adata_background
@@ -148,8 +149,14 @@ def build_background_v2(
         next_k_cells (int, optional): {DESCRIPTIONS["next_k_cells"]}
         verbose (int, optional): {DESCRIPTIONS["verbose"]}
     """
-
     logger = get_logger("utils", level=verbose)
+
+    # assert that all filtered cells are in the raw data
+    if not all(adata_hto.obs_names.isin(adata_hto_raw.obs_names)):
+        raise UserInputError(
+            "Filtered HTO data (`adata_hto`) contains cells that are not in the raw HTO data (`adata_hto_raw`). "
+            "Please make sure that the filtered HTO data is a subset of the raw HTO data."
+        )
 
     # get data
     whitelist = adata_hto.obs_names
@@ -164,7 +171,11 @@ def build_background_v2(
     # get top k from each column
     background = set(whitelist)
     next_k_cells = min(next_k_cells, x.shape[0] - 1)
-    assert next_k_cells > 0, f"It seems that there are no cells in the raw HTO data that are not already in the filtered HTO data."
+    if next_k_cells <= 0:
+        raise UserInputError(
+            f"All cell-ids in the raw HTO (`adata_hto_raw`) data are already in the filtered HTO (`adata_hto`) data. "
+            f"Make sure to set 'next_k_cells' to a value larger than 0 and that the raw HTO data contains cells that are not in the filtered HTO data."
+        )
     for i in range(x.shape[1]):
         # find value such that there are 'next_k_cells' cells larger than it
         cutoff = np.sort(x[:, i])[::-1][next_k_cells]

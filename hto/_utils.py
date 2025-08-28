@@ -88,6 +88,12 @@ def get_layer(
 
 def get_arg(v, kwargs, defaults):
     """Get argument from kwargs or defaults."""
+    # if dict, overwrite keys
+    if isinstance(defaults[v], dict):
+        defaults[v].update(kwargs.get(v, {}))
+        if v == "kwargs_classify":
+            print("DEBUG", kwargs, defaults)
+        return defaults[v]
     return kwargs.get(v, defaults[v])
 
 def subset_whitelist(adata, whitelist, _required_prop=0.9):
@@ -147,8 +153,14 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
             os.makedirs(os.path.dirname(path), exist_ok=True)
         # all categorical columns to str
         for k in adata.obs.columns:
-            if pd.api.types.is_categorical_dtype(adata.obs[k]):
+            if isinstance(adata.obs[k], pd.CategoricalDtype):
                 adata.obs[k] = adata.obs[k].astype(str)
+        # all np.matrix concepts to dense
+        if isinstance(adata.X, np.matrix):
+            adata.X = np.array(adata.X)
+        for layer in adata.layers:
+            if isinstance(adata.layers[layer], np.matrix):
+                adata.layers[layer] = np.array(adata.layers[layer])
         # overwrite
         if os.path.exists(path):
             os.remove(path)
@@ -261,11 +273,11 @@ def _assert_required_inputs(meta, key, kwargs, parameter):
 
     # throw errors
     if key not in meta:
-        msg = f"\nInvalid input: '{key}' for parameter '{parameter}'. " + error_msg
+        msg = f"\nInvalid input: '{key}' for '{parameter}': '{key}'. " + error_msg
         raise UserInputError(msg)
     for var in meta[key]["required"]:
         if var not in kwargs or kwargs[var] is None:
-            msg = f"\nMissing required input: '{var}' for parameter '{parameter}'. " + error_msg
+            msg = f"\nMissing required input: '{var}' for '{parameter}': '{key}'. " + error_msg
             raise UserInputError(msg)
 
 def user_input_error_decorator(func):

@@ -84,6 +84,8 @@ def remove_batch_effect_v2(
     covariates,
     kwargs_denoise,
 ) -> np.ndarray:
+    # logger
+    logger = get_logger("remove_batch_effect_v2", level=kwargs_denoise.get("verbose", DEFAULTS["verbose"]))
 
     # assertions
     assert isinstance(x, np.ndarray), "Input matrix must be a NumPy array"
@@ -91,9 +93,9 @@ def remove_batch_effect_v2(
     covariates = np.asarray(covariates).reshape(-1, 1)
 
     coefs = []
-    x_corrected = np.zeros_like(x)
+    x_corrected = np.array(np.zeros_like(x))
     for i in range(x.shape[1]):
-        x_i = x[:, i]
+        x_i = np.array(x[:, i]).flatten() # for whatever reason, x_i is a matrix, didn't use to be like this
 
         # Fit SVR model
         model = LinearSVR(fit_intercept=True, **kwargs_denoise)

@@ -41,7 +41,6 @@ def distribution(
     layer=None,
     cmap="tab20",
     title="",
-    xmin=None,
     remove_legend=False,
     params_legend={},
     use_log=True,
@@ -61,7 +60,7 @@ def distribution(
     params_kdeplot = {**defaults_kdeplot, **kwargs}
 
     # prep data
-    df_long = adata.to_df(layer).melt()
+    df_long = adata.to_df(layer).melt(var_name="variable", value_name="value")
     if use_log:
         df_long.loc[:, "value_set"] = _symmetric_log1p(df_long.value)
     else:
@@ -134,7 +133,6 @@ def distribution_stages(
             cmap=cmap,
             title=title,
             fill=True,
-            xmin=None,
             remove_legend=False,
             use_log=use_log,
         )

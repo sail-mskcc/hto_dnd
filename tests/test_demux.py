@@ -1,3 +1,5 @@
+"""Tests for demultiplexing."""
+
 import numbers
 
 import anndata as ad
@@ -11,6 +13,7 @@ from hto._exceptions import AnnDataFormatError
 
 @pytest.fixture
 def adata_hto():
+    """Generate mock AnnData object for HTO data."""
     x = np.array([
         [100, 0, 0],
         [0, 100, 0],
@@ -47,8 +50,7 @@ def adata_hto():
 
 
 def test_demux(adata_hto):
-    """Test the demux function for demultiplexing using different methods.
-    """
+    """Test the demux function for demultiplexing using different methods."""
     # All should work
     for method in SUPPORTED_DEMUX_METHODS:
 
@@ -82,6 +84,7 @@ def test_demux(adata_hto):
 @pytest.mark.parametrize("demux_method", ["kmeans", "gmm", "otsu", "gmm_demux"])
 def test_classify(mock_hto_data, demux_method):
     """Test the clustering and evaluation of HTO data.
+    
     Checks the following:
     1. The number of unique labels is exactly 2.
     2. The identified positive cluster is either 0 or 1.
@@ -96,10 +99,9 @@ def test_classify(mock_hto_data, demux_method):
         - The metrics dictionary contains 'threshold', 'inter_class_variance', and 'entropy'.
         - The threshold is a float greater than 0.
 
-    Parameters
-    ----------
-         mock_hto_data: An AnnData object containing the denoised data.
-         method: A string indicating the clustering method to use ("kmeans" or "gmm").
+    Args:
+        mock_hto_data: An AnnData object containing the denoised data.
+        demux_method: A string indicating the clustering method to use ("kmeans" or "gmm").
 
     """
     adata_filtered = mock_hto_data['filtered']
@@ -154,8 +156,7 @@ def test_classify(mock_hto_data, demux_method):
 
 
 def test_enforce_larger_than_background(adata_hto):
-    """Test if the enforce_larger_than_background option works.
-    """
+    """Test if the enforce_larger_than_background option works."""
     # Replace values with negative values to test
     adata_neg = adata_hto.copy()
     adata_neg.X = adata_neg.X - 1000
@@ -186,8 +187,7 @@ def test_enforce_larger_than_background(adata_hto):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_faulty_data(mock_hto_data):
-    """Test if normalisation works.
-    """
+    """Test if normalisation works."""
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
 

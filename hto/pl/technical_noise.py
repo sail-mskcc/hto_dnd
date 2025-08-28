@@ -1,3 +1,5 @@
+"""Visualise technical noise and HTO expression values."""
+
 from typing import Union
 
 import anndata as ad
@@ -10,10 +12,27 @@ from .._defaults import DEFAULTS
 from .._logging import get_logger
 
 
+def _plot_layer(df, axs_row, y, varname, df_line: pd.DataFrame = None, hline: float = None, **kwargs_fig):
+    # scatterplot
+    sns.scatterplot(df, x="noise", y=y, hue="highlight", size="highlight", ax=axs_row[0], **kwargs_fig)
+    axs_row[0].set_title(f"{varname} normalised")
+
+    # regression line
+    if df_line is not None:
+        sns.lineplot(df_line, x="x", y="y", c="black", ax=axs_row[0])
+
+    # KDE plot
+    sns.kdeplot(data=df, y="normalised", ax=axs_row[1], fill=True)
+
+    # horizontal line (demultiplexing threshold)
+    if hline is not None:
+        axs_row[0].axhline(hline, c="grey", linestyle="--")
+        axs_row[1].axhline(hline, c="grey", linestyle="--")
+
+
 def technical_noise(
     adata: ad.AnnData,
     var: Union[int, str] = None,
-    demux_method: str = None,
     add_threshold: bool = True,
     use_key_normalise: str = DEFAULTS["add_key_normalise"],
     use_key_denoise: str = DEFAULTS["add_key_denoise"],
@@ -23,7 +42,12 @@ def technical_noise(
     axs: plt.Axes = None,
     verbose: int = 1,
 ):
+    """Visualise technical noise in the data.
 
+    Step 1: Create a dataframe with noise, expression values and denoised values.
+    Step 2: Create a scatter plot of noise vs expression values.
+    Step 3: Create a KDE plot of expression values.
+    """
     # assert
     if var is None:
         logger = get_logger("technical_noise", level=verbose)
@@ -62,9 +86,7 @@ def technical_noise(
     df_line = pd.DataFrame({"x": x, "y": y})
 
     # get thresholds
-    demux_method = adata.uns["dnd"].get("demux", {}).get("params", {}).get("demux_method", DEFAULTS["demux_method"])
     threshold_denoised = adata.uns["dnd"]["demux"]["thresholds"][varname]
-    threshold_normalised = adata.uns["dnd"]["demux"]["thresholds"][varname] # TODO: use threshold from normalised data
 
     # defaults
     defaults = {
@@ -80,35 +102,27 @@ def technical_noise(
     if axs is None:
         fig, axs = plt.subplots(m, 2, squeeze=False, **params_fig)
 
-    row = 0
-    if "normalised" in plot_layers:
-        ax = axs[row, 0]
-        sns.scatterplot(df, x="noise", y="normalised", hue="highlight", size="highlight", ax=ax, **kwargs_fig)
-        sns.lineplot(df_line, x="x", y="y", c="black", ax=ax)
-        if add_threshold:
-            ax.axhline(threshold_normalised, c="grey", linestyle="--")
-        ax.set_title(f"{varname} normalised")
+    # normalised layer
+    _plot_layer(
+        df=df,
+        axs_row=axs[0],
+        y="normalised",
+        varname=varname,
+        df_line=df_line,
+        hline=None,
+        **kwargs_fig
+    )
 
-        ax = axs[row, 1]
-        sns.kdeplot(data=df, y="normalised", ax=ax, fill=True)
-        if add_threshold:
-            ax.axhline(threshold_normalised, c="grey", linestyle="--")
+    _plot_layer(
+        df=df,
+        axs_row=axs[1],
+        y="denoised",
+        varname=varname,
+        df_line=None,
+        hline=threshold_denoised,
+        **kwargs_fig
+    )
 
-        row += 1
-
-    if "denoised" in plot_layers:
-        ax = axs[row, 0]
-        sns.scatterplot(df, x="noise", y="denoised", hue="highlight", size="highlight", ax=ax, **kwargs_fig)
-        ax.axhline(0, c="black")
-        if add_threshold:
-            ax.axhline(threshold_denoised, c="grey", linestyle="--")
-        ax.set_title(f"{varname} denoised")
-
-        ax = axs[row, 1]
-        sns.kdeplot(data=df, y="denoised", ax=ax, fill=True)
-        if add_threshold:
-            ax.axhline(threshold_denoised, c="grey", linestyle="--")
-
-        plt.tight_layout()
+    plt.tight_layout()
 
     return df, axs

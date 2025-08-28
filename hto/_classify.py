@@ -8,8 +8,9 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, silhouette_score
 from sklearn.mixture import GaussianMixture
 
-from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._defaults import DEFAULTS
 from ._logging import get_logger
+from ._utils import add_docstring
 
 SUPPORTED_DEMUX_METHODS = ["kmeans", "gmm", "otsu", "gmm_demux"]
 
@@ -17,13 +18,14 @@ def assert_demux(method):
     if method not in SUPPORTED_DEMUX_METHODS:
         raise ValueError(f"Method '{method}' not supported. Choose from: {', '.join(SUPPORTED_DEMUX_METHODS)}")
 
+@add_docstring
 def classify(
     data,
     demux_method: str = DEFAULTS["demux_method"],
     verbose: int = DEFAULTS["verbose"],
     **kwargs_classify
 ):
-    f"""Perform clustering to identify positive populations for each HTO.
+    """Perform clustering to identify positive populations for each HTO.
 
     Methods:
         - K-means: Silhouette score and Davies-Bouldin index
@@ -33,15 +35,16 @@ def classify(
 
     Args:
         data (np.array): The input data used for clustering
-        demux_method (str): {DESCRIPTIONS["demux_method"]}
-        verbose (int): {DESCRIPTIONS["verbose"]}
-        **kwargs_classify: {DESCRIPTIONS["kwargs_classify"]}
+        demux_method (str): {demux_method}
+        verbose (int): {verbose}
+        **kwargs_classify: {kwargs_classify}
 
     Returns:
         tuple: A tuple containing:
             - np.array: The cluster labels
             - float: The threshold value (or an approximation thereof)used for classification
             - dict: A dictionary containing various goodness of fit metrics
+
     """
     logger = get_logger("demux", level=verbose)
     if demux_method == "kmeans":
@@ -114,7 +117,8 @@ def _classify_gmm_one(series, logger=None, **kwargs):
 
     # custom predict
     def custom_predict(model, series):
-        """Implemeent the following customisations:
+        """Implement custom prediction logic.
+        
         - If x > larger means, return 1
         - If x < smaller means, return 0
         - If x is between the means, return 0 or 1 based on the posterior probability
@@ -139,7 +143,7 @@ def _classify_gmm_one(series, logger=None, **kwargs):
     logger.debug(f"Calculating threshold for posterior probability cutoff {gmm_p_cutoff}")
     
     def posterior_diff(x):
-        """Optimise function"""
+        """Optimise function."""
         return custom_predict(model, x) - gmm_p_cutoff
 
     # find threshold

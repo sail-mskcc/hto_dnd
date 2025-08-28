@@ -1,3 +1,7 @@
+"""Run external tool: GMM-Demux.
+
+Source: https://github.com/CHPGenetics/GMM-Demux
+"""
 import os
 import subprocess
 import tempfile
@@ -6,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from hto._exceptions import UserInputError
+from hto._logging import get_logger
 
 
 def gmm_demux(
@@ -13,9 +18,11 @@ def gmm_demux(
     hash_id: str = "hash_id", 
     to_counts: bool = None, 
     params: str = "", 
+    verbose: int = 1,
     **kwargs
 ) -> pd.DataFrame:
     """Run GMM-Demux on filtered HTO. GMM-Demux uses raw counts. However, the input to this function is normalised, log-transformed and denoised.
+    
     Use exponentiation to get an approximation of the cleaned counts.
 
     Args:
@@ -23,6 +30,7 @@ def gmm_demux(
         hash_id (str): Hash id for output
         to_counts (bool): Whether to convert logged values to counts. If none, try to infer from the data.
         params (str): Parameters for GMM demux
+        verbose (int): Verbosity level
         **kwargs: Additional arguments
 
     """
@@ -37,6 +45,7 @@ def gmm_demux(
     os.makedirs(path_tmp_dir, exist_ok=True)
     path_tmp = tempfile.TemporaryDirectory(dir=path_tmp_dir, delete=False)
     path_tmp_str = path_tmp.name
+    logger = get_logger("gmm-demux", level=verbose)
 
     # set to_counts
     # - if integers, then False
@@ -68,6 +77,9 @@ def gmm_demux(
     cmd = f"cd {path_tmp_str} && GMM-demux {path_df} {hto_array} --output {path_tmp_str} --full FULL {params} --csv"
     try:
         result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
+        if result.exitcode != 0:
+            raise RuntimeError(f"GMM demux failed with return code {result.returncode}.\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}")
+        logger.info("GMM demux completed successfully.")
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
             f"GMM demux failed with return code {e.returncode}.\n"

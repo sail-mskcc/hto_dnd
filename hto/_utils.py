@@ -2,14 +2,16 @@ import importlib
 import os
 import sys
 
+import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scanpy as sc
 import scipy
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas.api.types import is_float_dtype, is_integer_dtype
 
-from ._defaults import DEFAULTS
+from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._exceptions import AnnDataFormatError, UserInputError
 from ._logging import get_logger
 from ._meta import init_meta
@@ -62,6 +64,7 @@ def get_layer(
         float (bool): Assert that the data is float
         numpy (bool): Convert to numpy
         inplace (bool): Return a copy
+        integer (bool): Assert that the data is integer
 
     """
     # copy if not inplace
@@ -135,6 +138,22 @@ def test_write(path, filetype, create_folder=True, _require_write=False):
             f.write("test")
         os.remove(path)
 
+def _fix_columns(df):
+    """Categorical to string type."""
+    for k in df.columns:
+        if isinstance(df[k], pd.CategoricalDtype):
+            df[k] = df[k].astype(str)
+    return df
+
+def _fix_layers(adata):
+    """All 'matrix' layers must be arrays."""
+    if isinstance(adata.X, np.matrix):
+        adata.X = np.array(adata.X)
+    for layer in adata.layers:
+        if isinstance(adata.layers[layer], np.matrix):
+            adata.layers[layer] = np.array(adata.layers[layer])
+    return adata
+
 def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
     """Write AnnData object to h5ad file safely.
 
@@ -152,15 +171,9 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
         if create_folder:
             os.makedirs(os.path.dirname(path), exist_ok=True)
         # all categorical columns to str
-        for k in adata.obs.columns:
-            if isinstance(adata.obs[k], pd.CategoricalDtype):
-                adata.obs[k] = adata.obs[k].astype(str)
+        adata.obs = _fix_columns(adata.obs)
         # all np.matrix concepts to dense
-        if isinstance(adata.X, np.matrix):
-            adata.X = np.array(adata.X)
-        for layer in adata.layers:
-            if isinstance(adata.layers[layer], np.matrix):
-                adata.layers[layer] = np.array(adata.layers[layer])
+        adata = _fix_layers(adata)
         # overwrite
         if os.path.exists(path):
             os.remove(path)
@@ -293,3 +306,19 @@ def to_dense_safe(x):
     if scipy.sparse.issparse(x):
         return x.todense()
     return x
+
+def add_docstring():
+    def wrapper(func):
+        func.__doc__ = func.__doc__.format(**DESCRIPTIONS)
+        return func
+    return wrapper
+
+@user_input_error_decorator
+def read_adata(path):
+    if path.endswith(".h5"):
+        adata = sc.read_10x_h5(path)
+    elif path.endswith(".h5ad"):
+        adata = ad.read_h5ad(path)
+    else:
+        raise UserInputError(f"Unknown file format for adata: {path}. Must be anndata (.h5ad) or 10x h5 (.h5)")
+    return adata

@@ -1,3 +1,5 @@
+"""Test HTO background identification."""
+
 import anndata as ad
 import hto
 import numpy as np
@@ -8,10 +10,12 @@ from hto._exceptions import UserInputError
 
 @pytest.fixture
 def hto_and_gex():
-    # generate some test data
-    # cell 1: real cell
-    # cell 2: background  barcode
-    # cell 3: discard
+    """Generate test data for HTO and GEX.
+    
+    - cell 1: real cell
+    - cell 2: background barcode
+    - cell 3: discard
+    """
     n = 50
     cell_ids = np.array([f"cell_{i}" for i in range(2 * n)])
     x_hto = np.ones((2 * n, 3))
@@ -30,6 +34,7 @@ def hto_and_gex():
 
 @pytest.fixture
 def hto_and_raw():
+    """Create anndatas for test cells."""
     cell_ids = np.array([f"cell_{i}" for i in range(1, 7)])
     x_hto = np.ones((3, 3)) + 1
     x_hto_raw = np.ones((3, 3))
@@ -42,6 +47,7 @@ def hto_and_raw():
 
 
 def test_build_background_v1(hto_and_gex):
+    """Test if background is correctly identified in v1; uses only raw HTO and GEX."""
     n = 50
 
     adata_hto, adata_gex = hto_and_gex
@@ -63,6 +69,7 @@ def test_build_background_v1(hto_and_gex):
 
 
 def test_build_background_v2(hto_and_raw):
+    """Test if background is correctly identified in v2; uses raw and filtered HTO."""
     adata_hto, adata_hto_raw = hto_and_raw
 
     adata_background = hto.tl.build_background(
@@ -90,6 +97,7 @@ def test_build_background_v2(hto_and_raw):
         )
 
 def test_build_background_v3(hto_and_gex):
+    """Test if background is correctly identified in v3; uses raw and filtered HTO and GEX."""
     adata_hto_raw, adata_gex = hto_and_gex
     # - 0-30 are real cells
     # - 30-50 are background

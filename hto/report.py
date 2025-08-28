@@ -1,3 +1,5 @@
+"""Create a simple HTO demultiplexing report."""
+
 import os
 
 import matplotlib.backends.backend_pdf
@@ -17,6 +19,7 @@ def report_safe(
     *args,
     **kwargs
 ):
+    """Run report with error handling."""
     try:
         report(*args, **kwargs)
     except Exception as e:
@@ -36,7 +39,9 @@ def report(
     use_key_denoise: str = DEFAULTS["add_key_denoise"],
     verbose: int = DEFAULTS["verbose"],
 ):
-    """Create a report to produce the following plots:
+    """Create a simple demultiplexing report.
+
+    Generates:
     - umiplot
     - umi_gex_hto
     - distributions_stages
@@ -78,7 +83,7 @@ def report(
 
     if adata_gex is not None:
         fig_umi_gex_hto, axs = plt.subplots(1, 2, figsize=(8, 4), **REPORT_PLT_DEFAULTS)
-        df = pl.umi_gex_hto(
+        _ = pl.umi_gex_hto(
             adata_hto=adata_hto,
             adata_background=adata_background,
             adata_hto_raw=adata_hto_raw,

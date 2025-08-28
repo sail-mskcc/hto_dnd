@@ -1,3 +1,5 @@
+"""UMI rankplots, analogous to 10X web summaries."""
+
 import math
 
 import anndata as ad
@@ -8,12 +10,13 @@ import seaborn as sns
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 
-from .._defaults import DEFAULTS, DESCRIPTIONS
+from .._defaults import DEFAULTS
 from .._logging import get_logger
 from .._utils import get_layer, to_dense_safe
 
 
 def scale_cmap(color_min, color_max, vmin=0, vmax=1):
+    """Scale colormap between 2 colors."""
     cmap = LinearSegmentedColormap.from_list("custom", [color_max, color_min])
     return ScalarMappable(norm=Normalize(vmin=vmin, vmax=vmax), cmap=cmap)
 
@@ -23,8 +26,7 @@ def bucketize(
     key_values: str = "_values_temp",
     n_buckets=150
 ):
-    """Aggregate buckets based on counts. Group if provided. Aggregate mean if values provided.
-    """
+    """Aggregate buckets based on counts. Group if provided. Aggregate mean if values provided."""
     # initialize
     df = df.copy()
 
@@ -67,7 +69,21 @@ def umi_one(
     verbose: int = DEFAULTS["verbose"],
     **kwargs
 ):
+    """Plot UMI counts for a single variable.
 
+    Args:
+        df (pd.DataFrame): DataFrame containing UMI counts.
+        ax (plt.Axes, optional): Matplotlib axes. Defaults to None.
+        use_log (bool, optional): Whether to use log scale. Defaults to True.
+        key_counts (str, optional): Key for counts. Defaults to 'counts'.
+        key_values (str, optional): Key for values. Defaults to '_values_temp'.
+        n_buckets (int, optional): Number of buckets for aggregation. Defaults to 50.
+        color (str, optional): Color for the plot. Defaults to '#1f77b4'.
+        color_fade (str, optional): Color to fade to. Defaults to '#D3D3D3'.
+        verbose (int, optional): Verbosity level. Defaults to DEFAULTS["verbose"].
+        **kwargs: Additional keyword arguments.
+
+    """
     df = df.copy()
     if use_log:
         df.loc[:, key_counts] = np.log10(df[key_counts].astype(float) + 1)
@@ -118,8 +134,7 @@ def _format_ticks(x):
         return f"{x:.2f}"
 
 def _add_log10_axis(ax: plt.Axes, key_counts: str = "counts"):
-    """Add a log10 axis to the plot.
-    """
+    """Add a log10 axis to the plot."""
     # add logged axis label
     ax.set_ylabel(f"Log10 {key_counts}")
     ax.set_xlabel(f"Log10 {key_counts} Rank")
@@ -151,8 +166,7 @@ def umi(
     verbose: int = DEFAULTS["verbose"],
     **kwargs
 ):
-    f"""
-    Plot UMI counts for each HTO or other groups.
+    """Plot UMI counts for each HTO or other groups.
 
     Args:
         adata (ad.AnnData): AnnData object.
@@ -167,11 +181,11 @@ def umi(
         cmap (str, optional): Color map. Defaults to None.
         color_fade (str, optional): Fade to a color. Defaults to '#D3D3D3'.
         verbose (int, optional): {DESCRIPTIONS["verbose"]}
+        axis (int, optional): Axis to plot. Defaults to 0.
+        **kwargs: Additional keyword arguments used in sns.scatterplot.
+
     """
-
     # init
-    logger = get_logger("plot", level=verbose)
-
     if ax is None:
         fig, ax = plt.subplots(1, 1)
 

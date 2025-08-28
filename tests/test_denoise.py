@@ -1,3 +1,6 @@
+"""Tests for technical denoising of data."""
+
+
 import numpy as np
 import pytest
 from hto import denoise, normalise
@@ -9,8 +12,7 @@ from pandas.api.types import is_float_dtype
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_denoise(mock_hto_data):
-    """Test if technical denoiseing works.
-    """
+    """Test if technical denoiseing works."""
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
     adata_raw = mock_hto_data['raw']
@@ -76,14 +78,13 @@ def test_denoise(mock_hto_data):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_skip_normalise(mock_hto_data):
-    """Test if technical denoiseing works.
-    """
+    """Test if technical denoising yields error for non-normalised data."""
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
 
     # Run denoising
     with pytest.raises(AnnDataFormatError):
-        adata_denoised = denoise(
+        _ = denoise(
             adata_hto=adata_filtered,
             background_method="kmeans-fast",
             inplace=False,
@@ -91,8 +92,7 @@ def test_skip_normalise(mock_hto_data):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_background_methods(mock_hto_data):
-    """Test if technical denoiseing works.
-    """
+    """Test if technical denoiseing works."""
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
     adata_raw = mock_hto_data['raw']

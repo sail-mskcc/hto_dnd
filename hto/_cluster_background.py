@@ -122,8 +122,7 @@ def _init_strategies(normalized_matrix, method, *args, **kwargs):
         raise ValueError(f"Method '{method}' not supported.")
 
 def _all_inits(matrix):
-    """Generate all supported inits - feasible for lower dimensions.
-    """
+    """Generate all supported inits - feasible for lower dimensions."""
     from math import floor
     m = matrix.shape[1]
     inits = [{"method": "1vall"}]
@@ -135,7 +134,7 @@ def _all_inits(matrix):
 
 
 def _get_background_kmeans_fast(matrix, n_iter=5, inits=None):
-    """Simple heuristics for fast, row-wise KMeans with 2 clusters in pandas DataFrame.
+    """Apply simple heuristics for fast, row-wise KMeans with 2 clusters in pandas DataFrame.
 
     1. Initialize clusters using 'inits' strategies.
     2. Iterate through initialisations:

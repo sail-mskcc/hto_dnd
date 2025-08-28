@@ -1,3 +1,5 @@
+"""Compare GEX to HTO counts."""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -13,7 +15,7 @@ def umi_gex_hto(
     subsample=10000,
     axs=None
 ):
-
+    """Plot expression level for GEX on x-axis and HTO on y-axis."""
     # combine data
     wl = adata_hto.obs_names
     sgex = pd.Series(name="gex", data=np.array(adata_gex.X.sum(axis=1)).flatten(), index=adata_gex.obs_names)

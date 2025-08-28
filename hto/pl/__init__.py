@@ -1,3 +1,4 @@
+"""HTO Plotting Package."""
 from .barplot import barplot
 from .distributions import distribution, distribution_stages
 from .heatmap import heatmap

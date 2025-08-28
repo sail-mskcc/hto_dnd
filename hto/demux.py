@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
+"""Methods for demultiplexing HTO data, containing implementation of various binary demultiplexing methods."""
 from pprint import pformat
 
 import anndata as ad
@@ -9,13 +7,14 @@ import pandas as pd
 import scipy.sparse
 
 from ._classify import assert_demux, classify
-from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._defaults import DEFAULTS
 from ._exceptions import UserInputError
 from ._logging import get_logger
 from ._meta import add_meta
-from ._utils import get_layer
+from ._utils import add_docstring, get_layer
 
 
+@add_docstring
 def demux(
     adata_hto: ad.AnnData,
     demux_method: str = DEFAULTS["demux_method"],
@@ -29,27 +28,27 @@ def demux(
     inplace: bool = DEFAULTS["inplace"],
     verbose: int = DEFAULTS["verbose"],
 ):
-    f"""Classify HTOs as singlets (assign to HTO), doublets, or negatives.
+    """Classify HTOs as singlets (assign to HTO), doublets, or negatives.
 
     Use a 2-component K-means, GMM, or Otsu threshold method to categorize cells based on their HTO classifications.
 
     Args:
-        adata_hto (ad.AnnData): {DESCRIPTIONS["adata_hto"]}
-        demux_method (str): {DESCRIPTIONS["demux_method"]}
-        use_layer (str): {DESCRIPTIONS["use_layer"]}
-        key_normalise (str): {DESCRIPTIONS["add_key_normalise"]}
-        enforce_larger_than_background (bool): {DESCRIPTIONS["enforce_larger_than_background"]}
-        add_key_hashid (str): {DESCRIPTIONS["add_key_hashid"]}
-        add_key_doublet (str): {DESCRIPTIONS["add_key_doublet"]}
-        add_key_labels (str): {DESCRIPTIONS["add_key_labels"]}
-        kwargs_classify (dict): {DESCRIPTIONS["kwargs_classify"]}
-        inplace (bool): {DESCRIPTIONS["inplace"]}
-        verbose (int): {DESCRIPTIONS["verbose"]}
+        adata_hto (ad.AnnData): {adata_hto}
+        demux_method (str): {demux_method}
+        use_layer (str): {use_layer}
+        key_normalise (str): {add_key_normalise}
+        enforce_larger_than_background (bool): {enforce_larger_than_background}
+        add_key_hashid (str): {add_key_hashid}
+        add_key_doublet (str): {add_key_doublet}
+        add_key_labels (str): {add_key_labels}
+        kwargs_classify (dict): {kwargs_classify}
+        inplace (bool): {inplace}
+        verbose (int): {verbose}
 
     Returns:
         AnnData: An AnnData object containing the results of the demultiplexing in .obs.
-    """
 
+    """
     # debug - print parameters
     logger = get_logger("demux", level=verbose)
     params = {k: v.shape if isinstance(v, ad.AnnData) else v for k, v in locals().items()}

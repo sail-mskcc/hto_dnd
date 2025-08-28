@@ -1,3 +1,5 @@
+"""Tests for HTO normalisation."""
+
 import numpy as np
 import pytest
 from hto import normalise
@@ -7,8 +9,7 @@ from pandas.api.types import is_float_dtype, is_integer_dtype
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_normalise(mock_hto_data):
-    """Test if normalisation works.
-    """
+    """Test if normalisation works."""
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
     adata_raw = mock_hto_data['raw']
@@ -62,15 +63,14 @@ def test_normalise(mock_hto_data):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_faulty_data(mock_hto_data):
-    """Test if normalisation works.
-    """
+    """Test if normalisation works."""
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
     adata_raw = mock_hto_data['raw']
 
     # Fail - full overlap
     with pytest.raises(UserInputError):
-        adata_norm = normalise(
+        _ = normalise(
             adata_hto=adata_filtered,
             adata_hto_raw=adata_filtered,
             inplace=False,
@@ -82,7 +82,7 @@ def test_faulty_data(mock_hto_data):
     with pytest.raises(UserInputError):
         obs_names = adata_raw.obs_names
         obs_names = obs_names[~obs_names.isin(adata_filtered.obs_names)]
-        adata_norm = normalise(
+        _ = normalise(
             adata_hto=adata_filtered,
             adata_hto_raw=adata_raw[obs_names],
             inplace=False,

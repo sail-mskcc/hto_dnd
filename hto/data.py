@@ -1,3 +1,4 @@
+"""Collection of utility functions for generating mock HTO expression data."""
 import anndata as ad
 import numpy as np
 import pandas as pd

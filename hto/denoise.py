@@ -1,14 +1,17 @@
+"""Denoise HTO expression data by using a vector of estimated per-cell background expression."""
+
 import anndata as ad
 import numpy as np
 
 from ._cluster_background import assert_background, estimate_background
-from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._defaults import DEFAULTS
 from ._logging import get_logger
 from ._meta import add_meta
 from ._remove_batch_effect import remove_batch_effect
-from ._utils import get_layer
+from ._utils import add_docstring, get_layer
 
 
+@add_docstring
 def denoise(
     adata_hto: ad.AnnData,
     use_layer: str = DEFAULTS["use_layer"],
@@ -22,25 +25,29 @@ def denoise(
     kwargs_denoise: dict = DEFAULTS["kwargs_denoise"],
     **kwargs,
 ):
-    f"""Remove technical noise by regressing out cell-level background expression.
+    """Remove technical noise by regressing out cell-level background expression.
 
     This function aims to remove technical noise from normalized protein expression data:
     1. Build Background Data: Estimate the technical noise per cell using kmeans or GMM.
     2. Remove Batch Effect: Fit a linear model to the normalized matrix and subtract the
-        technical noise from the original matrix.
+       technical noise from the original matrix.
 
     Args:
-        adata_hto (ad.AnnData): {DESCRIPTIONS["adata_hto"]}
-        use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
-        background_method (str, optional): {DESCRIPTIONS["background_method"]}
-        covariates (np.ndarray, optional): {DESCRIPTIONS["covariates"]}
-        design (np.ndarray, optional): {DESCRIPTIONS["design"]}
-        add_key_denoise (str, optional): {DESCRIPTIONS["add_key_denoise"]}
-        inplace (bool, optional): {DESCRIPTIONS["inplace"]}
-        verbose (int, optional): {DESCRIPTIONS["verbose"]}
+        adata_hto (anndata.AnnData): {adata_hto}
+        use_layer (str): {use_layer}
+        background_method (str): {background_method}
+        add_key_denoise (str): {add_key_denoise}
+        covariates (np.ndarray): {covariates}
+        denoise_version (str): {denoise_version}
+        design (np.ndarray): {design}
+        inplace (bool): {inplace}
+        verbose (int): {verbose}
+        kwargs_denoise (dict): {kwargs_denoise}
+        **kwargs: Additional keyword arguments for background estimation.
 
     Returns:
-        ad.AnnData: An updated AnnData object with denoised protein expression data.
+        anndata.AnnData: Updated AnnData object with denoised protein expression data.
+
     """
     assert_background(
         method=background_method,

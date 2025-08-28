@@ -1,3 +1,5 @@
+"""Function to remove batch effects (or technical noise) from count data."""
+
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import LinearSVR
@@ -42,7 +44,7 @@ def remove_batch_effect_v1(
     covariates: np.ndarray,
     design: np.ndarray,
 ) -> np.ndarray:
-
+    """Remove batch effect using linear regression."""
     # assertions
     assert isinstance(x, np.ndarray), "Input matrix must be a NumPy array"
     if design is None:
@@ -83,9 +85,7 @@ def remove_batch_effect_v2(
     covariates,
     kwargs_denoise,
 ) -> np.ndarray:
-    # logger
-    logger = get_logger("remove_batch_effect_v2", level=kwargs_denoise.get("verbose", DEFAULTS["verbose"]))
-
+    """Remove batch effect using Support Vector Regression (SVR)."""
     # assertions
     assert isinstance(x, np.ndarray), "Input matrix must be a NumPy array"
     assert isinstance(covariates, np.ndarray), "Covariates must be a NumPy array"

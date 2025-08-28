@@ -1,9 +1,12 @@
+"""Test GMM demultiplexing."""
+
 import pytest
 from hto.external import gmm_demux
 
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_gmm_demux(mock_hto_data):
+    """Test the GMM demultiplexing function."""
     adata_filtered = mock_hto_data['filtered']
     df_demux = gmm_demux(adata_filtered.to_df(), hash_id="hash_id_gmm_demux")
     assert "hash_id_gmm_demux" in df_demux.columns

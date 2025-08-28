@@ -1,3 +1,5 @@
+"""Visualise a heatmap of two columns of discrete labels. Used to visualise results of two cell label columns."""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -25,6 +27,7 @@ def heatmap(
         common_cols (bool, optional): If True, ensure all columns are present in box x and y. Defaults to True.
         normalise (str, optional): Normalise by "all", "row" or "col". Defaults to "" (no normalisation).
         ax (plt.Axes, optional): Axes to plot on. If None, a new figure is created. Defaults to None.
+        log_counts (bool, optional): If True, log-transform the counts. Defaults to False.
         **kwargs: Additional keyword arguments for seaborn heatmap.
 
     """

@@ -13,8 +13,7 @@ def _estimate_initial_params(
     n_probes: int,
     threshold: float = None,
 ) -> tuple:
-    """Estimate initial parameters for a skew-normal mixture model.
-    """
+    """Estimate initial parameters for a skew-normal mixture model."""
     # setup
     if threshold is None:
         threshold = threshold_otsu(data)
@@ -96,25 +95,20 @@ def skewnorm_mixture_model(
     n_probes: int = None,
     verbose: bool = False,
 ) -> ArrayLike:
-    """Label data points above a cutoff using a mixture of skew-normal
-    distributions.
+    """Labels data points above a cutoff using a mixture of skew-normal distributions.
 
-    Parameters
-    ----------
-    data : ArrayLike
-        Input data to label.
-    qtl_cutoff : float, optional
-        Quantile cutoff to classify positive labels. Default is 0.5.
-    nbins : int, optional
-        Number of bins for the histogram used in fitting. Default is 100.
-    return_params : bool, optional
-        Whether to return fitted parameters alongside labels. Default is False.
+    Args:
+        data (ArrayLike): Input data to label.
+        p0 (list, optional): Initial parameters for the mixture model. Default is None.
+        nbins (int, optional): Number of bins for the histogram used in fitting. Default is 100.
+        p_cutoff (float, optional): Probability cutoff to classify positive labels. Default is 0.95.
+        n_probes (int, optional): Number of probes (components) in the mixture. Required if p0 is None.
+        verbose (bool, optional): Whether to enable verbose logging. Default is False.
 
-    Returns
-    -------
-    ArrayLike
-        Boolean array indicating whether each data point is labeled positive.
-        If `return_params` is True, also returns the fitted parameters.
+    Returns:
+        ArrayLike: Probability for each data point belonging to the second skew-normal distribution.
+        float: Threshold value for positive classification.
+        list: Fitted parameters for the mixture model.
 
     """
     # Get logger
@@ -178,8 +172,7 @@ def plot_skewnorm(
     ax=None,
     **kwargs
 ):
-    """Plot both skew-normal distributions and the data as a histogram.
-    """
+    """Plot both skew-normal distributions and the data as a histogram."""
     # setup
     if ax is None:
         fig, ax = plt.subplots()

@@ -1,13 +1,15 @@
+"""Normalise HTO expression data based on a selected reference set of cells."""
+
 from pprint import pformat
 
 import anndata as ad
 import numpy as np
 
-from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._defaults import DEFAULTS
 from ._exceptions import AnnDataFormatError, UserInputError
 from ._logging import get_logger
 from ._meta import add_meta, init_meta
-from ._utils import get_layer
+from ._utils import add_docstring, get_layer
 from .tl import build_background
 
 
@@ -23,6 +25,7 @@ def assert_normalisation(df, logger, max_spread=1.5, qs=[.1, .99]):
     if ratio > max_spread:
         logger.warning(f"Spread of normalised values is too high: {ratio:.2f}. This may cause issues when estimate cell-by-cell covariates.")
 
+@add_docstring
 def normalise(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData = None,
@@ -36,23 +39,25 @@ def normalise(
     verbose: int = DEFAULTS["verbose"],
     **kwargs_background,
 ) -> ad.AnnData:
-    f"""Background aware HTO normalisation.
+    """Background aware HTO normalisation.
 
     This function implements an adapted version of the DSB algorithm (see citation), which normalizes protein
     expression data using empty droplets as background reference and optionally performs
     technical noise removal.
 
     Args:
-        adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
-        adata_hto_raw (AnnData): {DESCRIPTIONS["adata_hto_raw"]}
-        adata_gex (AnnData, optional): {DESCRIPTIONS["adata_gex"]}
-        adata_background (AnnData, optional): {DESCRIPTIONS["adata_background"]}
-        pseudocount (int, optional): {DESCRIPTIONS["pseudocount"]}
-        background_method (str, optional): {DESCRIPTIONS["background_method"]}
-        add_key_normalise (str, optional): {DESCRIPTIONS["add_key_normalise"]}
-        use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
-        inplace (bool, optional): {DESCRIPTIONS["inplace"]}
-        verbose (int, optional): {DESCRIPTIONS["verbose"]}
+        adata_hto (AnnData): {adata_hto}
+        adata_hto_raw (AnnData): {adata_hto_raw}
+        adata_gex (AnnData, optional): {adata_gex}
+        adata_background (AnnData, optional): {adata_background}
+        pseudocount (int, optional): {pseudocount}
+        background_version (str, optional): {background_version}
+        background_method (str, optional): {background_method}
+        add_key_normalise (str, optional): {add_key_normalise}
+        use_layer (str, optional): {use_layer}
+        inplace (bool, optional): {inplace}
+        verbose (int, optional): {verbose}
+        **kwargs_background: Additional keyword arguments for the background model.
 
     Returns:
         ad.AnnData: AnnData object with normalized protein expression data, either
@@ -60,6 +65,7 @@ def normalise(
 
     Citation:
     Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022). https://doi.org/10.1038/s41467-022-29356-8
+
     """
     # Get logger
     logger = get_logger("normalise", level=verbose)
@@ -176,16 +182,18 @@ def normalise_debug(
     add_key_normalise: str = DEFAULTS["add_key_normalise"],
     verbose: int = DEFAULTS["verbose"],
 ):
-    f"""
-    If no background data or GEX data is available, align the quantiles of the
-    filtered HTO data from 0 to 1. This is clearly not recommended, but is provided as a last
+    """Debug normaliser that only requires filtered HTO data.
+
+    If no background data or GEX data is available, align the quantiles of the filtered HTO data from 0 to 1. This is clearly not recommended, but is provided as a last
     resort option.
 
     Args:
-        adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
-        background_quantile (float, tuple, optional): {DESCRIPTIONS["background_quantile"]}
-        use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
-        verbose (int, optional): {DESCRIPTIONS["verbose"]}
+        adata_hto (AnnData): {adata_hto}
+        background_quantile (float, tuple, optional): {background_quantile}
+        use_layer (str, optional): {use_layer}
+        add_key_normalise (str, optional): {add_key_normalise}
+        verbose (int, optional): {verbose}
+
     """
     logger = get_logger("utils", level=verbose)
 

@@ -1,18 +1,26 @@
+"""End-to-end demultiplexing using DND.
+
+1. Step: Preprocessing
+2. Step: Normalization
+3. Step: Denoising
+4. Step: Demultiplexing
+5. Step: Postprocessing
+"""
+
+
 import warnings
 
 import anndata as ad
 import pandas as pd
-import scanpy as sc
-
-warnings.filterwarnings('ignore', module='anndata')
 
 from ._classify import assert_demux
 from ._cluster_background import assert_background
 from ._defaults import DEFAULTS
-from ._exceptions import UserInputError
 from ._logging import get_logger
 from ._utils import (
+    add_docstring,
     get_arg,
+    read_adata,
     subset_whitelist,
     test_write,
     user_input_error_decorator,
@@ -24,7 +32,9 @@ from .denoise import denoise
 from .normalise import normalise
 from .report import report_safe
 
+warnings.filterwarnings('ignore', module='anndata')
 
+@add_docstring
 @user_input_error_decorator
 def dnd(
     adata_hto: ad.AnnData,
@@ -41,12 +51,19 @@ def dnd(
     """Perform normalization and demultiplexing on the provided filtered and raw AnnData objects.
 
     Args:
-        adata_filtered (AnnData): AnnData object with filtered counts
-        adata_raw (AnnData): AnnData object with raw counts
-        verbose (int, optional): Verbosity level. Default is 1.
+        adata_hto (anndata.AnnData): {adata_hto}
+        adata_hto_raw (anndata.AnnData, optional): {adata_hto_raw}
+        adata_gex (anndata.AnnData, optional): {adata_gex}
+        adata_background (anndata.AnnData, optional): {adata_background}
+        adata_out (str, optional): {adata_out}
+        csv_out (str, optional): {csv_out}
+        path_report (str, optional): {path_report}
+        show_report (bool, optional): {show_report}
+        _as_cli (bool, optional): {_as_cli}
+        **kwargs: {kwargs}
 
     Returns:
-        demux_adata (AnnData): An AnnData object containing the results of the demultiplexing.
+        anndata.AnnData: {adata_hto}
 
     """
     # SET PARAMS
@@ -98,16 +115,10 @@ def dnd(
         assert add_key_denoise not in adata_hto.layers, f"Key {add_key_denoise} already exists in adata. Add option --add-key-denoise to change the key."
 
     # GET DATA
-    if adata_gex is not None:
-        if isinstance(adata_gex, str) and background_version in ["v1", "v3"]:
-            logger.debug(f"Reading gex adata from {adata_gex}")
-            if adata_gex.endswith(".h5"):
-                adata_gex = sc.read_10x_h5(adata_gex)
-            elif adata_gex.endswith(".h5ad"):
-                adata_gex = ad.read_h5ad(adata_gex)
-            else:
-                raise UserInputError(f"Unknown file format for adata_gex: {adata_gex}. Must be anndata (.h5ad) or 10x h5 (.h5)")
-
+    if adata_gex is not None and isinstance(adata_gex, str) and background_version in ["v1", "v3"]:
+        logger.debug(f"Reading gex adata from {adata_gex}")
+        adata_gex = read_adata(adata_gex)
+    
     # LOG
     logger.info(f"Starting DND: Normalise (build-background: {background_version}) -> Denoise (background-dection: {background_method} | version: {denoise_version}) -> Demux (method: {demux_method})")
 

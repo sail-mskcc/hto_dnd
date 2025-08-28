@@ -1,3 +1,5 @@
+"""Tests for DND end-to-end application."""
+
 import anndata as ad
 import numpy as np
 import pytest
@@ -7,8 +9,7 @@ from hto._exceptions import AnnDataFormatError
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_dnd(mock_hto_data):
-    """Test the full pipeline: normalisation, denoising, and demultiplexing.
-    """
+    """Test the full pipeline: normalisation, denoising, and demultiplexing."""
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
     adata_raw = mock_hto_data['raw']
@@ -75,14 +76,14 @@ def test_dnd(mock_hto_data):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_no_background(mock_hto_data):
-
+    """Test if DND fails without background data."""
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
     adata_raw = adata_filtered.copy()
 
     # Test with no background
     with pytest.raises(AnnDataFormatError):
-        adata = dnd(
+        _ = dnd(
             adata_hto=adata_filtered,
             adata_hto_raw=adata_filtered.copy(),
             adata_gex=adata_filtered.copy(),
@@ -90,7 +91,7 @@ def test_no_background(mock_hto_data):
 
     # Test with too few cells
     with pytest.raises(AnnDataFormatError):
-        adata = dnd(
+        _ = dnd(
             adata_hto=adata_filtered[:2],
             adata_hto_raw=adata_raw,
             adata_gex=adata_filtered,

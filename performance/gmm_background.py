@@ -1,5 +1,8 @@
+"""Benchmarking performance of different background noise estimation methods."""
+
 from pprint import pprint
 
+import hto
 import numpy as np
 import pandas as pd
 from hto._cluster_background import (
@@ -15,14 +18,16 @@ methods = {
 }
 
 def main():
+    """Compare performance of different normalisation and demultiplexing algorithms. TODO: Add GMM-Demux and HTODemux to comparison."""
     # generate
-    mock = generate_hto(
+    mock = hto.data.generate_hto(
         n_cells=1000,
         n_htos=8,
+        seed=42,
     )
 
     # normalise
-    adata_norm = dsb(
+    adata_norm = hto.dnd(
         adata_filtered=mock["filtered"],
         adata_raw=mock["raw"],
         pseudocount=10,

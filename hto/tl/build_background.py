@@ -1,10 +1,12 @@
+"""Construct a set of cells that are used as a background reference for HTO data."""
+
 import anndata as ad
 import numpy as np
 
-from .._defaults import DEFAULTS, DESCRIPTIONS
+from .._defaults import DEFAULTS
 from .._exceptions import AnnDataFormatError, UserInputError
 from .._logging import get_logger
-from .._utils import _assert_required_inputs, get_layer, subset_whitelist
+from .._utils import _assert_required_inputs, add_docstring, get_layer, subset_whitelist
 
 _background_version_meta = {
     "v1": {
@@ -41,21 +43,21 @@ def _log_background(n_background, n_empty, logger):
     )
     logger.info(msg)
 
-
+@add_docstring
 def build_background(
     background_version: str = DEFAULTS["background_version"],
     _run_assert: bool = True,
     **kwargs,
 ):
-    f"""
-    Build a background whitelisted adata for HTO data.
+    """Build a background whitelisted adata for HTO data.
 
     Args:
-        background_version (str): {DESCRIPTIONS["background_version"]}
+        background_version (str): {background_version}
         **kwargs: Additional keyword arguments for the specific version
 
     Returns:
         AnnData: Filtered AnnData object of background data
+
     """
     # don't do anything if adata_background is provided
     adata_background = kwargs.get("adata_background", None)
@@ -91,6 +93,7 @@ def build_background(
     return adata_background
 
 
+@add_docstring
 def build_background_v1(
     adata_hto_raw: ad.AnnData,
     adata_gex: ad.AnnData,
@@ -98,13 +101,15 @@ def build_background_v1(
     min_umi: int = DEFAULTS["min_umi"],
     verbose: int = DEFAULTS["verbose"],
 ):
-    f"""Get a whitelist based on GEX counts.
+    """Get a whitelist based on GEX counts.
 
     Args:
-        adata_hto_raw (AnnData): {DESCRIPTIONS["adata_hto_raw"]}
-        adata_gex (AnnData): {DESCRIPTIONS["adata_gex"]}
-        min_umi (int, optional): {DESCRIPTIONS["min_umi"]}
-        verbose (int, optional): {DESCRIPTIONS["verbose"]}
+        adata_hto_raw (AnnData): {adata_hto_raw}
+        adata_gex (AnnData): {adata_gex}
+        use_layer (str, optional): {use_layer}
+        min_umi (int, optional): {min_umi}
+        verbose (int, optional): {verbose}
+
     """
     # assertions - gex inputs must be integers
     adata_gex, x = get_layer(
@@ -131,6 +136,7 @@ def build_background_v1(
     return adata_hto_raw[list(ids_background)]
 
 
+@add_docstring
 def build_background_v2(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData,
@@ -138,16 +144,15 @@ def build_background_v2(
     next_k_cells: int = DEFAULTS["next_k_cells"],
     verbose: int = DEFAULTS["verbose"],
 ):
-    f"""
-    Build background by choosing the next k largest cells from the raw HTO data
-    that are not in the current HTO data.
+    """Build background by choosing the next k largest cells from the raw HTO data that are not in the current HTO data.
 
     Args:
-        adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
-        adata_hto_raw (AnnData): {DESCRIPTIONS["adata_hto_raw"]}
-        use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
-        next_k_cells (int, optional): {DESCRIPTIONS["next_k_cells"]}
-        verbose (int, optional): {DESCRIPTIONS["verbose"]}
+        adata_hto (AnnData): {adata_hto}
+        adata_hto_raw (AnnData): {adata_hto_raw}
+        use_layer (str, optional): {use_layer}
+        next_k_cells (int, optional): {next_k_cells}
+        verbose (int, optional): {verbose}
+
     """
     logger = get_logger("utils", level=verbose)
 
@@ -193,6 +198,7 @@ def build_background_v2(
     return adata_hto_raw[list(background)]
 
 
+@add_docstring
 def build_background_v3(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData,
@@ -201,18 +207,17 @@ def build_background_v3(
     use_layer: str = DEFAULTS["use_layer"],
     verbose: int = DEFAULTS["verbose"],
 ):
-    f"""
-    Choose the k cells with the highest total counts from the GEX data that are not whitelisted.
+    """Choose the k cells with the highest total counts from the GEX data that are not whitelisted.
 
     Args:
-        adata_hto (AnnData): {DESCRIPTIONS["adata_hto"]}
-        adata_hto_raw (AnnData): {DESCRIPTIONS["adata_hto_raw"]}
-        adata_gex (AnnData): {DESCRIPTIONS["adata_gex"]}
-        k_gex_cells (int, optional): {DESCRIPTIONS["k_gex_cells"]}
-        use_layer (str, optional): {DESCRIPTIONS["use_layer"]}
-        verbose (int, optional): {DESCRIPTIONS["verbose"]}
-    """
+        adata_hto (AnnData): {adata_hto}
+        adata_hto_raw (AnnData): {adata_hto_raw}
+        adata_gex (AnnData): {adata_gex}
+        k_gex_cells (int, optional): {k_gex_cells}
+        use_layer (str, optional): {use_layer}
+        verbose (int, optional): {verbose}
 
+    """
     logger = get_logger("utils", level=verbose)
 
     # get gex_counts

@@ -1,6 +1,8 @@
+"""Introducing two metrics: Singlet Accuracy (SA) and Singlet Recovery Rate (SRR)."""
+
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import f1_score
 
 # y_true: ground truth labels
 # y_pred: predicted labels from your algorithm
@@ -65,6 +67,11 @@ def srr(
     return recovery_rate
 
 def get_metrics(ground_truth, prediction):
+    """Obtain metrices of a ground_truth and prediction.
+
+    - SA (Singlet Accuracy) = Correctly Labelled Predicted Singlets / All Predicted Singlets
+    - SRR (Singlet Recovery Rate) = Correctly Labelled Ground Truth Singlets / All Ground Truth Singlets
+    """
     gt_negatives = ground_truth.isin(["low_quality"])
     gt_doublets = ground_truth.isin(["doublet"])
     gt_singlets = ~gt_negatives & ~gt_doublets
@@ -88,36 +95,3 @@ def get_metrics(ground_truth, prediction):
     }
 
     return pd.Series(metrics)
-
-
-def evaluate_classification(y_true, y_pred, map_labels=None):
-    # assertions
-    assert isinstance(y_true, pd.Series), "y_true should be a pandas Series"
-    assert isinstance(y_pred, pd.Series), "y_pred should be a pandas Series"
-
-    # map labels if a mapping is provided
-    if map_labels is not None:
-        assert isinstance(map_labels, dict), "map_labels should be a dictionary"
-        y_true = y_true.map(lambda x: map_labels.get(x, x))
-        y_pred = y_pred.map(lambda x: map_labels.get(x, x))
-
-    # report which labels are not represented by either y_true or y_pred
-    labels = set(y_true) | set(y_pred)
-    missing_true = set(y_true) - labels
-    missing_pred = set(y_pred) - labels
-    if missing_true:
-        print(f"Labels in y_true not in y_pred: {missing_true}")
-    if missing_pred:
-        print(f"Labels in y_pred not in y_true: {missing_pred}")
-
-    # get metrices
-    metrics = {
-        'accuracy': accuracy_score(y_true, y_pred),
-        'precision_macro': precision_score(y_true, y_pred, average='macro', zero_division=0),
-        'recall_macro': recall_score(y_true, y_pred, average='macro', zero_division=0),
-        'f1_macro': f1_score(y_true, y_pred, average='macro', zero_division=0),
-        'precision_micro': precision_score(y_true, y_pred, average='micro', zero_division=0),
-        'recall_micro': recall_score(y_true, y_pred, average='micro', zero_division=0),
-        'f1_micro': f1_score(y_true, y_pred, average='micro', zero_division=0),
-    }
-    return metrics

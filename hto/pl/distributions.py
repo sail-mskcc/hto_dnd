@@ -1,3 +1,5 @@
+"""Visualise the distribution of HTO expression values."""
+
 import anndata as ad
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -47,6 +49,20 @@ def distribution(
     use_log=True,
     **kwargs
 ):
+    """Plot the distribution of HTO expression data.
+
+    Args:
+        adata (AnnData): The annotated data object containing the HTO expression data.
+        ax (plt.Axes, optional): The axes to plot on. If None, a new figure is created.
+        layer (str, optional): The layer to use for the plot. Defaults to None.
+        cmap (str, optional): The colormap to use for the plot. Defaults to "tab20".
+        title (str, optional): The title of the plot. Defaults to "".
+        remove_legend (bool, optional): If True, remove the legend from the plot. Defaults to False.
+        params_legend (dict, optional): Additional parameters for the legend.
+        use_log (bool, optional): If True, use a log scale for the x-axis. Defaults to True.
+        **kwargs: Additional keyword arguments for the seaborn kdeplot.
+
+    """
     # defaults
     defaults_legend = {
         "title": "Hashtags",
@@ -113,7 +129,7 @@ def distribution_stages(
     cmap="tab20",
     axs=None,
 ):
-
+    """Visualise HTO distribution across different stages: raw, normalised, and denoised."""
     assert not (layer_raw == use_key_normalise), "Raw and normalised layers must be different"
     assert not (layer_raw == use_key_denoise), "Raw and denoised layers must be different"
 

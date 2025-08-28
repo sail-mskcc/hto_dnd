@@ -11,8 +11,9 @@ from .demux import demux
 from ._defaults import DEFAULTS
 from ._utils import write_h5ad_safe, write_csv_safe, test_write, subset_whitelist, get_arg, user_input_error_decorator
 from ._cluster_background import assert_background
-from ._cluster_demux import assert_demux
+from ._classify import assert_demux
 from ._logging import get_logger
+from ._exceptions import UserInputError
 from .report import report_safe
 
 @user_input_error_decorator
@@ -90,7 +91,12 @@ def dnd(
     if adata_gex is not None:
         if isinstance(adata_gex, str) and background_version in ["v1", "v3"]:
             logger.debug(f"Reading gex adata from {adata_gex}")
-            adata_gex = sc.read_10x_h5(adata_gex)
+            if adata_gex.endswith(".h5"):
+                adata_gex = sc.read_10x_h5(adata_gex)
+            elif adata_gex.endswith(".h5ad"):
+                adata_gex = ad.read_h5ad(adata_gex)
+            else:
+                raise UserInputError(f"Unknown file format for adata_gex: {adata_gex}. Must be anndata (.h5ad) or 10x h5 (.h5)")
 
     # LOG
     logger.info(f"Starting DND: Normalise (build-background: {background_version}) -> Denoise (background-dection: {background_method} | version: {denoise_version}) -> Demux (method: {demux_method})")
@@ -128,9 +134,12 @@ def dnd(
         verbose=verbose,
         use_layer=add_key_denoise,
         demux_method=demux_method,
+        key_normalise=add_key_normalise,
+        enforce_larger_than_background=get_arg("enforce_larger_than_background", kwargs, DEFAULTS),
         add_key_hashid=add_key_hashid,
         add_key_doublet=add_key_doublet,
         add_key_labels=get_arg("add_key_labels", kwargs, DEFAULTS),
+        kwargs_classify=get_arg("kwargs_classify", kwargs, DEFAULTS),
     )
 
     # SAVE

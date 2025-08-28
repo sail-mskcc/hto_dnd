@@ -5,22 +5,25 @@ import numpy as np
 import pandas as pd
 from pprint import pformat
 import scipy.sparse
-from skimage.filters import threshold_otsu
 import anndata as ad
 
-from ._cluster_demux import cluster_and_evaluate, assert_demux
+from ._classify import classify, assert_demux
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._logging import get_logger
 from ._meta import add_meta
 from ._utils import get_layer
+from ._exceptions import UserInputError
 
 def demux(
     adata_hto: ad.AnnData,
     demux_method: str = DEFAULTS["demux_method"],
     use_layer: str = DEFAULTS["use_layer"],
+    key_normalise: str = DEFAULTS["add_key_normalise"],
+    enforce_larger_than_background: bool = DEFAULTS["enforce_larger_than_background"],
     add_key_hashid: str = DEFAULTS["add_key_hashid"],
     add_key_doublet: str = DEFAULTS["add_key_doublet"],
     add_key_labels: str = DEFAULTS["add_key_labels"],
+    kwargs_classify: dict = DEFAULTS["kwargs_classify"],
     inplace: bool = DEFAULTS["inplace"],
     verbose: int = DEFAULTS["verbose"],
 ):
@@ -32,8 +35,12 @@ def demux(
         adata_hto (ad.AnnData): {DESCRIPTIONS["adata_hto"]}
         demux_method (str): {DESCRIPTIONS["demux_method"]}
         use_layer (str): {DESCRIPTIONS["use_layer"]}
+        key_normalise (str): {DESCRIPTIONS["add_key_normalise"]}
+        enforce_larger_than_background (bool): {DESCRIPTIONS["enforce_larger_than_background"]}
         add_key_hashid (str): {DESCRIPTIONS["add_key_hashid"]}
         add_key_doublet (str): {DESCRIPTIONS["add_key_doublet"]}
+        add_key_labels (str): {DESCRIPTIONS["add_key_labels"]}
+        kwargs_classify (dict): {DESCRIPTIONS["kwargs_classify"]}
         inplace (bool): {DESCRIPTIONS["inplace"]}
         verbose (int): {DESCRIPTIONS["verbose"]}
 
@@ -62,40 +69,50 @@ def demux(
         logger.warning(f"Column '{add_key_hashid}' already exists in adata.obs. Overwriting and storing previous columns under '{add_key_hashid}_archive'.")
         adata_hto.obs[f"{add_key_hashid}_archive"] = adata_hto.obs[add_key_hashid]
         adata_hto.obs.drop(add_key_hashid, axis=1, inplace=True)
+    
+    if enforce_larger_than_background:
+        if key_normalise not in adata_hto.layers.keys():
+            raise UserInputError(
+                f"Layer '{key_normalise}' not found in adata. Please normalise the data first or set 'enforce_larger_than_background' to False."
+            )
 
     # get data
     df_umi = adata_hto.to_df(layer=use_layer)
-    assert all([t == float for t in df_umi.dtypes]), "Denoised data must be float."
+    assert all([np.issubdtype(t, np.floating) for t in df_umi.dtypes]), "Denoised data must be float."
 
     # Get classifications for each HTO
     logger.debug(f"Starting demultiplexing using '{demux_method}'...")
-    classifications = {}
-    metrics = {}
-    thresholds = {}
+    classifications, thresholds, metrics = classify(
+        data=df_umi,
+        demux_method=demux_method,
+        verbose=verbose,
+        kwargs_classify=kwargs_classify,
+    )
 
-    for hto in df_umi.columns:
-        logger.debug(f"Demultiplexing HTO '{hto}'...")
-        data = df_umi[hto].values.reshape(-1, 1)
-        labels, threshold, hto_metrics = cluster_and_evaluate(data, demux_method=demux_method, verbose=verbose)
-        thresholds[hto] = float(threshold)
-        metrics[hto] = hto_metrics
-        classifications[hto] = labels
+    # Enforce that positively labeled cells are larger than background. This can be skewed due to the technical noise correction of small cells.
+    if enforce_larger_than_background:
+        logger.debug("Enforcing larger than background...")
+        df_normalised = adata_hto.to_df(layer=key_normalise)
+        for hto in df_normalised.columns:
+            classifications[hto][df_normalised[hto] <= 0] = 0
 
     # Init results
     logger.debug("Assigning labels...")
     labels_df = pd.DataFrame(classifications, index=df_umi.index)
-    result_df = pd.DataFrame("", index=labels_df.index, columns=[add_key_hashid, add_key_doublet])
+    result_df = pd.DataFrame("", index=labels_df.index, columns=[add_key_hashid, add_key_doublet], dtype="object")
 
     # Get cell labels
     result_df.loc[:, add_key_hashid] = labels_df.idxmax(axis=1)
-    result_df.loc[labels_df.sum(axis=1) == 0, add_key_hashid] = "Negative"
-    result_df.loc[labels_df.sum(axis=1) >= 2, add_key_hashid] = "Doublet"
+    result_df.loc[labels_df.sum(axis=1) == 0, add_key_hashid] = "negative"
+    result_df.loc[labels_df.sum(axis=1) >= 2, add_key_hashid] = "doublet"
 
     # Get doublet info
     logger.debug("Assigning doublet info...")
-    result_df.loc[:, add_key_doublet] = labels_df.apply(
-        lambda row: ",".join([r for r in row[row == 1].index if row.sum() >= 2]), axis=1
-    )
+    def _assign_doublet(row):
+        if row.sum() == 0:
+            return "negative"
+        return ":".join([r for r in row[row == 1].index])
+    result_df.loc[:, add_key_doublet] = labels_df.apply(_assign_doublet, axis=1)
 
     # Append to AnnData
     if add_key_labels is not None:
@@ -113,7 +130,7 @@ def demux(
         thresholds=thresholds,
     )
 
-    pct_doublet = (result_df[add_key_hashid] == "Doublet").mean() * 100
-    pct_negative = (result_df[add_key_hashid] == "Negative").mean() * 100
+    pct_doublet = (result_df[add_key_hashid] == "doublet").mean() * 100
+    pct_negative = (result_df[add_key_hashid] == "negative").mean() * 100
     logger.info(f"Demultiplexing completed ({pct_doublet:.1f}% Doublets, {pct_negative:.1f}% Negatives). Hash IDs stored in '{add_key_hashid}'.")
     return adata_hto

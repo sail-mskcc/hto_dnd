@@ -91,8 +91,6 @@ def get_arg(v, kwargs, defaults):
     # if dict, overwrite keys
     if isinstance(defaults[v], dict):
         defaults[v].update(kwargs.get(v, {}))
-        if v == "kwargs_classify":
-            print("DEBUG", kwargs, defaults)
         return defaults[v]
     return kwargs.get(v, defaults[v])
 

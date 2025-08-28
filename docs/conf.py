@@ -1,5 +1,8 @@
 """Pytest Configuration."""
 
+def test_ruff_check_fail():
+    """JOOO RUFF HATEST THATA
+    """
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:

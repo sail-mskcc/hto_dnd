@@ -58,6 +58,7 @@ def bucketize(
 def umi_one(
     df: pd.DataFrame,
     ax: plt.Axes = None,
+    use_log: bool = True,
     key_counts: str = "counts",
     key_values: str = "_values_temp",
     n_buckets=50,
@@ -66,6 +67,10 @@ def umi_one(
     verbose: int = DEFAULTS["verbose"],
     **kwargs
 ):
+
+    df = df.copy()
+    if use_log:
+        df.loc[:, key_counts] = np.log10(df[key_counts].astype(float) + 1)
 
     logger = get_logger("plot", level=verbose)
 
@@ -97,9 +102,20 @@ def umi_one(
         **kwargs
     )
 
+    if use_log:
+        ax = _add_log10_axis(ax, key_counts=key_counts)
+
     # rotate xticks by 0-90 degrees, and only show every 5th
     return ax
 
+
+def _format_ticks(x):
+    if x > 10:
+        return f"{int(x):,}"
+    elif x > 1:
+        return f"{x:.1f}"
+    else:
+        return f"{x:.2f}"
 
 def _add_log10_axis(ax: plt.Axes, key_counts: str = "counts"):
     """
@@ -117,7 +133,7 @@ def _add_log10_axis(ax: plt.Axes, key_counts: str = "counts"):
     # yticks
     yticks = ax.get_yticks()
     ax.set_yticks(yticks)
-    ax.set_yticklabels([f"{int(10**i):,}" for i in yticks])
+    ax.set_yticklabels([f"{_format_ticks(i)}" for i in yticks])
     return ax
 
 def umi(
@@ -127,6 +143,7 @@ def umi(
     key_counts: str = "counts",
     key_groups: str = "_groups_temp",
     key_values: str = "_values_temp",
+    axis: int = 0,
     use_log: bool = True,
     each_var: bool = False,
     n_buckets=50,
@@ -160,8 +177,15 @@ def umi(
         fig, ax = plt.subplots(1, 1)
 
     # get data
-    df = adata.obs.copy()
-    _, X = get_layer(adata, use_layer, numpy=False, inplace=False)
+    if axis == 0:
+        df = adata.obs.copy()
+        _, X = get_layer(adata, use_layer, numpy=False, inplace=False)
+    elif axis == 1:
+        df = adata.var.copy()
+        _, X = get_layer(adata, use_layer, numpy=False, inplace=False)
+        X = X.T  # transpose to have genes in rows
+    else:
+        raise ValueError(f"Axis must be 0 or 1, got {axis}")
 
     # concatenate if each_ver
     if each_var:
@@ -181,14 +205,11 @@ def umi(
         if cmap is None:
             cmap = "#1f77b4"
 
-        # get
-        if use_log:
-            df.loc[:, key_counts] = np.log10(df[key_counts].astype(float) + 1)
-
         # plot
         ax = umi_one(
             df,
             ax=ax,
+            use_log=use_log,
             key_counts=key_counts,
             key_values=key_values,
             n_buckets=n_buckets,
@@ -210,12 +231,11 @@ def umi(
         for j, group in enumerate(groups):
             # get
             df_temp = df[df[key_groups] == group].copy()
-            if use_log:
-                df_temp[key_counts] = np.log10(df_temp[key_counts] + 1)
 
             ax = umi_one(
                 df_temp,
                 ax=ax,
+                use_log=use_log,
                 key_counts=key_counts,
                 key_values=key_values,
                 n_buckets=n_buckets,
@@ -229,9 +249,6 @@ def umi(
         ax.get_legend().remove()
         handles = [plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=cmap[group], label=group) for group in groups]
         ax.legend(handles=handles, title=key_groups, loc="lower left")
-
-    if use_log:
-        ax = _add_log10_axis(ax, key_counts=key_counts)
 
     ax.set_xlabel("Log UMI Rank")
     return ax

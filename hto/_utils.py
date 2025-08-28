@@ -6,7 +6,6 @@ import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scanpy as sc
 import scipy
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas.api.types import is_float_dtype, is_integer_dtype
@@ -33,6 +32,7 @@ def _assert_float(x):
         else:
             raise AnnDataFormatError("adata_not_float", x)
 
+
 def _assert_int(x):
     if not is_integer_dtype(x):
         # check if just malformed float
@@ -52,9 +52,9 @@ def get_layer(
     adata,
     use_layer,
     numpy,
-    inplace: bool=False,
-    float: bool=False,
-    integer: bool=False,
+    inplace: bool = False,
+    float: bool = False,
+    integer: bool = False,
 ):
     """Get layer from AnnData object and perform checks.
 
@@ -92,6 +92,7 @@ def get_layer(
 
     return adata, x
 
+
 def get_arg(v, kwargs, defaults):
     """Get argument from kwargs or defaults."""
     # if dict, overwrite keys
@@ -99,6 +100,7 @@ def get_arg(v, kwargs, defaults):
         defaults[v].update(kwargs.get(v, {}))
         return defaults[v]
     return kwargs.get(v, defaults[v])
+
 
 def subset_whitelist(adata, whitelist, _required_prop=0.9):
     """Subset whitelist, even when not all barcodes are present in the data."""
@@ -116,8 +118,11 @@ def subset_whitelist(adata, whitelist, _required_prop=0.9):
         msg += "\nPlease make sure that whitelist barcodes are present in the data."
         raise UserInputError(msg)
     if whitelist_pct < 1:
-        logger.warning(f"Some whitelisted barcodes were not found: {whitelist_pct:.1f}%")
+        logger.warning(
+            f"Some whitelisted barcodes were not found: {whitelist_pct:.1f}%"
+        )
     return adata[whitelist_select]
+
 
 def test_write(path, filetype, create_folder=True, _require_write=False):
     """Test if file can be written before running demultiplexing."""
@@ -138,12 +143,14 @@ def test_write(path, filetype, create_folder=True, _require_write=False):
             f.write("test")
         os.remove(path)
 
+
 def _fix_columns(df):
     """Categorical to string type."""
     for k in df.columns:
         if isinstance(df[k], pd.CategoricalDtype):
             df[k] = df[k].astype(str)
     return df
+
 
 def _fix_layers(adata):
     """All 'matrix' layers must be arrays."""
@@ -153,6 +160,7 @@ def _fix_layers(adata):
         if isinstance(adata.layers[layer], np.matrix):
             adata.layers[layer] = np.array(adata.layers[layer])
     return adata
+
 
 def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
     """Write AnnData object to h5ad file safely.
@@ -185,6 +193,7 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
         logger = get_logger("_utils", level=1)
         logger.error(f"Failed to write h5ad file: {path} ('{e}')")
 
+
 def write_csv_safe(
     adata,
     path,
@@ -196,17 +205,20 @@ def write_csv_safe(
     if path is None:
         return
     try:
-        df = pd.DataFrame({
-            "barcode": adata.obs.index,
-            key_hashid: adata.obs[key_hashid],
-            key_doublet: adata.obs[key_doublet]
-        })
+        df = pd.DataFrame(
+            {
+                "barcode": adata.obs.index,
+                key_hashid: adata.obs[key_hashid],
+                key_doublet: adata.obs[key_doublet],
+            }
+        )
         if create_folder:
             os.makedirs(os.path.dirname(path), exist_ok=True)
         df.to_csv(path, index=False)
     except Exception as e:
         logger = get_logger("_utils", level=1)
         logger.error(f"Failed to write csv file: {path} ({e})")
+
 
 def reload_all(module):
     """Reload a module and all its submodules."""
@@ -223,12 +235,8 @@ def reload_all(module):
     # Reload the parent module last
     importlib.reload(module)
 
-def savepdf(
-    pdf: PdfPages,
-    path: str,
-    fig: plt.Figure,
-    show: bool = False
-):
+
+def savepdf(pdf: PdfPages, path: str, fig: plt.Figure, show: bool = False):
     # open pdf
     if pdf is None and path is not None:
         pdf = PdfPages(path)
@@ -240,6 +248,7 @@ def savepdf(
     # display
     if not show:
         plt.close()
+
 
 def _assert_required_inputs(meta, key, kwargs, parameter):
     """Assert that all required inputs are present and not None.
@@ -288,18 +297,25 @@ def _assert_required_inputs(meta, key, kwargs, parameter):
         raise UserInputError(msg)
     for var in meta[key]["required"]:
         if var not in kwargs or kwargs[var] is None:
-            msg = f"\nMissing required input: '{var}' for '{parameter}': '{key}'. " + error_msg
+            msg = (
+                f"\nMissing required input: '{var}' for '{parameter}': '{key}'. "
+                + error_msg
+            )
             raise UserInputError(msg)
+
 
 def user_input_error_decorator(func):
     """Catch UserInputError and print message instead of traceback."""
     logger = get_logger("UserInputError", level=1)
+
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except UserInputError as e:
             logger.error(e)
+
     return wrapper
+
 
 def to_dense_safe(x):
     """Convert sparse matrix to dense matrix safely."""
@@ -307,18 +323,25 @@ def to_dense_safe(x):
         return x.todense()
     return x
 
+
 def add_docstring():
     def wrapper(func):
         func.__doc__ = func.__doc__.format(**DESCRIPTIONS)
         return func
+
     return wrapper
+
 
 @user_input_error_decorator
 def read_adata(path):
     if path.endswith(".h5"):
+        import scanpy as sc
+
         adata = sc.read_10x_h5(path)
     elif path.endswith(".h5ad"):
         adata = ad.read_h5ad(path)
     else:
-        raise UserInputError(f"Unknown file format for adata: {path}. Must be anndata (.h5ad) or 10x h5 (.h5)")
+        raise UserInputError(
+            f"Unknown file format for adata: {path}. Must be anndata (.h5ad) or 10x h5 (.h5)"
+        )
     return adata

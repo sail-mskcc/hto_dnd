@@ -1,0 +1,10 @@
+name: Check Linting Package
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest 
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - uses: astral-sh/ruff-action@v3

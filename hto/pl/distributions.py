@@ -11,7 +11,7 @@ from .._defaults import DEFAULTS
 
 def _set_lims(ax, xmin=1):
     ### BROKEN
-    #if xmin is None:
+    # if xmin is None:
     #    return ax
 
     cutoff_y = 0
@@ -27,8 +27,10 @@ def _set_lims(ax, xmin=1):
     ax.set_ylim(0, cutoff_y * 1.3)
     return ax
 
+
 def _symmetric_log1p(x):
     return np.sign(x) * np.log1p(np.abs(x))
+
 
 def _format(x):
     if np.expm1(x) < 1000:
@@ -37,6 +39,7 @@ def _format(x):
         return f"{np.expm1(x) / 1000:.0f}K"
     else:
         return f"{np.expm1(x) / 1000000:.0f}M"
+
 
 def distribution(
     adata,
@@ -47,7 +50,7 @@ def distribution(
     remove_legend=False,
     params_legend={},
     use_log=True,
-    **kwargs
+    **kwargs,
 ):
     """Plot the distribution of HTO expression data.
 
@@ -89,14 +92,9 @@ def distribution(
 
     # kde log
     ax = sns.kdeplot(
-        df_long,
-        hue="variable",
-        x="value_set",
-        palette=cmap,
-        ax=ax,
-        **params_kdeplot
+        df_long, hue="variable", x="value_set", palette=cmap, ax=ax, **params_kdeplot
     )
-    #ax = _set_lims(ax, xmin=xmin)
+    # ax = _set_lims(ax, xmin=xmin)
     ax.set_title(title)
     ax.yaxis.set_ticks([])
     ax.set_ylabel("")
@@ -104,7 +102,9 @@ def distribution(
     # log transform
     if use_log:
         ax.set_xlabel("Logged Antibody Count")
-        log_ticks = _symmetric_log1p([-100000, -1000, -10, -1, 0, 1, 10, 100, 1000, 10000, 100000])  # Replace with dynamic range if needed
+        log_ticks = _symmetric_log1p(
+            [-100000, -1000, -10, -1, 0, 1, 10, 100, 1000, 10000, 100000]
+        )  # Replace with dynamic range if needed
         ax.xaxis.set_major_locator(ticker.FixedLocator(log_ticks))
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: _format(x)))
     else:
@@ -119,6 +119,7 @@ def distribution(
 
     return ax
 
+
 def distribution_stages(
     adata: ad.AnnData,
     figsize=(8, 12),
@@ -130,8 +131,12 @@ def distribution_stages(
     axs=None,
 ):
     """Visualise HTO distribution across different stages: raw, normalised, and denoised."""
-    assert not (layer_raw == use_key_normalise), "Raw and normalised layers must be different"
-    assert not (layer_raw == use_key_denoise), "Raw and denoised layers must be different"
+    assert not (layer_raw == use_key_normalise), (
+        "Raw and normalised layers must be different"
+    )
+    assert not (layer_raw == use_key_denoise), (
+        "Raw and denoised layers must be different"
+    )
 
     if axs is None:
         fig, axs = plt.subplots(3, 1, figsize=figsize)

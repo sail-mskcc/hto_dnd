@@ -7,12 +7,12 @@ from hto._exceptions import UserInputError
 from pandas.api.types import is_float_dtype, is_integer_dtype
 
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 def test_normalise(mock_hto_data):
     """Test if normalisation works."""
     # Get mock data
-    adata_filtered = mock_hto_data['filtered']
-    adata_raw = mock_hto_data['raw']
+    adata_filtered = mock_hto_data["filtered"]
+    adata_raw = mock_hto_data["raw"]
 
     # Run normalisation
     adata_norm = normalise(
@@ -61,12 +61,12 @@ def test_normalise(mock_hto_data):
     assert "norm" in adata_norm.layers
 
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 def test_faulty_data(mock_hto_data):
     """Test if normalisation works."""
     # Get mock data
-    adata_filtered = mock_hto_data['filtered']
-    adata_raw = mock_hto_data['raw']
+    adata_filtered = mock_hto_data["filtered"]
+    adata_raw = mock_hto_data["raw"]
 
     # Fail - full overlap
     with pytest.raises(UserInputError):

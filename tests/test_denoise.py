@@ -1,6 +1,5 @@
 """Tests for technical denoising of data."""
 
-
 import numpy as np
 import pytest
 from hto import denoise, normalise
@@ -10,12 +9,12 @@ from hto._remove_batch_effect import SUPPORTED_DENOISE_VERSIONS
 from pandas.api.types import is_float_dtype
 
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 def test_denoise(mock_hto_data):
     """Test if technical denoiseing works."""
     # Get mock data
-    adata_filtered = mock_hto_data['filtered']
-    adata_raw = mock_hto_data['raw']
+    adata_filtered = mock_hto_data["filtered"]
+    adata_raw = mock_hto_data["raw"]
 
     # Run normalisation
     adata_norm = normalise(
@@ -42,19 +41,24 @@ def test_denoise(mock_hto_data):
     assert adata_denoised.layers["denoised"].shape == adata_filtered.X.shape
 
     # Check that denoised values are different from non-denoised values
-    assert not np.array_equal(adata_denoised.layers["denoised"], adata_denoised.layers["normalised"]), \
-        "Denoised and non-denoised results should be different"
+    assert not np.array_equal(
+        adata_denoised.layers["denoised"], adata_denoised.layers["normalised"]
+    ), "Denoised and non-denoised results should be different"
 
     # Check that the denoised values have lower variance
     denoised_variance = np.var(adata_denoised.layers["denoised"])
     non_denoised_variance = np.var(adata_denoised.layers["normalised"])
-    assert denoised_variance < non_denoised_variance, \
+    assert denoised_variance < non_denoised_variance, (
         "Denoised data should have lower variance than non-denoised data"
+    )
 
     # Assert that covariate vector is stored in 'uns'
     assert "denoise" in adata_denoised.uns["dnd"]
     assert "covariates" in adata_denoised.uns["dnd"]["denoise"]
-    assert len(adata_denoised.uns["dnd"]["denoise"]["covariates"]) == adata_filtered.shape[0]
+    assert (
+        len(adata_denoised.uns["dnd"]["denoise"]["covariates"])
+        == adata_filtered.shape[0]
+    )
 
     # Test inplace
     adata_inplace = adata_filtered.copy()
@@ -76,11 +80,11 @@ def test_denoise(mock_hto_data):
     assert is_float_dtype(adata_inplace.X)
 
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 def test_skip_normalise(mock_hto_data):
     """Test if technical denoising yields error for non-normalised data."""
     # Get mock data
-    adata_filtered = mock_hto_data['filtered']
+    adata_filtered = mock_hto_data["filtered"]
 
     # Run denoising
     with pytest.raises(AnnDataFormatError):
@@ -90,12 +94,13 @@ def test_skip_normalise(mock_hto_data):
             inplace=False,
         )
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 def test_background_methods(mock_hto_data):
     """Test if technical denoiseing works."""
     # Get mock data
-    adata_filtered = mock_hto_data['filtered']
-    adata_raw = mock_hto_data['raw']
+    adata_filtered = mock_hto_data["filtered"]
+    adata_raw = mock_hto_data["raw"]
 
     # Run normalisation
     adata_norm = normalise(
@@ -128,5 +133,6 @@ def test_background_methods(mock_hto_data):
             )
             covariates_test = adata_denoised.uns["dnd"]["denoise"]["covariates"]
 
-            assert np.corrcoef(covariates_benchmark, covariates_test)[0, 1] > 0.9, \
+            assert np.corrcoef(covariates_benchmark, covariates_test)[0, 1] > 0.9, (
                 "Covariates from kmeans and kmeans-fast should be highly correlated"
+            )

@@ -11,29 +11,30 @@ from hto._utils import _assert_required_inputs
 SUPPORTED_BACKGROUND_METHODS = ["kmeans-fast", "kmeans", "gmm"]
 
 _background_method_meta = {
-    "kmeans-fast":
-        {
-            "description": "Simple heuristics for fast, row-wise KMeans with 2 clusters in pandas DataFrame. Recommended",
-            "required": [],
-            "optional": ["n_iter", "inits"],
-        },
-    "kmeans":
-        {
-            "description": "Fit a KMeans model to the input data and return the mean of the first cluster.",
-            "required": [],
-            "optional": [],
-        },
-    "gmm":
-        {
-            "description": "Fit a Gaussian Mixture Model to the input data and return the mean of the first component.",
-            "required": [],
-            "optional": ["kwargs_denoise"],
-        },
+    "kmeans-fast": {
+        "description": "Simple heuristics for fast, row-wise KMeans with 2 clusters in pandas DataFrame. Recommended",
+        "required": [],
+        "optional": ["n_iter", "inits"],
+    },
+    "kmeans": {
+        "description": "Fit a KMeans model to the input data and return the mean of the first cluster.",
+        "required": [],
+        "optional": [],
+    },
+    "gmm": {
+        "description": "Fit a Gaussian Mixture Model to the input data and return the mean of the first component.",
+        "required": [],
+        "optional": ["kwargs_denoise"],
+    },
 }
+
 
 # ASSERTIONS
 def assert_background(method, **kwargs):
-    assert method in SUPPORTED_BACKGROUND_METHODS, f"Method '{method}' not supported. Choose from: {', '.join(SUPPORTED_BACKGROUND_METHODS)}"
+    assert method in SUPPORTED_BACKGROUND_METHODS, (
+        f"Method '{method}' not supported. Choose from: {', '.join(SUPPORTED_BACKGROUND_METHODS)}"
+    )
+
 
 # OUT OF THE BOX
 def _apply_gmm_to_row(x, func):
@@ -49,17 +50,23 @@ def _apply_gmm_to_row(x, func):
 
 def _get_background_gmm(normalized_matrix, **kwargs):
     """Fit a Gaussian Mixture Model to the input data and return the mean of the first component."""
+
     def _get_background(x):
-        gmm = GaussianMixture(n_components=2, random_state=0, **kwargs).fit(x.reshape(-1, 1))
+        gmm = GaussianMixture(n_components=2, random_state=0, **kwargs).fit(
+            x.reshape(-1, 1)
+        )
         return min(gmm.means_)[0], {"debug": {"model": gmm}}
+
     return _apply_gmm_to_row(normalized_matrix, _get_background)
 
 
 def _get_background_kmeans(normalized_matrix, **kwargs):
     """Fit a KMeans model to the input data and return the mean of the first cluster."""
+
     def _get_background(x):
         kmeans = KMeans(n_clusters=2, random_state=0, **kwargs).fit(x.reshape(-1, 1))
         return min(kmeans.cluster_centers_)[0], {"model": kmeans}
+
     return _apply_gmm_to_row(normalized_matrix, _get_background)
 
 
@@ -69,25 +76,46 @@ def _converge(matrix, center_lower, center_upper, n_iter):
     # assert dimensions
     assert matrix.ndim == 2, "Matrix must be a 2D numpy array."
     assert isinstance(matrix, np.ndarray), "Matrix must be a numpy array."
-    assert center_lower.shape == (matrix.shape[0], ), f"Center lower must have shape ({matrix.shape[0]}, ), got {center_lower.shape}."
-    assert center_upper.shape == (matrix.shape[0], ), f"Center upper must have shape ({matrix.shape[0]}, ), got {center_upper.shape}."
+    assert center_lower.shape == (matrix.shape[0],), (
+        f"Center lower must have shape ({matrix.shape[0]}, ), got {center_lower.shape}."
+    )
+    assert center_upper.shape == (matrix.shape[0],), (
+        f"Center upper must have shape ({matrix.shape[0]}, ), got {center_upper.shape}."
+    )
 
     # converge
     for _ in range(n_iter):
         row_mid = (center_lower + center_upper) / 2
         assignment = matrix > row_mid[:, np.newaxis]
-        center_lower = np.sum(np.where(~assignment, matrix, 0), axis=1) / np.sum(~assignment, axis=1)
-        center_upper = np.sum(np.where(assignment, matrix, 0), axis=1) / np.sum(assignment, axis=1)
+        center_lower = np.sum(np.where(~assignment, matrix, 0), axis=1) / np.sum(
+            ~assignment, axis=1
+        )
+        center_upper = np.sum(np.where(assignment, matrix, 0), axis=1) / np.sum(
+            assignment, axis=1
+        )
 
     # inertia
-    inertia = np.sum(np.where(~assignment, np.array(matrix - center_lower[:, np.newaxis])**2, 0), axis=1)
-    inertia += np.sum(np.where(assignment, np.array(matrix - center_upper[:, np.newaxis])**2, 0), axis=1)
+    inertia = np.sum(
+        np.where(~assignment, np.array(matrix - center_lower[:, np.newaxis]) ** 2, 0),
+        axis=1,
+    )
+    inertia += np.sum(
+        np.where(assignment, np.array(matrix - center_upper[:, np.newaxis]) ** 2, 0),
+        axis=1,
+    )
 
     # assertions (numpy updates change specific behavious)
-    assert center_lower.shape == (matrix.shape[0], ), f"Center lower must have shape ({matrix.shape[0]},), got {center_lower.shape}."
-    assert center_upper.shape == (matrix.shape[0], ), f"Center upper must have shape ({matrix.shape[0]},), got {center_upper.shape}."
-    assert inertia.shape == (matrix.shape[0], ), f"Inertia must have shape ({matrix.shape[0],},), got {inertia.shape}."
+    assert center_lower.shape == (matrix.shape[0],), (
+        f"Center lower must have shape ({matrix.shape[0]},), got {center_lower.shape}."
+    )
+    assert center_upper.shape == (matrix.shape[0],), (
+        f"Center upper must have shape ({matrix.shape[0]},), got {center_upper.shape}."
+    )
+    assert inertia.shape == (matrix.shape[0],), (
+        f"Inertia must have shape ({(matrix.shape[0],)},), got {inertia.shape}."
+    )
     return center_lower, center_upper, inertia
+
 
 def _init_strategies(normalized_matrix, method, *args, **kwargs):
     """Return iterator of initialisation strategies.
@@ -100,7 +128,9 @@ def _init_strategies(normalized_matrix, method, *args, **kwargs):
     if method == "rank":
         k = kwargs.get("k", 0)
         assert k >= 0, "Rank must be greater than 0."
-        assert k < floor(normalized_matrix.shape[1] / 2), "Rank must be less than half the number of HTOs."
+        assert k < floor(normalized_matrix.shape[1] / 2), (
+            "Rank must be less than half the number of HTOs."
+        )
         center_lower_init = np.partition(normalized_matrix, k, axis=1)[:, k]
         center_upper_init = np.partition(normalized_matrix, -k, axis=1)[:, -k]
         yield center_lower_init, center_upper_init
@@ -108,22 +138,28 @@ def _init_strategies(normalized_matrix, method, *args, **kwargs):
     elif method == "rank_lower":
         k = kwargs.get("k", 0)
         assert k >= 0, "Rank must be greater or equal to 0."
-        assert k < normalized_matrix.shape[1] - 1, "Rank must be less than the number of HTOs - 1."
+        assert k < normalized_matrix.shape[1] - 1, (
+            "Rank must be less than the number of HTOs - 1."
+        )
         center_lower_init = np.partition(normalized_matrix, k, axis=1)[:, k]
         center_upper_init = np.max(normalized_matrix, axis=1)
         yield center_lower_init, center_upper_init
 
     elif method == "1vall":
         center_upper_init = np.max(normalized_matrix, axis=1)
-        center_lower_init = np.mean(np.partition(normalized_matrix, -1, axis=1)[:, :-1], axis=1)
+        center_lower_init = np.mean(
+            np.partition(normalized_matrix, -1, axis=1)[:, :-1], axis=1
+        )
         yield center_lower_init, center_upper_init
 
     else:
         raise ValueError(f"Method '{method}' not supported.")
 
+
 def _all_inits(matrix):
     """Generate all supported inits - feasible for lower dimensions."""
     from math import floor
+
     m = matrix.shape[1]
     inits = [{"method": "1vall"}]
     for i in range(m - 1):
@@ -167,19 +203,31 @@ def _get_background_kmeans_fast(matrix, n_iter=5, inits=None):
 
     for center_inits in inits:
         # converge
-        center_lower, center_upper, inertia = _converge(matrix, *center_inits, n_iter=n_iter)
+        center_lower, center_upper, inertia = _converge(
+            matrix, *center_inits, n_iter=n_iter
+        )
         # update if better
-        center_lower_min = np.where(inertia < intertia_min, center_lower, center_lower_min)
-        center_upper_min = np.where(inertia < intertia_min, center_upper, center_upper_min)
+        center_lower_min = np.where(
+            inertia < intertia_min, center_lower, center_lower_min
+        )
+        center_upper_min = np.where(
+            inertia < intertia_min, center_upper, center_upper_min
+        )
         intertia_min = np.minimum(inertia, intertia_min)
         # debug
         logger.debug(
-            "inertia", inertia.shape,
-            "inertia_min",  intertia_min.shape,
-            "center_lower", center_lower.shape,
-            "center_lower_min", center_lower_min.shape,
-            "inertia_min type", type(intertia_min),
-            "center_lower_min type", type(center_lower_min),
+            "inertia",
+            inertia.shape,
+            "inertia_min",
+            intertia_min.shape,
+            "center_lower",
+            center_lower.shape,
+            "center_lower_min",
+            center_lower_min.shape,
+            "inertia_min type",
+            type(intertia_min),
+            "center_lower_min type",
+            type(center_lower_min),
         )
 
     # store data
@@ -196,6 +244,7 @@ def _get_background_kmeans_fast(matrix, n_iter=5, inits=None):
     # return mean of the lower cluster
     return center_lower_min, meta
 
+
 def estimate_background(
     matrix,
     method="kmeans-fast",
@@ -203,18 +252,18 @@ def estimate_background(
 ):
     # assert inputs
     _assert_required_inputs(
-        meta=_background_method_meta, 
-        key=method, 
-        kwargs=kwargs, 
-        parameter="background_method"
+        meta=_background_method_meta,
+        key=method,
+        kwargs=kwargs,
+        parameter="background_method",
     )
 
     # get background
-    if method=="kmeans-fast":
+    if method == "kmeans-fast":
         return _get_background_kmeans_fast(matrix, **kwargs)
-    elif method=="kmeans":
+    elif method == "kmeans":
         return _get_background_kmeans(matrix, **kwargs)
-    elif method=="gmm":
+    elif method == "gmm":
         return _get_background_gmm(matrix, **kwargs)
     else:
         raise ValueError(f"Method '{method}' not supported.")

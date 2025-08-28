@@ -11,29 +11,37 @@ from hto._defaults import DEFAULTS
 from hto.cli import cli
 
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 def test_cli(mock_hto_data):
     """Test if normalisation works."""
     # Get mock data
-    path_filtered = mock_hto_data['path_filtered']
-    path_raw = mock_hto_data['path_raw']
-    adata_out = os.path.join(mock_hto_data['path'], "adata.h5ad")
-    csv_out = os.path.join(mock_hto_data['path'], "hash_ids.csv")
+    path_filtered = mock_hto_data["path_filtered"]
+    path_raw = mock_hto_data["path_raw"]
+    adata_out = os.path.join(mock_hto_data["path"], "adata.h5ad")
+    csv_out = os.path.join(mock_hto_data["path"], "hash_ids.csv")
 
     # run in cli
     runner = CliRunner()
     result = runner.invoke(
         cli,
         [
-            "--adata-hto", path_filtered,
-            "--adata-hto-raw", path_raw,
-            "--adata-out", adata_out,
-            "--csv-out", csv_out,
-            "--background-version", "v2",
-            "--demux-method", "otsu",
-        ]
+            "--adata-hto",
+            path_filtered,
+            "--adata-hto-raw",
+            path_raw,
+            "--adata-out",
+            adata_out,
+            "--csv-out",
+            csv_out,
+            "--background-version",
+            "v2",
+            "--demux-method",
+            "otsu",
+        ],
     )
-    assert result.exit_code == 0, f"Exit code is {result.exit_code}: {result.output} | {result.exception}"
+    assert result.exit_code == 0, (
+        f"Exit code is {result.exit_code}: {result.output} | {result.exception}"
+    )
     assert os.path.exists(adata_out)
     assert os.path.exists(csv_out)
 
@@ -53,19 +61,19 @@ def test_cli(mock_hto_data):
     assert df.shape[0] == adata.shape[0]
 
     # check labels
-    true_labels = adata.obs['hto_classification']
-    predicted_labels = adata.obs['hash_id']
+    true_labels = adata.obs["hto_classification"]
+    predicted_labels = adata.obs["hash_id"]
     overall_accuracy = np.mean(predicted_labels == true_labels)
     assert overall_accuracy > 0.8, f"Overall accuracy is only {overall_accuracy:.2f}"
 
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 def test_faulty_inputs(mock_hto_data):
     """Test if normalisation works."""
     # Get mock data
-    path_filtered = mock_hto_data['path_filtered']
-    path_raw = mock_hto_data['path_raw']
-    adata_out = os.path.join(mock_hto_data['path'], "adata.h5ad")
+    path_filtered = mock_hto_data["path_filtered"]
+    path_raw = mock_hto_data["path_raw"]
+    adata_out = os.path.join(mock_hto_data["path"], "adata.h5ad")
 
     runner = CliRunner()
 
@@ -73,10 +81,13 @@ def test_faulty_inputs(mock_hto_data):
     result = runner.invoke(
         cli,
         [
-            "--adata-hto", path_filtered,
-            "--adata-hto-raw", path_raw,
-            "--adata-out", "temp",
-        ]
+            "--adata-hto",
+            path_filtered,
+            "--adata-hto-raw",
+            path_raw,
+            "--adata-out",
+            "temp",
+        ],
     )
     assert result.exit_code == 1, f"Exit code is {result.exit_code}: {result.output}"
 
@@ -84,11 +95,15 @@ def test_faulty_inputs(mock_hto_data):
     result = runner.invoke(
         cli,
         [
-            "--adata-hto", path_filtered,
-            "--adata-hto-raw", path_raw,
-            "--adata-out", "temp.h5ad",
-            "--csv-out", "temp.false"
-        ]
+            "--adata-hto",
+            path_filtered,
+            "--adata-hto-raw",
+            path_raw,
+            "--adata-out",
+            "temp.h5ad",
+            "--csv-out",
+            "temp.false",
+        ],
     )
     assert result.exit_code == 1, f"Exit code is {result.exit_code}: {result.output}"
 
@@ -96,11 +111,15 @@ def test_faulty_inputs(mock_hto_data):
     result = runner.invoke(
         cli,
         [
-            "--adata-hto", path_filtered,
-            "--adata-hto-raw", path_raw,
-            "--adata-out", adata_out,
-            "--demux-method", "wrong_method",
-        ]
+            "--adata-hto",
+            path_filtered,
+            "--adata-hto-raw",
+            path_raw,
+            "--adata-out",
+            adata_out,
+            "--demux-method",
+            "wrong_method",
+        ],
     )
     assert result.exit_code == 1, f"Exit code is {result.exit_code}: {result.output}"
 
@@ -111,9 +130,12 @@ def test_faulty_inputs(mock_hto_data):
     result = runner.invoke(
         cli,
         [
-            "--adata-hto", path_filtered,
-            "--adata-hto-raw", path_raw,
-            "--adata-out", adata_out,
-        ]
+            "--adata-hto",
+            path_filtered,
+            "--adata-hto-raw",
+            path_raw,
+            "--adata-out",
+            adata_out,
+        ],
     )
     assert result.exit_code == 1, f"Exit code is {result.exit_code}: {result.output}"

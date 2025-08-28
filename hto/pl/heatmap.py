@@ -7,15 +7,15 @@ import seaborn as sns
 
 
 def heatmap(
-        df: pd.DataFrame,
-        x: str,
-        y: str,
-        cols: list = [],
-        normalise: str = "",
-        common_cols: bool = True,
-        ax: plt.Axes = None,
-        log_counts: bool = False,
-        **kwargs
+    df: pd.DataFrame,
+    x: str,
+    y: str,
+    cols: list = [],
+    normalise: str = "",
+    common_cols: bool = True,
+    ax: plt.Axes = None,
+    log_counts: bool = False,
+    **kwargs,
 ):
     """Create a heatmap count of the values in the dataframe.
 
@@ -42,16 +42,18 @@ def heatmap(
     kwargs_heatmap = {**kwargs_heatmap_defaults, **kwargs}
 
     # sort cols
-    cols_all_ref = list(set(df[x].astype(str).unique()) | set(df[y].astype(str).unique()))
+    cols_all_ref = list(
+        set(df[x].astype(str).unique()) | set(df[y].astype(str).unique())
+    )
     cols_all = cols + list(set(cols_all_ref) - set(cols))
-    
+
     # aggregate
     df_agg = df.groupby([x, y], observed=True).size().reset_index(name="count")
     df_pivot = df_agg.pivot(index=y, columns=x, values="count").fillna(0)
     # ensure all cols are present
     if common_cols:
         df_pivot = df_pivot.reindex(index=cols_all, columns=cols_all).fillna(0)
-    
+
     # sort if no cols were given
     if len(cols) == 0:
         row_sums = df_pivot.sum(axis=1)
@@ -59,8 +61,10 @@ def heatmap(
     else:
         rows_order = pd.Index(cols_all)
     if common_cols:
-        df_pivot = df_pivot.loc[rows_order[rows_order.isin(df_pivot.index)], rows_order[rows_order.isin(df_pivot.columns)]]
-    
+        df_pivot = df_pivot.loc[
+            rows_order[rows_order.isin(df_pivot.index)],
+            rows_order[rows_order.isin(df_pivot.columns)],
+        ]
 
     # normalise
     if normalise == "row":
@@ -69,11 +73,11 @@ def heatmap(
         df_pivot = df_pivot.div(df_pivot.sum(axis=0), axis=1)
     elif normalise == "all":
         df_pivot = df_pivot.div(df_pivot.sum().sum(), axis=None)
-    
+
     # log
     if log_counts:
         df_pivot = df_pivot.applymap(lambda x: np.log1p(x) if x > 0 else 0)
-    
+
     # plot
     if ax is None:
         fig, ax = plt.subplots(figsize=(5, 5))

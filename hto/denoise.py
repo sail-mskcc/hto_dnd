@@ -49,10 +49,7 @@ def denoise(
         anndata.AnnData: Updated AnnData object with denoised protein expression data.
 
     """
-    assert_background(
-        method=background_method,
-        **kwargs
-    )
+    assert_background(method=background_method, **kwargs)
 
     # logger
     logger = get_logger("denoise", level=verbose)
@@ -117,17 +114,16 @@ def denoise(
         adata_hto.X = norm_adt
         logger.info("Denoised matrix stored in adata.X")
 
-
     return adata_hto
 
 
 def _denoise_skip(
-        adata_hto: ad.AnnData,
-        x: np.ndarray,
-        add_key_denoise: str,
+    adata_hto: ad.AnnData,
+    x: np.ndarray,
+    add_key_denoise: str,
 ):
     """Skip denoising step if 2 or fewer HTOs are present.
-    
+
     Update the metadata and adata objects.
     """
     # Store meta information (don't use 'debug' key)
@@ -142,5 +138,3 @@ def _denoise_skip(
     if add_key_denoise is not None:
         adata_hto.layers[add_key_denoise] = x
     return adata_hto
-
-

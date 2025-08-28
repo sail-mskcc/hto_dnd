@@ -13,7 +13,7 @@ from ._utils import add_docstring, get_layer
 from .tl import build_background
 
 
-def assert_normalisation(df, logger, max_spread=1.5, qs=[.1, .99]):
+def assert_normalisation(df, logger, max_spread=1.5, qs=[0.1, 0.99]):
     """Assert that normalised values are within a certain spread."""
     spans = []
     # get spread of each column
@@ -23,7 +23,10 @@ def assert_normalisation(df, logger, max_spread=1.5, qs=[.1, .99]):
         spans.append(diff)
     ratio = max(spans) / min(spans)
     if ratio > max_spread:
-        logger.warning(f"Spread of normalised values is too high: {ratio:.2f}. This may cause issues when estimate cell-by-cell covariates.")
+        logger.warning(
+            f"Spread of normalised values is too high: {ratio:.2f}. This may cause issues when estimate cell-by-cell covariates."
+        )
+
 
 @add_docstring()
 def normalise(
@@ -73,11 +76,15 @@ def normalise(
     logger.debug("Starting normalization...")
 
     # Subset to same columns in hto and hto_raw
-    columns_mismatch = list(set(adata_hto.var_names).difference(set(adata_hto_raw.var_names)))
+    columns_mismatch = list(
+        set(adata_hto.var_names).difference(set(adata_hto_raw.var_names))
+    )
     if not all(adata_hto.var_names.isin(adata_hto_raw.var_names)):
-        raise UserInputError(f"Columns don't match. 'adata_hto' has columns that are not in 'adata_hto_raw': {columns_mismatch}. Make sure that all var_names in 'adata_hto' are also in 'adata_hto_raw'.")
+        raise UserInputError(
+            f"Columns don't match. 'adata_hto' has columns that are not in 'adata_hto_raw': {columns_mismatch}. Make sure that all var_names in 'adata_hto' are also in 'adata_hto_raw'."
+        )
     adata_hto_raw = adata_hto_raw[:, adata_hto.var_names].copy()
-    
+
     # Get background if not provided
     adata_background = build_background(
         background_version=background_version,
@@ -91,19 +98,11 @@ def normalise(
 
     # Setup
     adata_hto, adt = get_layer(
-        adata_hto,
-        use_layer=use_layer,
-        integer=True,
-        numpy=True,
-        inplace=inplace
+        adata_hto, use_layer=use_layer, integer=True, numpy=True, inplace=inplace
     )
 
     adata_background, adtu = get_layer(
-        adata_background,
-        use_layer=use_layer,
-        integer=True,
-        numpy=True,
-        inplace=inplace
+        adata_background, use_layer=use_layer, integer=True, numpy=True, inplace=inplace
     )
 
     # Init metadata
@@ -113,16 +112,24 @@ def normalise(
     barcodes_filtered = set(adata_hto.obs_names)
     barcodes_background = set(adata_background.obs_names)
     barcodes_background_only = barcodes_background.difference(barcodes_filtered)
-    overlap_barcode = list(barcodes_filtered & barcodes_background)  # check that naming is consistent
+    overlap_barcode = list(
+        barcodes_filtered & barcodes_background
+    )  # check that naming is consistent
 
     n_filtered = len(barcodes_filtered)
     n_background = len(barcodes_background)
     pct_background = n_filtered / n_background * 100
 
-    logger.debug(f"Filtered adata: {n_filtered / 1000:.1f}K cells | Background adata: {n_background / 1000:.1f}K cells")
-    logger.debug(f"Background cells: {n_background / 1000:.1f}K cells | Overlapping cells: {len(overlap_barcode) / 1000:.1f}K cells")
+    logger.debug(
+        f"Filtered adata: {n_filtered / 1000:.1f}K cells | Background adata: {n_background / 1000:.1f}K cells"
+    )
+    logger.debug(
+        f"Background cells: {n_background / 1000:.1f}K cells | Overlapping cells: {len(overlap_barcode) / 1000:.1f}K cells"
+    )
     if pct_background < 10:
-        logger.warning(f"Only few barcodes are used for normalization: {n_background / 1000:.1f}K ({pct_background:.1f}%)")
+        logger.warning(
+            f"Only few barcodes are used for normalization: {n_background / 1000:.1f}K ({pct_background:.1f}%)"
+        )
 
     # Identify barcodes that are in adata_raw but not in adata_filtered
     if len(barcodes_background_only) < 5:
@@ -174,7 +181,6 @@ def normalise(
     return adata_hto
 
 
-
 def normalise_debug(
     adata_hto: ad.AnnData,
     background_quantile: float = DEFAULTS["background_quantile"],
@@ -211,7 +217,9 @@ def normalise_debug(
         mu_empty.append(mu_temp)
         sd_empty.append(sd_temp)
         if sd_empty[i] <= 0:
-            logger.warning(f"Standard deviation for column {i} is zero or negative. This may cause issues with normalization. Setting it to 0.01")
+            logger.warning(
+                f"Standard deviation for column {i} is zero or negative. This may cause issues with normalization. Setting it to 0.01"
+            )
             sd_empty[i] = 0.01
 
     # normalise

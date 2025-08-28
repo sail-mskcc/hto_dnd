@@ -1,19 +1,20 @@
 """Create a horizontal stacked barplot from a DataFrame."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
 
 def barplot(
-        df: pd.DataFrame, 
-        by: list,
-        labels: list = None,
-        order_rows: list = None,
-        order_cols: list = None,
-        cmap: dict = None,
-        title: str = "",
-        ax: plt.Axes = None,
-        **kwargs
+    df: pd.DataFrame,
+    by: list,
+    labels: list = None,
+    order_rows: list = None,
+    order_cols: list = None,
+    cmap: dict = None,
+    title: str = "",
+    ax: plt.Axes = None,
+    **kwargs,
 ):
     """Create a horizontal stacked barplot from a DataFrame.
 
@@ -63,7 +64,7 @@ def barplot(
     order_rows = [r for r in order_rows if r in df_agg.index]
     order_cols = [c for c in cmap.keys() if c in df_agg.columns]
     df_agg = df_agg.loc[order_rows[::-1], order_cols]
-    
+
     # colors
     if order_cols is None:
         order_cols = df_agg.columns

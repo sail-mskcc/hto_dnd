@@ -10,6 +10,7 @@ from ._utils import get_arg
 
 SUPPORTED_DENOISE_VERSIONS = ["v1", "v2"]
 
+
 def remove_batch_effect(
     denoise_version: str,
     verbose: int = DEFAULTS["verbose"],
@@ -23,7 +24,9 @@ def remove_batch_effect(
     logger = get_logger("remove_batch_effect", level=verbose)
 
     if denoise_version == "v1":
-        logger.warning(f"Not recommended. Using denoise version: {denoise_version}. Plot 'hto_dnd.pl.technical_noise(adata)' to verify that the denoising is working as expected.")
+        logger.warning(
+            f"Not recommended. Using denoise version: {denoise_version}. Plot 'hto_dnd.pl.technical_noise(adata)' to verify that the denoising is working as expected."
+        )
         return remove_batch_effect_v1(
             x=kwargs["x"],
             covariates=kwargs["covariates"],
@@ -94,7 +97,9 @@ def remove_batch_effect_v2(
     coefs = []
     x_corrected = np.array(np.zeros_like(x))
     for i in range(x.shape[1]):
-        x_i = np.array(x[:, i]).flatten() # for whatever reason, x_i is a matrix, didn't use to be like this
+        x_i = np.array(
+            x[:, i]
+        ).flatten()  # for whatever reason, x_i is a matrix, didn't use to be like this
 
         # Fit SVR model
         model = LinearSVR(fit_intercept=True, **kwargs_denoise)

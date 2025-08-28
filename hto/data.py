@@ -1,4 +1,5 @@
 """Collection of utility functions for generating mock HTO expression data."""
+
 import anndata as ad
 import numpy as np
 import pandas as pd
@@ -33,7 +34,7 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     """
     # Set seed
     np.random.seed(seed)
-    assert n_htos >=2, "Number of HTOs must be at least 2"
+    assert n_htos >= 2, "Number of HTOs must be at least 2"
 
     # Define cluster centers
     # - off-diagonal is random around 0-3
@@ -51,8 +52,9 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     n_empty = int(n_cells) * 2  # 100% additional empty droplets used for background
 
     # Generate singlets
-    singlets, singlet_labels = make_blobs(n_samples=n_singlets, n_features=n_htos,
-                                          centers=hto_centers, cluster_std=3.0)
+    singlets, singlet_labels = make_blobs(
+        n_samples=n_singlets, n_features=n_htos, centers=hto_centers, cluster_std=3.0
+    )
 
     # Generate doublets
     doublets = []
@@ -66,26 +68,35 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     doublets = np.array(doublets)
 
     # Generate negatives
-    negatives, _ = make_blobs(n_samples=n_negatives, n_features=n_htos,
-                              centers=[negative_center], cluster_std=0.5)
+    negatives, _ = make_blobs(
+        n_samples=n_negatives,
+        n_features=n_htos,
+        centers=[negative_center],
+        cluster_std=0.5,
+    )
 
     # Generate empty droplets
-    empty, _ = make_blobs(n_samples=n_empty, n_features=n_htos,
-                          centers=[empty_center], cluster_std=0.2)
+    empty, _ = make_blobs(
+        n_samples=n_empty, n_features=n_htos, centers=[empty_center], cluster_std=0.2
+    )
 
     # Combine all data
     raw_data = np.vstack((singlets, doublets, negatives, empty))
 
     # Create labels
-    cell_ids = [f'cell{i+1}' for i in range(raw_data.shape[0])]
-    hto_ids = [f'HTO_{i+1}' for i in range(n_htos)]
+    cell_ids = [f"cell{i + 1}" for i in range(raw_data.shape[0])]
+    hto_ids = [f"HTO_{i + 1}" for i in range(n_htos)]
 
-    singlet_labels = [f'{hto_ids[i]}' for i in singlet_labels]
-    negative_labels = ['negative'] * n_negatives
-    empty_labels = ['empty'] * n_empty
-    raw_labels = np.array(singlet_labels + doublet_labels + negative_labels + empty_labels)
-    raw_cell_types = np.array(['singlet'] * n_singlets + doublet_labels + negative_labels + empty_labels)
-    subset_filterd = raw_cell_types != 'empty'
+    singlet_labels = [f"{hto_ids[i]}" for i in singlet_labels]
+    negative_labels = ["negative"] * n_negatives
+    empty_labels = ["empty"] * n_empty
+    raw_labels = np.array(
+        singlet_labels + doublet_labels + negative_labels + empty_labels
+    )
+    raw_cell_types = np.array(
+        ["singlet"] * n_singlets + doublet_labels + negative_labels + empty_labels
+    )
+    subset_filterd = raw_cell_types != "empty"
 
     # Ensure non-negative values
     raw_data = np.maximum(raw_data, 0)
@@ -97,11 +108,14 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     raw_data = np.round(raw_data).astype(int)
 
     # Create anndata
-    obs = pd.DataFrame({
-        'cell_id': cell_ids,
-        'cell_type': raw_cell_types,
-        'hto_classification': raw_labels
-    }, index=cell_ids)
+    obs = pd.DataFrame(
+        {
+            "cell_id": cell_ids,
+            "cell_type": raw_cell_types,
+            "hto_classification": raw_labels,
+        },
+        index=cell_ids,
+    )
 
     var = pd.DataFrame(None, index=hto_ids)
 
@@ -139,5 +153,5 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
         "filtered_labels": raw_labels[subset_filterd],
         "raw_labels": raw_labels,
         "filtered_cell_types": raw_cell_types[subset_filterd],
-        "raw_cell_types": raw_cell_types
+        "raw_cell_types": raw_cell_types,
     }

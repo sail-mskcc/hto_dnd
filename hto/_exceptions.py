@@ -4,6 +4,7 @@ import numpy as np
 class UserInputError(Exception):
     pass
 
+
 class AnnDataFormatError(Exception):
     def __init__(self, key, *args, **kwargs):
         message = self.get_message(key, *args, **kwargs)
@@ -23,8 +24,10 @@ class AnnDataFormatError(Exception):
         return f"Unknown error occurred. Args: {args}, kwargs: {kwargs}"
 
     def _adata_raw_missing_cells(self, empty_barcodes):
-        return f"Too few empty droplets detected: '{len(empty_barcodes)}'. " \
-               f"Make sure that 'adata_raw' contains cells that are not present in 'adata_filtered'."
+        return (
+            f"Too few empty droplets detected: '{len(empty_barcodes)}'. "
+            f"Make sure that 'adata_raw' contains cells that are not present in 'adata_filtered'."
+        )
 
     def _adata_filtered_too_few_cells(self, n_cells):
         return f"Too few cells in 'adata_filtered': '{n_cells}'. "

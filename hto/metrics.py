@@ -7,12 +7,13 @@ from sklearn.metrics import f1_score
 # y_true: ground truth labels
 # y_pred: predicted labels from your algorithm
 
+
 def sa(
-        ground_truth, 
-        prediction, 
-        non_singlet_substring: list = ["low_quality", "doublet", ":", "negative"],
-        ignore_case: bool = True
-    ):
+    ground_truth,
+    prediction,
+    non_singlet_substring: list = ["low_quality", "doublet", ":", "negative"],
+    ignore_case: bool = True,
+):
     """Singlet Accuracy (SA) meassures the percentage of predicted singlets that are correctly classified.
 
     Args:
@@ -26,9 +27,11 @@ def sa(
     if ignore_case:
         prediction = prediction.str.lower()
         non_singlet_substring = [sub.lower() for sub in non_singlet_substring]
-    
+
     # subset predicted singlets
-    is_predicted_singlet = np.all([~prediction.str.contains(sub) for sub in non_singlet_substring], axis=0)
+    is_predicted_singlet = np.all(
+        [~prediction.str.contains(sub) for sub in non_singlet_substring], axis=0
+    )
     predicted_singlets = prediction[is_predicted_singlet]
     ground_truth_singlets = ground_truth[is_predicted_singlet]
 
@@ -38,10 +41,10 @@ def sa(
 
 
 def srr(
-        ground_truth, 
-        prediction, 
-        non_singlet_substring: list = ["low_quality", "doublet", ":", "negative"],
-        ignore_case: bool = True
+    ground_truth,
+    prediction,
+    non_singlet_substring: list = ["low_quality", "doublet", ":", "negative"],
+    ignore_case: bool = True,
 ):
     """Singlet Recovery Rate (SRR) measures the percentage of ground truth singlets that are correctly predicted.
 
@@ -58,13 +61,16 @@ def srr(
         non_singlet_substring = [sub.lower() for sub in non_singlet_substring]
 
     # subset ground truth singlets
-    is_true_singlet = np.all([~ground_truth.str.contains(sub) for sub in non_singlet_substring], axis=0)
+    is_true_singlet = np.all(
+        [~ground_truth.str.contains(sub) for sub in non_singlet_substring], axis=0
+    )
     predicted_singlets = prediction[is_true_singlet]
     ground_truth_singlets = ground_truth[is_true_singlet]
 
     # return accuracy
     recovery_rate = (predicted_singlets == ground_truth_singlets).mean()
     return recovery_rate
+
 
 def get_metrics(ground_truth, prediction):
     """Obtain metrices of a ground_truth and prediction.

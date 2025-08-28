@@ -7,7 +7,7 @@ import pytest
 from hto.data import generate_hto
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def mock_hto_data(request):
     """Generate clustered HTO data."""
     # Parameters

@@ -14,36 +14,59 @@ from hto._exceptions import AnnDataFormatError
 @pytest.fixture
 def adata_hto():
     """Generate mock AnnData object for HTO data."""
-    x = np.array([
-        [100, 0, 0],
-        [0, 100, 0],
-        [0, 0, 100],
-        [100, 100, 0],
-        [0, 100, 100],
-        [0, 0, 0],
-        [0, 0, 0],
-    ])
-    labels = np.array([
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-        [1, 1, 0],
-        [0, 1, 1],
-        [0, 0, 0],
-        [0, 0, 0],
-    ])
+    x = np.array(
+        [
+            [100, 0, 0],
+            [0, 100, 0],
+            [0, 0, 100],
+            [100, 100, 0],
+            [0, 100, 100],
+            [0, 0, 0],
+            [0, 0, 0],
+        ]
+    )
+    labels = np.array(
+        [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 1, 0],
+            [0, 1, 1],
+            [0, 0, 0],
+            [0, 0, 0],
+        ]
+    )
     var_names = [f"hto_{i}" for i in range(x.shape[1])]
     obs_names = [f"cell_{i}" for i in range(x.shape[0])]
-    true_labels = ["hto_0", "hto_1", "hto_2", "doublet", "doublet", "negative", "negative"]
-    true_doublet_info = ["hto_0", "hto_1", "hto_2", "hto_0:hto_1", "hto_1:hto_2", "negative", "negative"]
+    true_labels = [
+        "hto_0",
+        "hto_1",
+        "hto_2",
+        "doublet",
+        "doublet",
+        "negative",
+        "negative",
+    ]
+    true_doublet_info = [
+        "hto_0",
+        "hto_1",
+        "hto_2",
+        "hto_0:hto_1",
+        "hto_1:hto_2",
+        "negative",
+        "negative",
+    ]
     adata = ad.AnnData(
         X=x,
         dtype="float32",
-        obs=pd.DataFrame({
-            "true_labels": true_labels,
-            "true_doublet_info": true_doublet_info,
-        }, index=obs_names),
-        var=pd.DataFrame(index=var_names)
+        obs=pd.DataFrame(
+            {
+                "true_labels": true_labels,
+                "true_doublet_info": true_doublet_info,
+            },
+            index=obs_names,
+        ),
+        var=pd.DataFrame(index=var_names),
     )
     adata.layers["labels"] = labels
     return adata
@@ -53,7 +76,6 @@ def test_demux(adata_hto):
     """Test the demux function for demultiplexing using different methods."""
     # All should work
     for method in SUPPORTED_DEMUX_METHODS:
-
         # Run demux
         adata_demux = demux(
             adata_hto=adata_hto,
@@ -77,14 +99,16 @@ def test_demux(adata_hto):
         assert all(adata_demux.obs["hash_id"] == adata_demux.obs["true_labels"])
         assert np.all(adata_demux.layers["demux_labels"] == adata_hto.layers["labels"])
         # check doublet_info
-        assert np.all(adata_demux.obs["doublet_info"] == adata_demux.obs["true_doublet_info"])
+        assert np.all(
+            adata_demux.obs["doublet_info"] == adata_demux.obs["true_doublet_info"]
+        )
 
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 @pytest.mark.parametrize("demux_method", ["kmeans", "gmm", "otsu", "gmm_demux"])
 def test_classify(mock_hto_data, demux_method):
     """Test the clustering and evaluation of HTO data.
-    
+
     Checks the following:
     1. The number of unique labels is exactly 2.
     2. The identified positive cluster is either 0 or 1.
@@ -104,19 +128,19 @@ def test_classify(mock_hto_data, demux_method):
         demux_method: A string indicating the clustering method to use ("kmeans" or "gmm").
 
     """
-    adata_filtered = mock_hto_data['filtered']
-    adata_hto_raw = mock_hto_data['raw']
+    adata_filtered = mock_hto_data["filtered"]
+    adata_hto_raw = mock_hto_data["raw"]
     adata_normalised = normalise(
         adata_filtered,
         adata_hto_raw=adata_hto_raw,
         background_version="v2",
-        add_key_normalise="normalised"
+        add_key_normalise="normalised",
     )
     adata_denoised = denoise(
         adata_normalised,
         denoise_version="v1",
         add_key_denoise="denoised",
-        use_layer="normalised"
+        use_layer="normalised",
     )
     df = adata_denoised.to_df("denoised")
 
@@ -139,20 +163,20 @@ def test_classify(mock_hto_data, demux_method):
     # metric specific
     for hto, _metrics in metrics.items():
         if demux_method == "kmeans":
-            assert 'silhouette_score' in _metrics
-            assert 'davies_bouldin_index' in _metrics
-            assert _metrics['silhouette_score'] > 0
-            assert _metrics['davies_bouldin_index'] > 0
+            assert "silhouette_score" in _metrics
+            assert "davies_bouldin_index" in _metrics
+            assert _metrics["silhouette_score"] > 0
+            assert _metrics["davies_bouldin_index"] > 0
         elif demux_method == "gmm":
-            assert 'bic' in _metrics
-            assert 'log_likelihood' in _metrics
-            assert _metrics['log_likelihood'] < 0
+            assert "bic" in _metrics
+            assert "log_likelihood" in _metrics
+            assert _metrics["log_likelihood"] < 0
         elif demux_method == "otsu":
-            assert 'inter_class_variance' in _metrics
-            assert 'entropy' in _metrics
+            assert "inter_class_variance" in _metrics
+            assert "entropy" in _metrics
         elif demux_method == "gmm_demux":
-            assert 'min_signal' in _metrics
-            assert 'max_background' in _metrics
+            assert "min_signal" in _metrics
+            assert "max_background" in _metrics
 
 
 def test_enforce_larger_than_background(adata_hto):
@@ -185,11 +209,11 @@ def test_enforce_larger_than_background(adata_hto):
     assert np.all(adata_demux_false.obs["hash_id"] == adata_hto.obs["true_labels"])
 
 
-@pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
 def test_faulty_data(mock_hto_data):
     """Test if normalisation works."""
     # Get mock data
-    adata_filtered = mock_hto_data['filtered']
+    adata_filtered = mock_hto_data["filtered"]
 
     # Skip preprocessing
     with pytest.raises(AnnDataFormatError):

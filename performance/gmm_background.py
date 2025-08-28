@@ -17,6 +17,7 @@ methods = {
     "kmeans-fast": _get_background_kmeans_fast,
 }
 
+
 def main():
     """Compare performance of different normalisation and demultiplexing algorithms. TODO: Add GMM-Demux and HTODemux to comparison."""
     # generate
@@ -50,7 +51,9 @@ def main():
     accuracy = np.zeros((len(noise_vectors), len(noise_vectors)))
     for i, key1 in enumerate(noise_vectors):
         for j, key2 in enumerate(noise_vectors):
-            accuracy[i, j] = np.sum(np.isclose(noise_vectors[key1], noise_vectors[key2])) / len(noise_vectors[key1])
+            accuracy[i, j] = np.sum(
+                np.isclose(noise_vectors[key1], noise_vectors[key2])
+            ) / len(noise_vectors[key1])
 
     print("Background noise vectors:")
     print(df.head())

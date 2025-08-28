@@ -30,8 +30,14 @@ def _estimate_initial_params(
     upper_sd = np.std(data[data > threshold])
 
     init = [
-        lower_w, lower_skew, lower_loc, lower_sd,
-        upper_w, upper_skew, upper_loc, upper_sd,
+        lower_w,
+        lower_skew,
+        lower_loc,
+        lower_sd,
+        upper_w,
+        upper_skew,
+        upper_loc,
+        upper_sd,
     ]
 
     return init
@@ -39,8 +45,14 @@ def _estimate_initial_params(
 
 def skewnorm_mixture_pdf(
     x: ArrayLike,
-    s1: float, a1: float, loc1: float, scale1: float,
-    s2: float, a2: float, loc2: float, scale2: float,
+    s1: float,
+    a1: float,
+    loc1: float,
+    scale1: float,
+    s2: float,
+    a2: float,
+    loc2: float,
+    scale2: float,
 ) -> ArrayLike:
     """Get pdf of two skew-normal distributions.
 
@@ -66,16 +78,24 @@ def skewnorm_mixture_pdf(
     """
     density_1 = s1 * skewnorm.pdf(x, a=a1, loc=loc1, scale=scale1)
     density_2 = s2 * skewnorm.pdf(x, a=a2, loc=loc2, scale=scale2)
-    return density_1,  density_2
+    return density_1, density_2
+
 
 def _skewnorm_sum(*args, **kwargs):
     d1, d2 = skewnorm_mixture_pdf(*args, **kwargs)
     return d1 + d2
 
+
 def _assign_skewnorm_proba(
     x: ArrayLike,
-    s1: float, a1: float, loc1: float, scale1: float,
-    s2: float, a2: float, loc2: float, scale2: float,
+    s1: float,
+    a1: float,
+    loc1: float,
+    scale1: float,
+    s2: float,
+    a2: float,
+    loc2: float,
+    scale2: float,
 ):
     """Return the probability of each data point coming from the second skew-normal distribution."""
     density_1, density_2 = skewnorm_mixture_pdf(
@@ -86,6 +106,7 @@ def _assign_skewnorm_proba(
     density_sum[x < loc1] = 0
     density_sum[x > loc2] = 1
     return density_sum
+
 
 def skewnorm_mixture_model(
     data: ArrayLike,
@@ -118,7 +139,7 @@ def skewnorm_mixture_model(
     counts, edges = np.histogram(data, bins=nbins)
     centers = (edges[:-1] + edges[1:]) / 2
     counts = counts.astype(float)
-    #counts = np.log10(counts + 1)  # Log transformation to stabilize counts
+    # counts = np.log10(counts + 1)  # Log transformation to stabilize counts
     bin_width = edges[1] - edges[0]
     counts /= counts.sum() * bin_width
 
@@ -128,16 +149,18 @@ def skewnorm_mixture_model(
         p0 = _estimate_initial_params(data, n_probes=n_probes)
 
     # Bounds
-    bounds = np.array([
-        [0, 32],         # s1, scale of first skewnorm
-        [0, 5],        # a1, skew of first skewnorm
-        [-5, 5],  # loc1, mean of first skewnorm
-        [0.1, 5],        # scale1, std of first skewnorm
-        [0, 32],         # s2, scale of second skewnorm
-        [-1, 0],       # a2, skew of second skewnorm
-        [0, 8],  # loc2, mean of second skewnorm
-        [0.1, 5],        # scale2, std of second skewnorm
-    ]).T
+    bounds = np.array(
+        [
+            [0, 32],  # s1, scale of first skewnorm
+            [0, 5],  # a1, skew of first skewnorm
+            [-5, 5],  # loc1, mean of first skewnorm
+            [0.1, 5],  # scale1, std of first skewnorm
+            [0, 32],  # s2, scale of second skewnorm
+            [-1, 0],  # a2, skew of second skewnorm
+            [0, 8],  # loc2, mean of second skewnorm
+            [0.1, 5],  # scale2, std of second skewnorm
+        ]
+    ).T
     bounds = Bounds(*bounds)
 
     # Fit parameters
@@ -148,10 +171,12 @@ def skewnorm_mixture_model(
             counts,
             p0=p0,
             bounds=bounds,
-            method='dogbox',
+            method="dogbox",
         )
     except RuntimeError:
-        logger.warning("Fitting failed. Data quality low. Using Otsu's method, but results may be unreliable.")
+        logger.warning(
+            "Fitting failed. Data quality low. Using Otsu's method, but results may be unreliable."
+        )
         params = p0
 
     # Calculate probabilities
@@ -165,13 +190,8 @@ def skewnorm_mixture_model(
 
     return probs, threshold, params
 
-def plot_skewnorm(
-    data,
-    params,
-    nbins=100,
-    ax=None,
-    **kwargs
-):
+
+def plot_skewnorm(data, params, nbins=100, ax=None, **kwargs):
     """Plot both skew-normal distributions and the data as a histogram."""
     # setup
     if ax is None:
@@ -179,7 +199,7 @@ def plot_skewnorm(
     bins = np.linspace(data.min(), data.max(), nbins)
 
     # plot densities
-    #sns.kdeplot(data, fill=True, alpha=.2, color=kwargs.pop("color", "orange"), ax=ax)
+    # sns.kdeplot(data, fill=True, alpha=.2, color=kwargs.pop("color", "orange"), ax=ax)
     # histogram
     counts = np.histogram(data, bins=nbins)[0]
     bin_width = bins[1] - bins[0]

@@ -1,6 +1,5 @@
-
-
 SUPPORTED_STEPS = ["normalise", "denoise", "demux", "paths"]
+
 
 def init_meta(adata):
     """Initialize the meta data for the AnnData object.
@@ -19,6 +18,7 @@ def init_meta(adata):
         **existing_meta,
     }
     return adata
+
 
 def add_meta(adata, step, params={}, **kwargs):
     """Add metadata to the AnnData object.

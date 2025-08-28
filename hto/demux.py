@@ -1,4 +1,5 @@
 """Methods for demultiplexing HTO data, containing implementation of various binary demultiplexing methods."""
+
 from pprint import pformat
 
 import anndata as ad
@@ -51,7 +52,9 @@ def demux(
     """
     # debug - print parameters
     logger = get_logger("demux", level=verbose)
-    params = {k: v.shape if isinstance(v, ad.AnnData) else v for k, v in locals().items()}
+    params = {
+        k: v.shape if isinstance(v, ad.AnnData) else v for k, v in locals().items()
+    }
     params_str = pformat(params, indent=4)
     logger.debug(f"Parameters:\n{params_str}")
 
@@ -67,10 +70,12 @@ def demux(
     # assertions
     assert_demux(demux_method)
     if add_key_hashid in adata_hto.obs.columns:
-        logger.warning(f"Column '{add_key_hashid}' already exists in adata.obs. Overwriting and storing previous columns under '{add_key_hashid}_archive'.")
+        logger.warning(
+            f"Column '{add_key_hashid}' already exists in adata.obs. Overwriting and storing previous columns under '{add_key_hashid}_archive'."
+        )
         adata_hto.obs[f"{add_key_hashid}_archive"] = adata_hto.obs[add_key_hashid]
         adata_hto.obs.drop(add_key_hashid, axis=1, inplace=True)
-    
+
     if enforce_larger_than_background:
         if key_normalise not in adata_hto.layers.keys():
             raise UserInputError(
@@ -79,7 +84,9 @@ def demux(
 
     # get data
     df_umi = adata_hto.to_df(layer=use_layer)
-    assert all([np.issubdtype(t, np.floating) for t in df_umi.dtypes]), "Denoised data must be float."
+    assert all([np.issubdtype(t, np.floating) for t in df_umi.dtypes]), (
+        "Denoised data must be float."
+    )
 
     # Get classifications for each HTO
     logger.debug(f"Starting demultiplexing using '{demux_method}'...")
@@ -100,7 +107,12 @@ def demux(
     # Init results
     logger.debug("Assigning labels...")
     labels_df = pd.DataFrame(classifications, index=df_umi.index)
-    result_df = pd.DataFrame("", index=labels_df.index, columns=[add_key_hashid, add_key_doublet], dtype="object")
+    result_df = pd.DataFrame(
+        "",
+        index=labels_df.index,
+        columns=[add_key_hashid, add_key_doublet],
+        dtype="object",
+    )
 
     # Get cell labels
     result_df.loc[:, add_key_hashid] = labels_df.idxmax(axis=1)
@@ -109,10 +121,12 @@ def demux(
 
     # Get doublet info
     logger.debug("Assigning doublet info...")
+
     def _assign_doublet(row):
         if row.sum() == 0:
             return "negative"
         return ":".join([r for r in row[row == 1].index])
+
     result_df.loc[:, add_key_doublet] = labels_df.apply(_assign_doublet, axis=1)
 
     # Append to AnnData
@@ -133,5 +147,7 @@ def demux(
 
     pct_doublet = (result_df[add_key_hashid] == "doublet").mean() * 100
     pct_negative = (result_df[add_key_hashid] == "negative").mean() * 100
-    logger.info(f"Demultiplexing completed ({pct_doublet:.1f}% Doublets, {pct_negative:.1f}% Negatives). Hash IDs stored in '{add_key_hashid}'.")
+    logger.info(
+        f"Demultiplexing completed ({pct_doublet:.1f}% Doublets, {pct_negative:.1f}% Negatives). Hash IDs stored in '{add_key_hashid}'."
+    )
     return adata_hto

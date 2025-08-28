@@ -26,6 +26,7 @@ _background_version_meta = {
     },
 }
 
+
 def _assert_background(adata, _run_assert=True):
     n = adata.shape[0]
     if not _run_assert:
@@ -35,6 +36,7 @@ def _assert_background(adata, _run_assert=True):
     elif n < 100:
         raise AnnDataFormatError(f"Only {n} barcodes found in HTO data.")
 
+
 def _log_background(n_background, n_empty, logger):
     msg = (
         f"Building set of background barcodes. "
@@ -42,6 +44,7 @@ def _log_background(n_background, n_empty, logger):
         f"# Empty: {n_empty} | "
     )
     logger.info(msg)
+
 
 @add_docstring()
 def build_background(
@@ -61,11 +64,18 @@ def build_background(
     """
     # don't do anything if adata_background is provided
     adata_background = kwargs.get("adata_background", None)
-    
+
     # assert inputs
-    _assert_required_inputs(_background_version_meta, background_version, kwargs, "background_version")
-    params_required = {k: kwargs[k] for k in _background_version_meta[background_version]["required"]}
-    params_optional = {k: kwargs.get(k, DEFAULTS[k]) for k in _background_version_meta[background_version]["optional"]}
+    _assert_required_inputs(
+        _background_version_meta, background_version, kwargs, "background_version"
+    )
+    params_required = {
+        k: kwargs[k] for k in _background_version_meta[background_version]["required"]
+    }
+    params_optional = {
+        k: kwargs.get(k, DEFAULTS[k])
+        for k in _background_version_meta[background_version]["optional"]
+    }
     if adata_background is not None:
         adata_background = adata_background
     elif background_version == "v1":
@@ -87,7 +97,9 @@ def build_background(
             verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
         )
     else:
-        raise ValueError(f"Invalid version: {background_version}. Must be 'v1', 'v2' or 'v3'.")
+        raise ValueError(
+            f"Invalid version: {background_version}. Must be 'v1', 'v2' or 'v3'."
+        )
 
     _assert_background(adata_background, _run_assert=_run_assert)
     return adata_background

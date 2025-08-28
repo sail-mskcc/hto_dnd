@@ -2,6 +2,7 @@
 
 Source: https://github.com/CHPGenetics/GMM-Demux
 """
+
 import os
 import subprocess
 import tempfile
@@ -14,15 +15,15 @@ from hto._logging import get_logger
 
 
 def gmm_demux(
-    df: pd.DataFrame, 
-    hash_id: str = "hash_id", 
-    to_counts: bool = None, 
-    params: str = "", 
+    df: pd.DataFrame,
+    hash_id: str = "hash_id",
+    to_counts: bool = None,
+    params: str = "",
     verbose: int = 1,
-    **kwargs
+    **kwargs,
 ) -> pd.DataFrame:
     """Run GMM-Demux on filtered HTO. GMM-Demux uses raw counts. However, the input to this function is normalised, log-transformed and denoised.
-    
+
     Use exponentiation to get an approximation of the cleaned counts.
 
     Args:
@@ -38,10 +39,14 @@ def gmm_demux(
     prohibited_params = ["-f ", "--full ", "-o ", "--output ", "--csv ", "-c "]
     for param in prohibited_params:
         if param in params:
-            raise UserInputError(f"Prohibited parameter '{param}' found in params. Please remove it.")
+            raise UserInputError(
+                f"Prohibited parameter '{param}' found in params. Please remove it."
+            )
 
     # set tmp path
-    path_tmp_dir = os.environ.get("DND_TMPDIR", os.path.join(os.path.expanduser("~"), ".dnd_tmp"))
+    path_tmp_dir = os.environ.get(
+        "DND_TMPDIR", os.path.join(os.path.expanduser("~"), ".dnd_tmp")
+    )
     os.makedirs(path_tmp_dir, exist_ok=True)
     path_tmp = tempfile.TemporaryDirectory(dir=path_tmp_dir, delete=False)
     path_tmp_str = path_tmp.name
@@ -60,7 +65,9 @@ def gmm_demux(
         elif all([np.issubdtype(t, np.floating) for t in df.dtypes]):
             to_counts = True
         else:
-            raise UserInputError(f"Cannot infer 'to_counts' from data types: {df.dtypes}. Please set 'to_counts' explicitly.")
+            raise UserInputError(
+                f"Cannot infer 'to_counts' from data types: {df.dtypes}. Please set 'to_counts' explicitly."
+            )
 
     # transform to counts
     if to_counts:
@@ -89,7 +96,14 @@ def gmm_demux(
     # read assignment
     # - mark doublets with : instead of -
     # - note that celltypes may include -, so first replace those with <dash>, then replace - with : and finally replace <dash> with -
-    df_config = pd.read_csv(os.path.join(path_tmp_str, "FULL/GMM_full.config"), index_col=None, sep=", ", header=None, names=["Cluster_id", hash_id], engine='python')
+    df_config = pd.read_csv(
+        os.path.join(path_tmp_str, "FULL/GMM_full.config"),
+        index_col=None,
+        sep=", ",
+        header=None,
+        names=["Cluster_id", hash_id],
+        engine="python",
+    )
     for c in df.columns:
         df_config[hash_id] = df_config[hash_id].str.replace(c, c.replace("-", "<dash>"))
     df_config[hash_id] = df_config[hash_id].str.replace("-", ":")
@@ -97,7 +111,9 @@ def gmm_demux(
 
     # join assignment
     df_full = pd.read_csv(os.path.join(path_tmp_str, "FULL/GMM_full.csv"), index_col=0)
-    df_out = df_full.join(df_config, on="Cluster_id", how="left", lsuffix="_full", rsuffix="_config")
+    df_out = df_full.join(
+        df_config, on="Cluster_id", how="left", lsuffix="_full", rsuffix="_config"
+    )
 
     # rename index to "barcode"
     df_out.index.name = "barcode"

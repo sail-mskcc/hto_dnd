@@ -12,9 +12,25 @@ from .._defaults import DEFAULTS
 from .._logging import get_logger
 
 
-def _plot_layer(df, axs_row, y, varname, df_line: pd.DataFrame = None, hline: float = None, **kwargs_fig):
+def _plot_layer(
+    df,
+    axs_row,
+    y,
+    varname,
+    df_line: pd.DataFrame = None,
+    hline: float = None,
+    **kwargs_fig,
+):
     # scatterplot
-    sns.scatterplot(df, x="noise", y=y, hue="highlight", size="highlight", ax=axs_row[0], **kwargs_fig)
+    sns.scatterplot(
+        df,
+        x="noise",
+        y=y,
+        hue="highlight",
+        size="highlight",
+        ax=axs_row[0],
+        **kwargs_fig,
+    )
     axs_row[0].set_title(f"{varname} normalised")
 
     # regression line
@@ -51,7 +67,9 @@ def technical_noise(
     # assert
     if var is None:
         logger = get_logger("technical_noise", level=verbose)
-        logger.error(f"Parameter 'var' must be provided. For example, set 'var=0' or 'var='{adata.var_names[0]}''")
+        logger.error(
+            f"Parameter 'var' must be provided. For example, set 'var=0' or 'var='{adata.var_names[0]}''"
+        )
         return
 
     if isinstance(var, int):
@@ -69,11 +87,14 @@ def technical_noise(
         assert axs.shape == (2, 2), "axs must be a 2x2 numpy array"
 
     # get data
-    df = pd.DataFrame({
-        "noise": adata.uns["dnd"]["denoise"]["covariates"],
-        "normalised": adata.layers[use_key_normalise][:, i],
-        "denoised": adata.layers[use_key_denoise][:, i],
-    }, index=adata.obs_names)
+    df = pd.DataFrame(
+        {
+            "noise": adata.uns["dnd"]["denoise"]["covariates"],
+            "normalised": adata.layers[use_key_normalise][:, i],
+            "denoised": adata.layers[use_key_denoise][:, i],
+        },
+        index=adata.obs_names,
+    )
     if highlight is not None:
         df["highlight"] = highlight
     else:
@@ -98,7 +119,11 @@ def technical_noise(
 
     # plot
     m = len(plot_layers)
-    params_fig = {"figsize": (10, m * 5), "gridspec_kw": {"width_ratios": [3, 1]}, "sharey": "row"}
+    params_fig = {
+        "figsize": (10, m * 5),
+        "gridspec_kw": {"width_ratios": [3, 1]},
+        "sharey": "row",
+    }
     if axs is None:
         fig, axs = plt.subplots(m, 2, squeeze=False, **params_fig)
 
@@ -110,7 +135,7 @@ def technical_noise(
         varname=varname,
         df_line=df_line,
         hline=None,
-        **kwargs_fig
+        **kwargs_fig,
     )
 
     _plot_layer(
@@ -120,7 +145,7 @@ def technical_noise(
         varname=varname,
         df_line=None,
         hline=threshold_denoised,
-        **kwargs_fig
+        **kwargs_fig,
     )
 
     plt.tight_layout()

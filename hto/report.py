@@ -11,14 +11,10 @@ from ._defaults import DEFAULTS
 from ._logging import get_logger
 from ._utils import get_arg, savepdf
 
-REPORT_PLT_DEFAULTS = {
-    "dpi": 80
-}
+REPORT_PLT_DEFAULTS = {"dpi": 80}
 
-def report_safe(
-    *args,
-    **kwargs
-):
+
+def report_safe(*args, **kwargs):
     """Run report with error handling."""
     try:
         report(*args, **kwargs)
@@ -27,6 +23,7 @@ def report_safe(
         logger.error(f"Failed to run report: {e}")
         if kwargs["verbose"] >= 2:
             raise e
+
 
 def report(
     adata_hto,
@@ -62,10 +59,11 @@ def report(
         os.makedirs(os.path.dirname(path_report), exist_ok=True)
         pdf = matplotlib.backends.backend_pdf.PdfPages(path_report)
 
-
     # preprocess
     adata_background = adata_background.copy()
-    adata_background.obs.loc[:, "filtered"] = adata_background.obs_names.isin(adata_hto.obs_names)
+    adata_background.obs.loc[:, "filtered"] = adata_background.obs_names.isin(
+        adata_hto.obs_names
+    )
 
     # plot umiplot
     fig_umiplot, ax = plt.subplots(1, 1, figsize=(8, 4), **REPORT_PLT_DEFAULTS)
@@ -95,7 +93,9 @@ def report(
         logger.info("Skipping umi_gex_hto plot as adata_gex is not provided")
 
     # distributions_stages
-    fig_distributions_stages, axs = plt.subplots(3, 1, figsize=(8, 12), **REPORT_PLT_DEFAULTS)
+    fig_distributions_stages, axs = plt.subplots(
+        3, 1, figsize=(8, 12), **REPORT_PLT_DEFAULTS
+    )
 
     axs = pl.distribution_stages(
         adata=adata_hto,
@@ -107,7 +107,14 @@ def report(
 
     # technical_noise
     for i in range(adata_hto.shape[1]):
-        fig_technical_noise, axs = plt.subplots(2, 2, figsize=(10, 10), gridspec_kw={"width_ratios": [3, 1]}, sharey="row", **REPORT_PLT_DEFAULTS)
+        fig_technical_noise, axs = plt.subplots(
+            2,
+            2,
+            figsize=(10, 10),
+            gridspec_kw={"width_ratios": [3, 1]},
+            sharey="row",
+            **REPORT_PLT_DEFAULTS,
+        )
 
         axs = pl.technical_noise(
             adata=adata_hto,

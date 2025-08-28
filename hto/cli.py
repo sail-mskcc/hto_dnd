@@ -1,4 +1,5 @@
 """Generate a CLI command using Click. Arguments are automatically generated from `hto._defaults.py` options."""
+
 import click
 
 from hto import dnd
@@ -13,10 +14,8 @@ from hto._defaults import OPTIONS
 )
 def cli(**kwargs):
     """Run demultiplexing and normalization of HTO data."""
-    dnd(
-        _as_cli=True,
-        **kwargs
-    )
+    dnd(_as_cli=True, **kwargs)
+
 
 # add options
 for key, option in OPTIONS.items():

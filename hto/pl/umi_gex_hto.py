@@ -13,13 +13,21 @@ def umi_gex_hto(
     adata_gex,
     num_buckets=51,
     subsample=10000,
-    axs=None
+    axs=None,
 ):
     """Plot expression level for GEX on x-axis and HTO on y-axis."""
     # combine data
     wl = adata_hto.obs_names
-    sgex = pd.Series(name="gex", data=np.array(adata_gex.X.sum(axis=1)).flatten(), index=adata_gex.obs_names)
-    shto = pd.Series(name="hto", data=np.array(adata_hto_raw.X.sum(axis=1)).flatten(), index=adata_hto_raw.obs_names)
+    sgex = pd.Series(
+        name="gex",
+        data=np.array(adata_gex.X.sum(axis=1)).flatten(),
+        index=adata_gex.obs_names,
+    )
+    shto = pd.Series(
+        name="hto",
+        data=np.array(adata_hto_raw.X.sum(axis=1)).flatten(),
+        index=adata_hto_raw.obs_names,
+    )
     df = pd.concat([np.log10(sgex + 1), np.log10(shto + 1)], join="inner", axis=1)
 
     # make and summarise buckets
@@ -37,11 +45,17 @@ def umi_gex_hto(
     df.loc[df.filtered, "label"] = "Cells"
 
     # aggregate
-    df_agg = df.groupby("gex_bucket", observed=True).agg(**{
-        "hto": ("hto", "mean"),
-        "cell_frac": ("filtered", "mean"),
-        "barcodes": ("filtered", "size"),
-    }).reset_index()
+    df_agg = (
+        df.groupby("gex_bucket", observed=True)
+        .agg(
+            **{
+                "hto": ("hto", "mean"),
+                "cell_frac": ("filtered", "mean"),
+                "barcodes": ("filtered", "size"),
+            }
+        )
+        .reset_index()
+    )
 
     # plot
     if axs is None:
@@ -65,7 +79,7 @@ def umi_gex_hto(
         y="hto",
         linewidth=0,
         s=5,
-        alpha=.4,
+        alpha=0.4,
         hue="label",
         ax=ax,
     )

@@ -7,7 +7,6 @@
 5. Step: Postprocessing
 """
 
-
 import warnings
 
 import anndata as ad
@@ -32,7 +31,8 @@ from .denoise import denoise
 from .normalise import normalise
 from .report import report_safe
 
-warnings.filterwarnings('ignore', module='anndata')
+warnings.filterwarnings("ignore", module="anndata")
+
 
 @user_input_error_decorator
 @add_docstring()
@@ -46,7 +46,7 @@ def dnd(
     path_report: str = None,
     show_report: bool = False,
     _as_cli: bool = False,  # required when run as cli
-    **kwargs
+    **kwargs,
 ):
     """Perform normalization and demultiplexing on the provided filtered and raw AnnData objects.
 
@@ -95,7 +95,9 @@ def dnd(
             whitelist = pd.read_csv(adata_hto, header=None, index_col=0).index.tolist()
             adata_hto = subset_whitelist(adata_hto_raw, whitelist)
         else:
-            raise ValueError(f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)")
+            raise ValueError(
+                f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)"
+            )
     if isinstance(adata_background, str):
         logger.debug(f"Reading background adata from {adata_background}")
         adata_background = ad.read_h5ad(adata_background)
@@ -110,17 +112,29 @@ def dnd(
     assert_background(background_method)
     assert_demux(demux_method)
     if _as_cli:
-        assert adata_out is not None, "Output path must be provided using parameter --output-path"
-        assert add_key_normalise not in adata_hto.layers, f"Key {add_key_normalise} already exists in adata. Add option --add-key-normalise to change the key."
-        assert add_key_denoise not in adata_hto.layers, f"Key {add_key_denoise} already exists in adata. Add option --add-key-denoise to change the key."
+        assert adata_out is not None, (
+            "Output path must be provided using parameter --output-path"
+        )
+        assert add_key_normalise not in adata_hto.layers, (
+            f"Key {add_key_normalise} already exists in adata. Add option --add-key-normalise to change the key."
+        )
+        assert add_key_denoise not in adata_hto.layers, (
+            f"Key {add_key_denoise} already exists in adata. Add option --add-key-denoise to change the key."
+        )
 
     # GET DATA
-    if adata_gex is not None and isinstance(adata_gex, str) and background_version in ["v1", "v3"]:
+    if (
+        adata_gex is not None
+        and isinstance(adata_gex, str)
+        and background_version in ["v1", "v3"]
+    ):
         logger.debug(f"Reading gex adata from {adata_gex}")
         adata_gex = read_adata(adata_gex)
-    
+
     # LOG
-    logger.info(f"Starting DND: Normalise (build-background: {background_version}) -> Denoise (background-dection: {background_method} | version: {denoise_version}) -> Demux (method: {demux_method})")
+    logger.info(
+        f"Starting DND: Normalise (build-background: {background_version}) -> Denoise (background-dection: {background_method} | version: {denoise_version}) -> Demux (method: {demux_method})"
+    )
 
     # RUN
     adata_hto = normalise(
@@ -156,7 +170,9 @@ def dnd(
         use_layer=add_key_denoise,
         demux_method=demux_method,
         key_normalise=add_key_normalise,
-        enforce_larger_than_background=get_arg("enforce_larger_than_background", kwargs, DEFAULTS),
+        enforce_larger_than_background=get_arg(
+            "enforce_larger_than_background", kwargs, DEFAULTS
+        ),
         add_key_hashid=add_key_hashid,
         add_key_doublet=add_key_doublet,
         add_key_labels=get_arg("add_key_labels", kwargs, DEFAULTS),
@@ -165,16 +181,25 @@ def dnd(
 
     # SAVE
     write_h5ad_safe(adata_hto, adata_out, create_folder=True, _require_write=_as_cli)
-    write_csv_safe(adata_hto, csv_out, key_hashid=add_key_hashid, key_doublet=add_key_doublet, create_folder=True)
+    write_csv_safe(
+        adata_hto,
+        csv_out,
+        key_hashid=add_key_hashid,
+        key_doublet=add_key_doublet,
+        create_folder=True,
+    )
 
     # REPORT
     if add_key_normalise is None or add_key_denoise is None:
-        logger.warning("Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoise' (--add-key-denoise) to generate report.")
+        logger.warning(
+            "Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoise' (--add-key-denoise) to generate report."
+        )
     elif path_report is not None or show_report:
-
         # get background
         if adata_background is None:
-            adata_background = subset_whitelist(adata_hto_raw, adata_hto.uns["dnd"]["normalise"]["params"]["background"])
+            adata_background = subset_whitelist(
+                adata_hto_raw, adata_hto.uns["dnd"]["normalise"]["params"]["background"]
+            )
 
         # run report
         report_safe(

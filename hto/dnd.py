@@ -34,8 +34,8 @@ from .report import report_safe
 
 warnings.filterwarnings('ignore', module='anndata')
 
-@add_docstring
 @user_input_error_decorator
+@add_docstring()
 def dnd(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData = None,
@@ -58,12 +58,12 @@ def dnd(
         adata_out (str, optional): {adata_out}
         csv_out (str, optional): {csv_out}
         path_report (str, optional): {path_report}
-        show_report (bool, optional): {show_report}
-        _as_cli (bool, optional): {_as_cli}
-        **kwargs: {kwargs}
+        show_report (bool, optional): Show report in current session after processing.
+        _as_cli (bool, optional): Run code in CLI mode. This triggers additional checks and logging.
+        **kwargs: Allows for keywords such as: `inplace`, `verbose`, `denoise_version`, `add_key_hashid`, `add_key_doublet`, `add_key_normalise`, `add_key_denoise`, `demux_method`, `background_method`, `background_version`
 
     Returns:
-        anndata.AnnData: {adata_hto}
+        anndata.AnnData: Anndata object with normalised and denoised expression levels, and sample assignments stored in .obs
 
     """
     # SET PARAMS

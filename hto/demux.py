@@ -14,7 +14,7 @@ from ._meta import add_meta
 from ._utils import add_docstring, get_layer
 
 
-@add_docstring
+@add_docstring()
 def demux(
     adata_hto: ad.AnnData,
     demux_method: str = DEFAULTS["demux_method"],

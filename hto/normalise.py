@@ -25,7 +25,7 @@ def assert_normalisation(df, logger, max_spread=1.5, qs=[.1, .99]):
     if ratio > max_spread:
         logger.warning(f"Spread of normalised values is too high: {ratio:.2f}. This may cause issues when estimate cell-by-cell covariates.")
 
-@add_docstring
+@add_docstring()
 def normalise(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData = None,

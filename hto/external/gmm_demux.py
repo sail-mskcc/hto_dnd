@@ -76,9 +76,7 @@ def gmm_demux(
     # run gmm
     cmd = f"cd {path_tmp_str} && GMM-demux {path_df} {hto_array} --output {path_tmp_str} --full FULL {params} --csv"
     try:
-        result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
-        if result.exitcode != 0:
-            raise RuntimeError(f"GMM demux failed with return code {result.returncode}.\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}")
+        _ = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
         logger.info("GMM demux completed successfully.")
     except subprocess.CalledProcessError as e:
         raise RuntimeError(

@@ -43,7 +43,7 @@ def _log_background(n_background, n_empty, logger):
     )
     logger.info(msg)
 
-@add_docstring
+@add_docstring()
 def build_background(
     background_version: str = DEFAULTS["background_version"],
     _run_assert: bool = True,
@@ -93,7 +93,7 @@ def build_background(
     return adata_background
 
 
-@add_docstring
+@add_docstring()
 def build_background_v1(
     adata_hto_raw: ad.AnnData,
     adata_gex: ad.AnnData,
@@ -136,7 +136,7 @@ def build_background_v1(
     return adata_hto_raw[list(ids_background)]
 
 
-@add_docstring
+@add_docstring()
 def build_background_v2(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData,
@@ -198,7 +198,7 @@ def build_background_v2(
     return adata_hto_raw[list(background)]
 
 
-@add_docstring
+@add_docstring()
 def build_background_v3(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData,

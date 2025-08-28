@@ -11,7 +11,7 @@ from ._remove_batch_effect import remove_batch_effect
 from ._utils import add_docstring, get_layer
 
 
-@add_docstring
+@add_docstring()
 def denoise(
     adata_hto: ad.AnnData,
     use_layer: str = DEFAULTS["use_layer"],

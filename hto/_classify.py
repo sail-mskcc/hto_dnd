@@ -18,7 +18,7 @@ def assert_demux(method):
     if method not in SUPPORTED_DEMUX_METHODS:
         raise ValueError(f"Method '{method}' not supported. Choose from: {', '.join(SUPPORTED_DEMUX_METHODS)}")
 
-@add_docstring
+@add_docstring()
 def classify(
     data,
     demux_method: str = DEFAULTS["demux_method"],

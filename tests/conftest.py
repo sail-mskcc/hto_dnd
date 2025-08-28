@@ -6,15 +6,6 @@ import shutil
 import pytest
 from hto.data import generate_hto
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--github-skip",
-        action="store_true",
-        dest="github_skip",
-        default=False,
-        help="Skip tests on Github workflow",
-    )
-
 
 @pytest.fixture(scope="module")
 def mock_hto_data(request):

@@ -129,7 +129,6 @@ def test_classify(mock_hto_data, demux_method):
         demux_method: A string indicating the clustering method to use ("kmeans" or "gmm").
 
     """
-
     # skip gmm_demux if github actions
     if demux_method == "gmm_demux" and is_github_actions():
         pytest.skip("Skipping gmm_demux on GitHub Actions")

@@ -1,12 +1,12 @@
 import importlib
 import os
 import sys
-import pytest
 
 import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pytest
 import scipy
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas.api.types import is_float_dtype, is_integer_dtype

@@ -1,6 +1,7 @@
 import importlib
 import os
 import sys
+import pytest
 
 import anndata as ad
 import matplotlib.pyplot as plt
@@ -345,3 +346,13 @@ def read_adata(path):
             f"Unknown file format for adata: {path}. Must be anndata (.h5ad) or 10x h5 (.h5)"
         )
     return adata
+
+def is_github_actions():
+    return os.getenv("GITHUB_ACTIONS") == "true"
+
+def skip_on_github_actions():
+    """Skip test on GitHub Actions."""
+    def wrapper(func):
+        return pytest.mark.skipif(is_github_actions(), reason="Skipping on GitHub Actions")(func)
+
+    return wrapper

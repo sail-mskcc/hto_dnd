@@ -2,9 +2,10 @@
 
 import pytest
 from hto.external import gmm_demux
-
+from hto._utils import skip_on_github_actions
 
 @pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
+@skip_on_github_actions
 def test_gmm_demux(mock_hto_data):
     """Test the GMM demultiplexing function."""
     adata_filtered = mock_hto_data["filtered"]

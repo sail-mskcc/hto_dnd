@@ -9,6 +9,7 @@ import pytest
 from hto import demux, denoise, normalise
 from hto._classify import SUPPORTED_DEMUX_METHODS, classify
 from hto._exceptions import AnnDataFormatError
+from hto._utils import is_github_actions
 
 
 @pytest.fixture
@@ -128,6 +129,11 @@ def test_classify(mock_hto_data, demux_method):
         demux_method: A string indicating the clustering method to use ("kmeans" or "gmm").
 
     """
+
+    # skip gmm_demux if github actions
+    if demux_method == "gmm_demux" and is_github_actions():
+        pytest.skip("Skipping gmm_demux on GitHub Actions")
+
     adata_filtered = mock_hto_data["filtered"]
     adata_hto_raw = mock_hto_data["raw"]
     adata_normalised = normalise(

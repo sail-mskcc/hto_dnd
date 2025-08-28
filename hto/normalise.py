@@ -4,19 +4,11 @@ import anndata as ad
 from typing import Union
 from ._logging import get_logger
 from ._meta import init_meta, add_meta
-from ._exceptions import AnnDataFormatError
+from ._exceptions import AnnDataFormatError, UserInputError
 from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._utils import get_layer
 from .tl import build_background
 
-
-_normalise_version_meta = {
-    "v1": {
-        "required": ["adata_hto"],
-        "optional": ["adata_hto_raw", "adata_gex", "adata_background"],
-        "description": "Background aware HTO normalisation.",
-    }
-}
 
 def assert_normalisation(df, logger, max_spread=1.5, qs=[.1, .99]):
     """Assert that normalised values are within a certain spread."""
@@ -73,6 +65,12 @@ def normalise(
     logger.log_parameters(locals())
     logger.debug("Starting normalization...")
 
+    # Subset to same columns in hto and hto_raw
+    columns_mismatch = list(set(adata_hto.var_names).difference(set(adata_hto_raw.var_names)))
+    if not all(adata_hto.var_names.isin(adata_hto_raw.var_names)):
+        raise UserInputError(f"Columns don't match. 'adata_hto' has columns that are not in 'adata_hto_raw': {columns_mismatch}. Make sure that all var_names in 'adata_hto' are also in 'adata_hto_raw'.")
+    adata_hto_raw = adata_hto_raw[:, adata_hto.var_names].copy()
+    
     # Get background if not provided
     adata_background = build_background(
         background_version=background_version,
@@ -115,7 +113,7 @@ def normalise(
     pct_background = n_filtered / n_background * 100
 
     logger.debug(f"Filtered adata: {n_filtered / 1000:.1f}K cells | Background adata: {n_background / 1000:.1f}K cells")
-    logger.debug(f"Background cells: {n_background / 1000:f}K cells | Overlapping cells: {len(overlap_barcode) / 1000:f}K cells")
+    logger.debug(f"Background cells: {n_background / 1000:.1f}K cells | Overlapping cells: {len(overlap_barcode) / 1000:.1f}K cells")
     if pct_background < 10:
         logger.warning(f"Only few barcodes are used for normalization: {n_background / 1000:.1f}K ({pct_background:.1f}%)")
 
@@ -136,6 +134,9 @@ def normalise(
     # Normalize the cell protein matrix
     normalized_matrix = (adt_log - mu_empty) / sd_empty
 
+    # Ensure that the normalized matrix is a numpy array
+    normalized_matrix = np.array(normalized_matrix)
+
     # Checkpoint
     if add_key_normalise is not None:
         adata_hto.layers[add_key_normalise] = normalized_matrix
@@ -154,6 +155,7 @@ def normalise(
     adata_hto = add_meta(
         adata_hto,
         step="normalise",
+        layer=add_key_normalise,
         params={
             "pseudocount": pseudocount,
             "background": adata_background.obs_names.values,
@@ -170,6 +172,7 @@ def normalise_debug(
     adata_hto: ad.AnnData,
     background_quantile: float = DEFAULTS["background_quantile"],
     use_layer: str = DEFAULTS["use_layer"],
+    add_key_normalise: str = DEFAULTS["add_key_normalise"],
     verbose: int = DEFAULTS["verbose"],
 ):
     f"""
@@ -186,6 +189,7 @@ def normalise_debug(
     logger = get_logger("utils", level=verbose)
 
     # estimate empty
+    adata_hto = init_meta(adata_hto)
     df = adata_hto.to_df(use_layer)
     adt_log = np.log1p(df).values
 
@@ -197,8 +201,38 @@ def normalise_debug(
         sd_temp = np.std(adt_log[adt_log[:, i] < q, i])
         mu_empty.append(mu_temp)
         sd_empty.append(sd_temp)
+        if sd_empty[i] <= 0:
+            logger.warning(f"Standard deviation for column {i} is zero or negative. This may cause issues with normalization. Setting it to 0.01")
+            sd_empty[i] = 0.01
 
     # normalise
     normalized_matrix = (adt_log - mu_empty) / sd_empty
     adata_hto.layers["normalised"] = normalized_matrix
+
+    # Checkpoint
+    if add_key_normalise is not None:
+        adata_hto.layers[add_key_normalise] = normalized_matrix
+        logger.info(f"Normalized matrix stored in adata.layers['{add_key_normalise}']")
+    else:
+        adata_hto.X = normalized_matrix
+        logger.info("Normalization completed and stored in adata.X")
+
+    # Assert
+    assert_normalisation(adata_hto.to_df(add_key_normalise), logger)
+
+    # Log metadata
+    logger.debug(pformat(adata_hto.uns["dnd"]))
+
+    # Store meta information
+    adata_hto = add_meta(
+        adata_hto,
+        step="normalise",
+        layer=add_key_normalise,
+        params={
+            "background_quantile": background_quantile,
+        },
+        mu_empty=mu_empty,
+        sd_empty=sd_empty,
+    )
+
     return adata_hto

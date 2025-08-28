@@ -34,10 +34,16 @@ DEFAULTS = {
     },
 
     # demux
-    "demux_method": "kmeans",
+    "demux_method": "gmm",
+    "enforce_larger_than_background": True,
     "add_key_hashid": "hash_id",
     "add_key_doublet": "doublet_info",
     "add_key_labels": None,
+    "kwargs_classify": {
+        "kmeans_placeholder": -1,
+        "gmm-p-cutoff": 0.5,
+        "otsu_placeholder": -1,
+    },
 
     # build_background
     "min_umi": 300,
@@ -76,9 +82,11 @@ DESCRIPTIONS = {
 
     # demux
     "demux_method": f"Method to use for demultiplexing. Must be either 'kmeans', 'gmm' or 'otsu'. Default is {DEFAULTS['demux_method']}.",
+    "enforce_larger_than_background": f"Enforce that only cells with larger than background counts are considered for a hashtag label. This ensures that normalised counts are larger than 0. Default is {DEFAULTS['enforce_larger_than_background']}.",
     "add_key_hashid": f"Column to store the demultiplexed cell type in the AnnData object. Default is {DEFAULTS['add_key_hashid']}.",
     "add_key_doublet": f"Column to store the doublet information in the AnnData object. Default is {DEFAULTS['add_key_doublet']}.",
     "add_key_labels": f"Adata layer to store the demultiplexed labels in the AnnData object. Default is {DEFAULTS['add_key_labels']}.",
+    "kwargs_classify": f"Additional parameters for the demultiplexing algorithm. Default is {DEFAULTS['kwargs_classify']}.",
 
     # build_background
     "min_umi": f"Minimum UMI count to consider a barcode. Default is {DEFAULTS['min_umi']}.",
@@ -115,10 +123,12 @@ OPTIONS = {
 
     # demux
     "demux_method": click.option("--demux-method", type=str, default=DEFAULTS["demux_method"], help=DESCRIPTIONS["demux_method"]),
-    "add_key_hashid": click.option("--add-key", type=str, default=DEFAULTS["add_key_hashid"], help=DESCRIPTIONS["add_key_hashid"]),
+    "enforce_larger_than_background": click.option("--enforce-larger-than-background", is_flag=True, default=DEFAULTS["enforce_larger_than_background"], help=DESCRIPTIONS["enforce_larger_than_background"]),
+    "add_key_hashid": click.option("--add-key-hashid", type=str, default=DEFAULTS["add_key_hashid"], help=DESCRIPTIONS["add_key_hashid"]),
     "add_key_doublet": click.option("--add-key-doublet", type=str, default=DEFAULTS["add_key_doublet"], help=DESCRIPTIONS["add_key_doublet"]),
     "add_key_labels": click.option("--add-key-labels", type=str, default=DEFAULTS["add_key_labels"], help=DESCRIPTIONS["add_key_labels"]),
-
+    "kwargs_classify": click.option("--kwargs-classify", type=(str, float), multiple=True, help="Additional parameters for the demultiplexing algorithm. Use key-value pairs, e.g. --kwargs-classify gmm-p-cutoff 0.8."),
+    
     # build_background
     "min_umi": click.option("--min-umi", type=int, default=DEFAULTS["min_umi"], help=DESCRIPTIONS["min_umi"]),
     "next_k_cells": click.option("--next-k-cells", type=int, default=DEFAULTS["next_k_cells"], help=DESCRIPTIONS["next_k_cells"]),

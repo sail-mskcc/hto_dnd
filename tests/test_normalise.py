@@ -5,7 +5,7 @@ import pytest
 from pandas.api.types import is_float_dtype, is_integer_dtype
 
 from hto import normalise
-from hto._exceptions import AnnDataFormatError
+from hto._exceptions import AnnDataFormatError, UserInputError
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_normalise(mock_hto_data):
@@ -19,9 +19,10 @@ def test_normalise(mock_hto_data):
     # Run normalisation
     adata_norm = normalise(
         adata_hto=adata_filtered,
-        adata_background=adata_raw,
+        adata_hto_raw=adata_raw,
         add_key_normalise=None,
         inplace=False,
+        background_version="v2",
     )
 
     # Test layers, datatypes, shapes and metadata
@@ -42,10 +43,11 @@ def test_normalise(mock_hto_data):
     adata_inplace = adata_filtered.copy()
     normalise(
         adata_hto=adata_inplace,
-        adata_background=adata_raw,
+        adata_hto_raw=adata_raw,
         add_key_normalise=None,
         pseudocount=20,
         inplace=True,
+        background_version="v2",
     )
     assert is_float_dtype(adata_inplace.X)
     assert adata_inplace.uns["dnd"]["normalise"]["params"]["pseudocount"] == 20
@@ -53,9 +55,10 @@ def test_normalise(mock_hto_data):
     # Test layers
     adata_norm = normalise(
         adata_hto=adata_filtered,
-        adata_background=adata_raw,
+        adata_hto_raw=adata_raw,
         add_key_normalise="norm",
         inplace=False,
+        background_version="v2",
     )
     assert "norm" in adata_norm.layers
 
@@ -70,20 +73,22 @@ def test_faulty_data(mock_hto_data):
     adata_raw = mock_hto_data['raw']
 
     # Fail - full overlap
-    with pytest.raises(AnnDataFormatError):
+    with pytest.raises(UserInputError):
         adata_norm = normalise(
             adata_hto=adata_filtered,
-            adata_background=adata_filtered,
+            adata_hto_raw=adata_filtered,
             inplace=False,
             _run_assert=False,
+            background_version="v2",
         )
 
     # Fail - no overlap
-    with pytest.raises(AnnDataFormatError):
+    with pytest.raises(UserInputError):
         obs_names = adata_raw.obs_names
         obs_names = obs_names[~obs_names.isin(adata_filtered.obs_names)]
         adata_norm = normalise(
             adata_hto=adata_filtered,
-            adata_background=adata_raw[obs_names],
+            adata_hto_raw=adata_raw[obs_names],
             inplace=False,
+            background_version="v2",
         )

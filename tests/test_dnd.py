@@ -60,7 +60,7 @@ def test_dnd(mock_hto_data):
         hash_ids = adata.var_names
         classifications = adata.obs['hash_id'].value_counts()
         assert len(classifications) > 1, "No classifications found"
-        assert all(classifications.index.isin(['Negative', 'Doublet'] + list(hash_ids))), "Invalid classifications found"
+        assert all(classifications.index.isin(['negative', 'doublet'] + list(hash_ids))), "Invalid classifications found"
 
         # Check if metrics exist for each HTO
         metrics = adata.uns["dnd"]["demux"]["metrics"]

@@ -2,11 +2,10 @@ import pytest
 import numpy as np
 import pandas as pd
 import anndata as ad
-import yaml
-from sklearn.datasets import make_blobs
+import numbers
 
 from hto import normalise, denoise, demux
-from hto._cluster_demux import SUPPORTED_DEMUX_METHODS, cluster_and_evaluate
+from hto._classify import SUPPORTED_DEMUX_METHODS, classify
 from hto._exceptions import AnnDataFormatError
 
 
@@ -20,7 +19,7 @@ def adata_hto():
         [0, 100, 100],
         [0, 0, 0],
         [0, 0, 0],
-    ]) + 0.1 # (must be float)
+    ])
     labels = np.array([
         [1, 0, 0],
         [0, 1, 0],
@@ -32,12 +31,17 @@ def adata_hto():
     ])
     var_names = [f"hto_{i}" for i in range(x.shape[1])]
     obs_names = [f"cell_{i}" for i in range(x.shape[0])]
-    true_labels = ["hto_0", "hto_1", "hto_2", "Doublet", "Doublet", "Negative", "Negative"]
-    true_doublet_info = ["", "", "", "hto_0,hto_1", "hto_1,hto_2", "", ""]
-    adata = ad.AnnData(X=x, obs=pd.DataFrame({
-        "true_labels": true_labels,
-        "true_doublet_info": true_doublet_info,
-    }, index=obs_names), var=pd.DataFrame(index=var_names))
+    true_labels = ["hto_0", "hto_1", "hto_2", "doublet", "doublet", "negative", "negative"]
+    true_doublet_info = ["hto_0", "hto_1", "hto_2", "hto_0:hto_1", "hto_1:hto_2", "negative", "negative"]
+    adata = ad.AnnData(
+        X=x,
+        dtype="float32",
+        obs=pd.DataFrame({
+            "true_labels": true_labels,
+            "true_doublet_info": true_doublet_info,
+        }, index=obs_names),
+        var=pd.DataFrame(index=var_names)
+    )
     adata.layers["labels"] = labels
     return adata
 
@@ -54,6 +58,7 @@ def test_demux(adata_hto):
         adata_demux = demux(
             adata_hto=adata_hto,
             demux_method=method,
+            enforce_larger_than_background=False,  # <- no normalised layer available
             add_key_labels="demux_labels",
             use_layer=None,
             inplace=False,
@@ -67,7 +72,7 @@ def test_demux(adata_hto):
         assert "thresholds" in adata_demux.uns["dnd"]["demux"]
         thresholds = adata_demux.uns["dnd"]["demux"]["thresholds"]
         assert len(thresholds) == adata_hto.X.shape[1]
-        assert isinstance(thresholds["hto_1"], float)
+        assert isinstance(thresholds["hto_1"], numbers.Real)
         # check classification
         assert all(adata_demux.obs["hash_id"] == adata_demux.obs["true_labels"])
         assert np.all(adata_demux.layers["demux_labels"] == adata_hto.layers["labels"])
@@ -76,8 +81,8 @@ def test_demux(adata_hto):
 
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
-@pytest.mark.parametrize("demux_method", ["kmeans", "gmm", "otsu"])
-def test_cluster_and_evaluate(mock_hto_data, demux_method):
+@pytest.mark.parametrize("demux_method", ["kmeans", "gmm", "otsu", "gmm_demux"])
+def test_classify(mock_hto_data, demux_method):
     """
     Test the clustering and evaluation of HTO data.
     Checks the following:
@@ -112,29 +117,74 @@ def test_cluster_and_evaluate(mock_hto_data, demux_method):
         add_key_denoise="denoised",
         use_layer="normalised"
     )
-    X = adata_denoised.layers["denoised"]
+    df = adata_denoised.to_df("denoised")
 
-    for i in range(X.shape[1]):
-        hto_data = X[:, i].reshape(-1, 1)
-        labels, threshold, metrics = cluster_and_evaluate(hto_data, demux_method=demux_method)
+    classifications, thresholds, metrics = classify(
+        data=df,
+        demux_method=demux_method,
+    )
 
-        # same for all
+    for hto, labels in classifications.items():
+        # Check if the labels are binary
         assert len(np.unique(labels)) == 2
-        assert threshold > 0
 
-        # metric specific
+    for hto, thresh in thresholds.items():
+        # Check if the threshold is a float
+        assert isinstance(thresh, numbers.Real)
+        if demux_method == "gmm_demux":
+            print(pd.DataFrame(classifications))
+        assert thresh > 0
+
+    # metric specific
+    for hto, _metrics in metrics.items():
         if demux_method == "kmeans":
-            assert 'silhouette_score' in metrics
-            assert 'davies_bouldin_index' in metrics
-            assert metrics['silhouette_score'] > 0
-            assert metrics['davies_bouldin_index'] > 0
+            assert 'silhouette_score' in _metrics
+            assert 'davies_bouldin_index' in _metrics
+            assert _metrics['silhouette_score'] > 0
+            assert _metrics['davies_bouldin_index'] > 0
         elif demux_method == "gmm":
-            assert 'bic' in metrics
-            assert 'log_likelihood' in metrics
-            assert metrics['log_likelihood'] < 0
+            assert 'bic' in _metrics
+            assert 'log_likelihood' in _metrics
+            assert _metrics['log_likelihood'] < 0
         elif demux_method == "otsu":
-            assert 'inter_class_variance' in metrics
-            assert 'entropy' in metrics
+            assert 'inter_class_variance' in _metrics
+            assert 'entropy' in _metrics
+        elif demux_method == "gmm_demux":
+            assert 'min_signal' in _metrics
+            assert 'max_background' in _metrics
+
+
+def test_enforce_larger_than_background(adata_hto):
+    """
+    Test if the enforce_larger_than_background option works.
+    """
+    # Replace values with negative values to test
+    adata_neg = adata_hto.copy()
+    adata_neg.X = adata_neg.X - 1000
+    adata_neg.layers["normalised"] = adata_neg.X.copy()
+
+    # Enforce
+    adata_demux_true = demux(
+        adata_hto=adata_neg,
+        demux_method="otsu",
+        enforce_larger_than_background=True,
+        key_normalise="normalised",
+        use_layer=None,
+        inplace=False,
+    )
+    assert np.all(adata_demux_true.obs["hash_id"] == "negative")
+
+    # Do not enforce
+    adata_demux_false = demux(
+        adata_hto=adata_neg,
+        demux_method="otsu",
+        enforce_larger_than_background=False,
+        key_normalise="normalised",
+        use_layer=None,
+        inplace=False,
+    )
+    assert np.all(adata_demux_false.obs["hash_id"] == adata_hto.obs["true_labels"])
+
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_faulty_data(mock_hto_data):
@@ -143,7 +193,6 @@ def test_faulty_data(mock_hto_data):
     """
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
-    adata_raw = mock_hto_data['raw']
 
     # Skip preprocessing
     with pytest.raises(AnnDataFormatError):

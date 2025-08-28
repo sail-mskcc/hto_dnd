@@ -103,9 +103,10 @@ def test_background_methods(mock_hto_data):
     # Run normalisation
     adata_norm = normalise(
         adata_hto=adata_filtered,
-        adata_background=adata_raw,
+        adata_hto_raw=adata_raw,
         add_key_normalise="normalised",
         inplace=False,
+        background_version="v2",
     )
 
     adata_benchmark = denoise(

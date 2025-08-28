@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 import anndata as ad
+from hto._exceptions import UserInputError
 
 import hto
 
@@ -22,8 +23,8 @@ def hto_and_gex():
     ])
 
     obs = pd.DataFrame(index=cell_ids)
-    adata_hto = ad.AnnData(X=x_hto, obs=obs)
-    adata_gex = ad.AnnData(X=x_gex, obs=obs)
+    adata_hto = ad.AnnData(X=x_hto, dtype=x_hto.dtype, obs=obs)
+    adata_gex = ad.AnnData(X=x_gex, dtype=x_gex.dtype, obs=obs)
 
     return adata_hto, adata_gex
 
@@ -34,8 +35,8 @@ def hto_and_raw():
     x_hto_raw = np.ones((3, 3))
 
     obs = pd.DataFrame(index=cell_ids)
-    adata_hto = ad.AnnData(X=x_hto, obs=obs.iloc[:3])
-    adata_hto_raw = ad.AnnData(X=np.concatenate([x_hto, x_hto_raw]), obs=obs)
+    adata_hto = ad.AnnData(X=x_hto, dtype=x_hto.dtype, obs=obs.iloc[:3])
+    adata_hto_raw = ad.AnnData(X=np.concatenate([x_hto, x_hto_raw]), dtype=x_hto.dtype, obs=obs)
 
     return adata_hto, adata_hto_raw
 
@@ -80,7 +81,7 @@ def test_build_background_v2(hto_and_raw):
     assert set_background == set_expected
 
     # check faulty data
-    with pytest.raises(AssertionError):
+    with pytest.raises(UserInputError):
         adata_background = hto.tl.build_background(
             "v2",
             adata_hto=adata_hto,

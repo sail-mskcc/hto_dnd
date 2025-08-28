@@ -1,6 +1,7 @@
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
+
 
 def umap(
     adata,
@@ -14,10 +15,8 @@ def umap(
     kwargs_scatter={},
     kwargs_text={},
 ):
+    """Plot UMAP and add labels to the plot.
     """
-    Plot UMAP and add labels to the plot.
-    """
-
     # defaults
     default_scatter = {
         "linewidth": 0,

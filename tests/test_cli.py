@@ -1,17 +1,17 @@
 import os
-from click.testing import CliRunner
-import pytest
+
+import anndata as ad
 import numpy as np
 import pandas as pd
-import anndata as ad
-
-from hto.cli import cli
+import pytest
+from click.testing import CliRunner
 from hto._defaults import DEFAULTS
+from hto.cli import cli
+
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_cli(mock_hto_data):
-    """
-    Test if normalisation works.
+    """Test if normalisation works.
     """
     # Get mock data
     path_filtered = mock_hto_data['path_filtered']
@@ -60,8 +60,7 @@ def test_cli(mock_hto_data):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_faulty_inputs(mock_hto_data):
-    """
-    Test if normalisation works.
+    """Test if normalisation works.
     """
     # Get mock data
     path_filtered = mock_hto_data['path_filtered']

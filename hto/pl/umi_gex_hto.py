@@ -1,10 +1,8 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 
-from ..tl import build_background
-from .._defaults import DEFAULTS
 
 def umi_gex_hto(
     adata_hto,

@@ -1,10 +1,10 @@
-import pytest
+import anndata as ad
+import hto
 import numpy as np
 import pandas as pd
-import anndata as ad
+import pytest
 from hto._exceptions import UserInputError
 
-import hto
 
 @pytest.fixture
 def hto_and_gex():

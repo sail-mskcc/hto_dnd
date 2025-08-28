@@ -1,6 +1,8 @@
 import logging
 from pprint import pformat
+
 import anndata as ad
+
 
 def _log_parameters(logger : logging.Logger, params : dict):
     """Log parameters to the logger."""

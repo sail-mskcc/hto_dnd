@@ -1,7 +1,8 @@
+import anndata as ad
 import numpy as np
 import pandas as pd
-import anndata as ad
 from sklearn.datasets import make_blobs
+
 
 def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     """Generate clustered HTO data.
@@ -27,8 +28,8 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
         - 'raw_labels': Labels for the raw data
         - 'filtered_cell_types': Cell types for the filtered data
         - 'raw_cell_types': Cell types for the raw data
-    """
 
+    """
     # Set seed
     np.random.seed(seed)
     assert n_htos >=2, "Number of HTOs must be at least 2"

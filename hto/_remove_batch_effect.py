@@ -2,9 +2,9 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import LinearSVR
 
-from ._defaults import DEFAULTS, DESCRIPTIONS
-from ._utils import get_arg
+from ._defaults import DEFAULTS
 from ._logging import get_logger
+from ._utils import get_arg
 
 SUPPORTED_DENOISE_VERSIONS = ["v1", "v2"]
 
@@ -13,8 +13,7 @@ def remove_batch_effect(
     verbose: int = DEFAULTS["verbose"],
     **kwargs,
 ):
-    f"""
-    Remove batch effect of adt count data (x) using a cell-by-cell noise vector (covariates).
+    """Remove batch effect of adt count data (x) using a cell-by-cell noise vector (covariates).
 
     - v1: Linear regression of x on covariates and design matrix.
     - v2: Support Vector Regression (SVR) of x on covariates.

@@ -1,16 +1,19 @@
+import importlib
 import os
 import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import importlib
 import scipy
-import matplotlib.pyplot as plt
-from pandas.api.types import is_float_dtype, is_integer_dtype
 from matplotlib.backends.backend_pdf import PdfPages
+from pandas.api.types import is_float_dtype, is_integer_dtype
+
+from ._defaults import DEFAULTS
 from ._exceptions import AnnDataFormatError, UserInputError
-from ._meta import init_meta
-from ._defaults import DEFAULTS, DESCRIPTIONS
 from ._logging import get_logger
+from ._meta import init_meta
+
 
 def _assert_float(x):
     if not is_float_dtype(x):
@@ -59,8 +62,8 @@ def get_layer(
         float (bool): Assert that the data is float
         numpy (bool): Convert to numpy
         inplace (bool): Return a copy
-    """
 
+    """
     # copy if not inplace
     if not inplace:
         adata = adata.copy()
@@ -107,7 +110,7 @@ def subset_whitelist(adata, whitelist, _required_prop=0.9):
         msg = f"Too view of the whitelist barcodes were found in the data: {whitelist_pct:.1f}%"
         msg += f"\n- Example whitelist selected from filtered hto data: {whitelist[:3].tolist()}"
         msg += f"\n- Example background cell ids from raw hto or gex data: {adata.obs_names[:3].tolist()}"
-        msg += f"\nPlease make sure that whitelist barcodes are present in the data."
+        msg += "\nPlease make sure that whitelist barcodes are present in the data."
         raise UserInputError(msg)
     if whitelist_pct < 1:
         logger.warning(f"Some whitelisted barcodes were not found: {whitelist_pct:.1f}%")
@@ -115,7 +118,6 @@ def subset_whitelist(adata, whitelist, _required_prop=0.9):
 
 def test_write(path, filetype, create_folder=True, _require_write=False):
     """Test if file can be written before running demultiplexing."""
-
     # skip
     if path is None:
         return
@@ -140,8 +142,8 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
         adata (AnnData): AnnData object
         path (str): Path to save the file
         create_folder (bool): Create folder if it does not exist
-    """
 
+    """
     # skip
     if path is None:
         return
@@ -227,8 +229,7 @@ def savepdf(
         plt.close()
 
 def _assert_required_inputs(meta, key, kwargs, parameter):
-    """
-    Assert that all required inputs are present and not None.
+    """Assert that all required inputs are present and not None.
 
     Args:
         meta (dict): Metadata for the parameter
@@ -255,7 +256,6 @@ def _assert_required_inputs(meta, key, kwargs, parameter):
     ```
 
     """
-
     # init error message
     error_msg = f"Available options for '{parameter}':\n"
     # add line

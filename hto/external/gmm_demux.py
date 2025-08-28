@@ -1,9 +1,12 @@
 import os
 import subprocess
-import pandas as pd
-import numpy as np
 import tempfile
+
+import numpy as np
+import pandas as pd
+
 from hto._exceptions import UserInputError
+
 
 def gmm_demux(
     df: pd.DataFrame, 
@@ -12,8 +15,7 @@ def gmm_demux(
     params: str = "", 
     **kwargs
 ) -> pd.DataFrame:
-    """
-    Run GMM-Demux on filtered HTO. GMM-Demux uses raw counts. However, the input to this function is normalised, log-transformed and denoised. 
+    """Run GMM-Demux on filtered HTO. GMM-Demux uses raw counts. However, the input to this function is normalised, log-transformed and denoised.
     Use exponentiation to get an approximation of the cleaned counts.
 
     Args:
@@ -22,8 +24,8 @@ def gmm_demux(
         to_counts (bool): Whether to convert logged values to counts. If none, try to infer from the data.
         params (str): Parameters for GMM demux
         **kwargs: Additional arguments
-    """
 
+    """
     # assertions
     prohibited_params = ["-f ", "--full ", "-o ", "--output ", "--csv ", "-c "]
     for param in prohibited_params:

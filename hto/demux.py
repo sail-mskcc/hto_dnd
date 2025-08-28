@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from pprint import pformat
+
+import anndata as ad
 import numpy as np
 import pandas as pd
-from pprint import pformat
 import scipy.sparse
-import anndata as ad
 
-from ._classify import classify, assert_demux
+from ._classify import assert_demux, classify
 from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._exceptions import UserInputError
 from ._logging import get_logger
 from ._meta import add_meta
 from ._utils import get_layer
-from ._exceptions import UserInputError
+
 
 def demux(
     adata_hto: ad.AnnData,

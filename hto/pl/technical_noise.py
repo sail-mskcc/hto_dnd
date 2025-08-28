@@ -1,12 +1,14 @@
 from typing import Union
-import numpy as np
-import pandas as pd
+
 import anndata as ad
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from .._defaults import DEFAULTS
 from .._logging import get_logger
+
 
 def technical_noise(
     adata: ad.AnnData,

@@ -1,9 +1,12 @@
 from pprint import pprint
+
 import numpy as np
 import pandas as pd
-
-from hto._cluster_background import _get_background_gmm, _get_background_kmeans, _get_background_kmeans_fast
-
+from hto._cluster_background import (
+    _get_background_gmm,
+    _get_background_kmeans,
+    _get_background_kmeans_fast,
+)
 
 methods = {
     "gmm": _get_background_gmm,

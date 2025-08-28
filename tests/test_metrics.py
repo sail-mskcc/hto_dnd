@@ -1,6 +1,7 @@
+import pandas as pd
 import pytest
 from hto import metrics
-import pandas as pd
+
 
 @pytest.fixture
 def ground_truth_prediction_100():

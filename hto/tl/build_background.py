@@ -1,10 +1,10 @@
-import numpy as np
 import anndata as ad
-from .._logging import get_logger
-from .._utils import get_layer, subset_whitelist, _assert_required_inputs
+import numpy as np
+
 from .._defaults import DEFAULTS, DESCRIPTIONS
 from .._exceptions import AnnDataFormatError, UserInputError
-
+from .._logging import get_logger
+from .._utils import _assert_required_inputs, get_layer, subset_whitelist
 
 _background_version_meta = {
     "v1": {
@@ -173,8 +173,8 @@ def build_background_v2(
     next_k_cells = min(next_k_cells, x.shape[0] - 1)
     if next_k_cells <= 0:
         raise UserInputError(
-            f"All cell-ids in the raw HTO (`adata_hto_raw`) data are already in the filtered HTO (`adata_hto`) data. "
-            f"Make sure to set 'next_k_cells' to a value larger than 0 and that the raw HTO data contains cells that are not in the filtered HTO data."
+            "All cell-ids in the raw HTO (`adata_hto_raw`) data are already in the filtered HTO (`adata_hto`) data. "
+            "Make sure to set 'next_k_cells' to a value larger than 0 and that the raw HTO data contains cells that are not in the filtered HTO data."
         )
     for i in range(x.shape[1]):
         # find value such that there are 'next_k_cells' cells larger than it

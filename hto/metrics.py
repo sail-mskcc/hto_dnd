@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 # y_true: ground truth labels
 # y_pred: predicted labels from your algorithm
@@ -11,13 +11,14 @@ def sa(
         non_singlet_substring: list = ["low_quality", "doublet", ":", "negative"],
         ignore_case: bool = True
     ):
-    """
-    Singlet Accuracy (SA) meassures the percentage of predicted singlets that are correctly classified.
+    """Singlet Accuracy (SA) meassures the percentage of predicted singlets that are correctly classified.
+
     Args:
         ground_truth (pd.Series): Ground truth labels.
         prediction (pd.Series): Predicted labels.
         non_singlet_substring (list): List of substrings that indicate a non-singlet label.
         ignore_case (bool): Whether to ignore case when checking for non-singlet substrings.
+
     """
     # ignore case
     if ignore_case:
@@ -40,13 +41,14 @@ def srr(
         non_singlet_substring: list = ["low_quality", "doublet", ":", "negative"],
         ignore_case: bool = True
 ):
-    """
-    Singlet Recovery Rate (SRR) measures the percentage of ground truth singlets that are correctly predicted.
+    """Singlet Recovery Rate (SRR) measures the percentage of ground truth singlets that are correctly predicted.
+
     Args:
         ground_truth (pd.Series): Ground truth labels.
         prediction (pd.Series): Predicted labels.
         non_singlet_substring (list): List of substrings that indicate a non-singlet label.
         ignore_case (bool): Whether to ignore case when checking for non-singlet substrings.
+
     """
     # ignore case
     if ignore_case:

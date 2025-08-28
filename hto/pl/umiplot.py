@@ -1,15 +1,17 @@
 import math
-import numpy as np
-import pandas as pd
+
 import anndata as ad
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
-from matplotlib.colors import Normalize, LinearSegmentedColormap
 from matplotlib.cm import ScalarMappable
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 
-from .._utils import get_layer, to_dense_safe
-from .._logging import get_logger
 from .._defaults import DEFAULTS, DESCRIPTIONS
+from .._logging import get_logger
+from .._utils import get_layer, to_dense_safe
+
 
 def scale_cmap(color_min, color_max, vmin=0, vmax=1):
     cmap = LinearSegmentedColormap.from_list("custom", [color_max, color_min])
@@ -21,16 +23,14 @@ def bucketize(
     key_values: str = "_values_temp",
     n_buckets=150
 ):
+    """Aggregate buckets based on counts. Group if provided. Aggregate mean if values provided.
     """
-    Aggregate buckets based on counts. Group if provided. Aggregate mean if values provided.
-    """
-
     # initialize
     df = df.copy()
 
     if key_values == "_values_temp":
         df.loc[:, key_values] = 1
-    assert df[key_values].min() >= 0 and df[key_values].max() <= 1, f"Values must be between 0 and 1"
+    assert df[key_values].min() >= 0 and df[key_values].max() <= 1, "Values must be between 0 and 1"
 
     # add rank based on counts, descending
     df.loc[:, "_rank"] = np.log10(df[key_counts].rank(ascending=False) + 1)
@@ -118,8 +118,7 @@ def _format_ticks(x):
         return f"{x:.2f}"
 
 def _add_log10_axis(ax: plt.Axes, key_counts: str = "counts"):
-    """
-    Add a log10 axis to the plot.
+    """Add a log10 axis to the plot.
     """
     # add logged axis label
     ax.set_ylabel(f"Log10 {key_counts}")
@@ -190,7 +189,7 @@ def umi(
     # concatenate if each_ver
     if each_var:
         assert adata.shape[1] < 19, f"Number of vars must be less than 19, got {adata.shape[1]}"
-        assert not key_groups != "_groups_temp", f"Can't use 'each_var' with 'key_groups', as variable names are used as groups"
+        assert not key_groups != "_groups_temp", "Can't use 'each_var' with 'key_groups', as variable names are used as groups"
         key_groups = "var_name"
         df = pd.concat([df] * adata.shape[1], ignore_index=True)
         df.loc[:, key_groups] = np.repeat(adata.var_names, adata.shape[0])

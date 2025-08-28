@@ -1,6 +1,7 @@
 import pytest
 from hto.external import gmm_demux
 
+
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_gmm_demux(mock_hto_data):
     adata_filtered = mock_hto_data['filtered']

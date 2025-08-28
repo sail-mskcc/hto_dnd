@@ -1,17 +1,14 @@
-import os
-import numpy as np
 import anndata as ad
+import numpy as np
 import pytest
-
 from hto import dnd
 from hto._exceptions import AnnDataFormatError
 
+
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_dnd(mock_hto_data):
+    """Test the full pipeline: normalisation, denoising, and demultiplexing.
     """
-    Test the full pipeline: normalisation, denoising, and demultiplexing.
-    """
-
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
     adata_raw = mock_hto_data['raw']

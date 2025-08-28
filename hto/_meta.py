@@ -40,8 +40,8 @@ def add_meta(adata, step, params={}, **kwargs):
     # >> adata.uns["dnd"]["normalise"]["key1"] == "value1"
     # >> adata.uns["dnd"]["normalise"]["params"]["method"] == "method_name"
     ```
-    """
 
+    """
     assert step in ["normalise", "denoise", "demux", "paths"], f"Invalid step: '{step}'"
     meta_new = {
         step: {

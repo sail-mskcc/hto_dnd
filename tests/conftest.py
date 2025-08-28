@@ -1,12 +1,13 @@
 import os
 import shutil
+
 import pytest
 from hto.data import generate_hto
+
 
 @pytest.fixture(scope='module')
 def mock_hto_data(request):
     """Generate clustered HTO data."""
-
     # Parameters
     n_cells = request.param.get("n_cells", 1000)
     n_htos = request.param.get("n_htos", 3)

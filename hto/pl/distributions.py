@@ -1,10 +1,11 @@
-import numpy as np
 import anndata as ad
 import matplotlib.pyplot as plt
-import seaborn as sns
 import matplotlib.ticker as ticker
+import numpy as np
+import seaborn as sns
 
 from .._defaults import DEFAULTS
+
 
 def _set_lims(ax, xmin=1):
     ### BROKEN

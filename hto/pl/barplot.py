@@ -1,6 +1,7 @@
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
+
 
 def barplot(
         df: pd.DataFrame, 
@@ -13,8 +14,7 @@ def barplot(
         ax: plt.Axes = None,
         **kwargs
 ):
-    """
-    Create a horizontal stacked barplot from a DataFrame.
+    """Create a horizontal stacked barplot from a DataFrame.
 
     Args:
         df (pd.DataFrame): DataFrame containing the data to plot.
@@ -24,6 +24,7 @@ def barplot(
         cmap (dict, optional): Color map for the bars. Defaults to None.
         title (str, optional): Title of the plot. Defaults to "".
         ax (plt.Axes, optional): Axes to plot on. If None, a new figure is created. Defaults to None.
+
     """
     # set kwargs
     kwargs_defaults = {

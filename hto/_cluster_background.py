@@ -1,10 +1,12 @@
-from math import floor
-import numpy as np
 from itertools import chain
+from math import floor
+
+import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
-from hto._utils import _assert_required_inputs
+
 from hto._logging import get_logger
+from hto._utils import _assert_required_inputs
 
 SUPPORTED_BACKGROUND_METHODS = ["kmeans-fast", "kmeans", "gmm"]
 
@@ -95,7 +97,6 @@ def _init_strategies(normalized_matrix, method, *args, **kwargs):
     - 'rank_lower': rank-based initialisation. args: k (int) - which rank to use from bottom.
     - '1vall': Use max as top and mean of the rest as bottom.
     """
-
     if method == "rank":
         k = kwargs.get("k", 0)
         assert k >= 0, "Rank must be greater than 0."
@@ -149,6 +150,7 @@ def _get_background_kmeans_fast(matrix, n_iter=5, inits=None):
     matrix = np.random.normal(0, 1, (100, 10))
     background = _get_background_kmeans_fast(matrix)
     ```
+
     """
     # debug logger
     logger = get_logger("hto._cluster_background", level=1)

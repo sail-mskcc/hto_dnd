@@ -1,16 +1,13 @@
-import os
 import numpy as np
-import anndata as ad
 import pytest
+from hto import normalise
+from hto._exceptions import UserInputError
 from pandas.api.types import is_float_dtype, is_integer_dtype
 
-from hto import normalise
-from hto._exceptions import AnnDataFormatError, UserInputError
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_normalise(mock_hto_data):
-    """
-    Test if normalisation works.
+    """Test if normalisation works.
     """
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
@@ -65,8 +62,7 @@ def test_normalise(mock_hto_data):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_faulty_data(mock_hto_data):
-    """
-    Test if normalisation works.
+    """Test if normalisation works.
     """
     # Get mock data
     adata_filtered = mock_hto_data['filtered']

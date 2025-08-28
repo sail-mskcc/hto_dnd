@@ -1,11 +1,12 @@
 from copy import copy
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
 
+
 def prep_plot(x, label, k, xlim=None):
-    """
-    Subsample and sort data for plotting.
+    """Subsample and sort data for plotting.
 
     Parameters
     ----------
@@ -15,6 +16,7 @@ def prep_plot(x, label, k, xlim=None):
         Labels for x.
     k : int
         Number of data points to plot.
+
     """
     n = len(x)
     k = min(k, n)
@@ -57,10 +59,8 @@ def prep_plot(x, label, k, xlim=None):
 
 
 def plot_umi(x, label=None, k=50000, size_map={}, color="blue", color_map={}, logx=True, logy=True, xlim=None, alpha=1, ax=None):
+    """Plot UMI counts.
     """
-    Plot UMI counts.
-    """
-
     n = len(x)
     k = min(k, n)
 
@@ -86,10 +86,8 @@ def plot_umi(x, label=None, k=50000, size_map={}, color="blue", color_map={}, lo
 
 
 def plot_umis(obs, by, value="total_counts", label=None, k=50000, size_map={}, cmap=None, color_map={}, logx=True, logy=True, xlim=None, alpha=1, ax=None):
+    """Plot UMI counts grouped by a categorical variable.
     """
-    Plot UMI counts grouped by a categorical variable.
-    """
-
     obs = copy(obs)
 
     # setup plot
@@ -115,10 +113,8 @@ def plot_umis(obs, by, value="total_counts", label=None, k=50000, size_map={}, c
     return ax
 
 def umi(adata, var=None, layer=None, label=None, **kwargs):
+    """Transform adata into format suitable for plot_umis.
     """
-    Transform adata into format suitable for plot_umis.
-    """
-
     # get data
     df = adata.to_df(layer)
     if var is not None:

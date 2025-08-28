@@ -1,7 +1,8 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
+
 
 def heatmap(
         df: pd.DataFrame,
@@ -14,8 +15,7 @@ def heatmap(
         log_counts: bool = False,
         **kwargs
 ):
-    """
-    Create a heatmap count of the values in the dataframe.
+    """Create a heatmap count of the values in the dataframe.
 
     Args:
         df (pd.DataFrame): DataFrame containing the data to plot.
@@ -26,6 +26,7 @@ def heatmap(
         normalise (str, optional): Normalise by "all", "row" or "col". Defaults to "" (no normalisation).
         ax (plt.Axes, optional): Axes to plot on. If None, a new figure is created. Defaults to None.
         **kwargs: Additional keyword arguments for seaborn heatmap.
+
     """
     # params
     fmt_default = ".0f" if not log_counts else ".2f"

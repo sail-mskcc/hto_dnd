@@ -1,17 +1,13 @@
-import numpy as np
-from sklearn.linear_model import LinearRegression
-import scipy
 import anndata as ad
-from pandas.api.types import is_integer_dtype, is_float_dtype
+import numpy as np
 
 from ._cluster_background import assert_background, estimate_background
-from ._remove_batch_effect import remove_batch_effect
-
-from ._meta import add_meta
-from ._logging import get_logger
 from ._defaults import DEFAULTS, DESCRIPTIONS
-from ._exceptions import UserInputError
+from ._logging import get_logger
+from ._meta import add_meta
+from ._remove_batch_effect import remove_batch_effect
 from ._utils import get_layer
+
 
 def denoise(
     adata_hto: ad.AnnData,

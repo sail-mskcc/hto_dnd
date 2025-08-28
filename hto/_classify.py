@@ -1,16 +1,15 @@
 """Module containing functions for clustering and demultiplexing HTO data."""
 
 import numpy as np
-from sklearn.mixture import GaussianMixture
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, davies_bouldin_score
-from skimage.filters import threshold_otsu
 import scipy.stats
 from scipy.optimize import root_scalar
+from skimage.filters import threshold_otsu
+from sklearn.cluster import KMeans
+from sklearn.metrics import davies_bouldin_score, silhouette_score
+from sklearn.mixture import GaussianMixture
+
 from ._defaults import DEFAULTS, DESCRIPTIONS
-
 from ._logging import get_logger
-
 
 SUPPORTED_DEMUX_METHODS = ["kmeans", "gmm", "otsu", "gmm_demux"]
 
@@ -115,13 +114,11 @@ def _classify_gmm_one(series, logger=None, **kwargs):
 
     # custom predict
     def custom_predict(model, series):
-        """
-        Implemeent the following customisations:
+        """Implemeent the following customisations:
         - If x > larger means, return 1
         - If x < smaller means, return 0
         - If x is between the means, return 0 or 1 based on the posterior probability
         """
-
         # prepare and predict
         series = np.array(series).reshape(-1, 1)
         probabilities = model.predict_proba(series)

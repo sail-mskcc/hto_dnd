@@ -55,9 +55,9 @@ DEFAULTS = {
 # shared descriptions
 DESCRIPTIONS = {
     # general
-    "adata_hto": f"AnnData object containing unfiltered protein expression data.",
-    "adata_hto_raw": f"AnnData object containing raw protein expression data.",
-    "adata_gex": f"AnnData object containing raw gene expression data.",
+    "adata_hto": "AnnData object containing unfiltered protein expression data.",
+    "adata_hto_raw": "AnnData object containing raw protein expression data.",
+    "adata_gex": "AnnData object containing raw gene expression data.",
     "adata_background": f"AnnData object containing background data. Default is {DEFAULTS['adata_background']}.",
     "adata_out": f"Path to save the output AnnData object. Default is {DEFAULTS['adata_out']}.",
     "csv_out": f"Path to save demultiplexing results as CSV file. Default is {DEFAULTS['csv_out']}.",

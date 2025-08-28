@@ -1,16 +1,15 @@
 import numpy as np
 import pytest
+from hto import denoise, normalise
+from hto._cluster_background import SUPPORTED_BACKGROUND_METHODS
+from hto._exceptions import AnnDataFormatError
+from hto._remove_batch_effect import SUPPORTED_DENOISE_VERSIONS
 from pandas.api.types import is_float_dtype
 
-from hto import normalise, denoise
-from hto._exceptions import AnnDataFormatError
-from hto._cluster_background import SUPPORTED_BACKGROUND_METHODS
-from hto._remove_batch_effect import SUPPORTED_DENOISE_VERSIONS
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_denoise(mock_hto_data):
-    """
-    Test if technical denoiseing works.
+    """Test if technical denoiseing works.
     """
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
@@ -77,8 +76,7 @@ def test_denoise(mock_hto_data):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_skip_normalise(mock_hto_data):
-    """
-    Test if technical denoiseing works.
+    """Test if technical denoiseing works.
     """
     # Get mock data
     adata_filtered = mock_hto_data['filtered']
@@ -93,8 +91,7 @@ def test_skip_normalise(mock_hto_data):
 
 @pytest.mark.parametrize("mock_hto_data", [{'n_cells': 100}], indirect=True)
 def test_background_methods(mock_hto_data):
-    """
-    Test if technical denoiseing works.
+    """Test if technical denoiseing works.
     """
     # Get mock data
     adata_filtered = mock_hto_data['filtered']

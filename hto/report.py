@@ -1,11 +1,13 @@
 import os
-import matplotlib.pyplot as plt
+
 import matplotlib.backends.backend_pdf
+import matplotlib.pyplot as plt
 
 import hto.pl as pl
+
 from ._defaults import DEFAULTS
 from ._logging import get_logger
-from ._utils import savepdf, get_arg
+from ._utils import get_arg, savepdf
 
 REPORT_PLT_DEFAULTS = {
     "dpi": 80
@@ -34,8 +36,7 @@ def report(
     use_key_denoise: str = DEFAULTS["add_key_denoise"],
     verbose: int = DEFAULTS["verbose"],
 ):
-    f"""
-    Create a report to produce the following plots:
+    """Create a report to produce the following plots:
     - umiplot
     - umi_gex_hto
     - distributions_stages
@@ -44,7 +45,6 @@ def report(
     This requires some specialised inputs. This function is best used as part of
     dnd().
     """
-
     # setup
     logger = get_logger("report", level=verbose)
 

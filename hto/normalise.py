@@ -1,11 +1,12 @@
 from pprint import pformat
-import numpy as np
+
 import anndata as ad
-from typing import Union
-from ._logging import get_logger
-from ._meta import init_meta, add_meta
-from ._exceptions import AnnDataFormatError, UserInputError
+import numpy as np
+
 from ._defaults import DEFAULTS, DESCRIPTIONS
+from ._exceptions import AnnDataFormatError, UserInputError
+from ._logging import get_logger
+from ._meta import add_meta, init_meta
 from ._utils import get_layer
 from .tl import build_background
 

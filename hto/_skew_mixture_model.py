@@ -1,22 +1,20 @@
-import numpy as np
-from scipy.stats import skewnorm
-from scipy.optimize import curve_fit, Bounds
-from numpy.typing import ArrayLike
-from skimage.filters import threshold_otsu
 import matplotlib.pyplot as plt
-import seaborn as sns
+import numpy as np
+from numpy.typing import ArrayLike
+from scipy.optimize import Bounds, curve_fit
+from scipy.stats import skewnorm
+from skimage.filters import threshold_otsu
 
 from ._logging import get_logger
+
 
 def _estimate_initial_params(
     data: ArrayLike,
     n_probes: int,
     threshold: float = None,
 ) -> tuple:
+    """Estimate initial parameters for a skew-normal mixture model.
     """
-    Estimate initial parameters for a skew-normal mixture model.
-    """
-
     # setup
     if threshold is None:
         threshold = threshold_otsu(data)
@@ -45,8 +43,7 @@ def skewnorm_mixture_pdf(
     s1: float, a1: float, loc1: float, scale1: float,
     s2: float, a2: float, loc2: float, scale2: float,
 ) -> ArrayLike:
-    """
-    Get pdf of two skew-normal distributions.
+    """Get pdf of two skew-normal distributions.
 
     Parameters
     ----------
@@ -66,6 +63,7 @@ def skewnorm_mixture_pdf(
     -------
     ArrayLike
         Sum of densities from the two skew-normal distributions.
+
     """
     density_1 = s1 * skewnorm.pdf(x, a=a1, loc=loc1, scale=scale1)
     density_2 = s2 * skewnorm.pdf(x, a=a2, loc=loc2, scale=scale2)
@@ -98,8 +96,7 @@ def skewnorm_mixture_model(
     n_probes: int = None,
     verbose: bool = False,
 ) -> ArrayLike:
-    """
-    Label data points above a cutoff using a mixture of skew-normal
+    """Label data points above a cutoff using a mixture of skew-normal
     distributions.
 
     Parameters
@@ -118,8 +115,8 @@ def skewnorm_mixture_model(
     ArrayLike
         Boolean array indicating whether each data point is labeled positive.
         If `return_params` is True, also returns the fitted parameters.
-    """
 
+    """
     # Get logger
     logger = get_logger("skewnorm_mixture_model", level=verbose)
 
@@ -181,10 +178,8 @@ def plot_skewnorm(
     ax=None,
     **kwargs
 ):
+    """Plot both skew-normal distributions and the data as a histogram.
     """
-    Plot both skew-normal distributions and the data as a histogram.
-    """
-
     # setup
     if ax is None:
         fig, ax = plt.subplots()

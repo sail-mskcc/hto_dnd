@@ -1,20 +1,29 @@
-import pandas as pd
-import anndata as ad
-import scanpy as sc
 import warnings
+
+import anndata as ad
+import pandas as pd
+import scanpy as sc
+
 warnings.filterwarnings('ignore', module='anndata')
 
-from . import tl
-from .normalise import normalise
-from .denoise import denoise
-from .demux import demux
-from ._defaults import DEFAULTS
-from ._utils import write_h5ad_safe, write_csv_safe, test_write, subset_whitelist, get_arg, user_input_error_decorator
-from ._cluster_background import assert_background
 from ._classify import assert_demux
-from ._logging import get_logger
+from ._cluster_background import assert_background
+from ._defaults import DEFAULTS
 from ._exceptions import UserInputError
+from ._logging import get_logger
+from ._utils import (
+    get_arg,
+    subset_whitelist,
+    test_write,
+    user_input_error_decorator,
+    write_csv_safe,
+    write_h5ad_safe,
+)
+from .demux import demux
+from .denoise import denoise
+from .normalise import normalise
 from .report import report_safe
+
 
 @user_input_error_decorator
 def dnd(
@@ -29,16 +38,17 @@ def dnd(
     _as_cli: bool = False,  # required when run as cli
     **kwargs
 ):
-    f"""Perform normalization and demultiplexing on the provided filtered and raw AnnData objects.
+    """Perform normalization and demultiplexing on the provided filtered and raw AnnData objects.
 
     Args:
         adata_filtered (AnnData): AnnData object with filtered counts
         adata_raw (AnnData): AnnData object with raw counts
         verbose (int, optional): Verbosity level. Default is 1.
+
     Returns:
         demux_adata (AnnData): An AnnData object containing the results of the demultiplexing.
-    """
 
+    """
     # SET PARAMS
     inplace = get_arg("inplace", kwargs, DEFAULTS)
     verbose = get_arg("verbose", kwargs, DEFAULTS)

@@ -68,6 +68,11 @@ def denoise(
         inplace=inplace,
     )
 
+    # 0. Skip if two or fewer HTO's are present
+    if x.shape[0] <= 2:
+        logger.warning("Skipping denoising: two or fewer HTO's present.")
+        return _denoise_skip(adata_hto, x, add_key_denoise)
+
     # 1. Build Background Data
     if covariates is None:
         logger.debug(f"Build background data using '{background_method}' method")
@@ -92,7 +97,6 @@ def denoise(
 
     # Store meta information (don't use 'debug' key)
     logger.debug("Technical noise removal completed.")
-    #meta_background = {k: v for k, v in meta_background.items() if k != "debug"}
     adata_hto = add_meta(
         adata_hto,
         step="denoise",
@@ -115,3 +119,28 @@ def denoise(
 
 
     return adata_hto
+
+
+def _denoise_skip(
+        adata_hto: ad.AnnData,
+        x: np.ndarray,
+        add_key_denoise: str,
+):
+    """Skip denoising step if 2 or fewer HTOs are present.
+    
+    Update the metadata and adata objects.
+    """
+    # Store meta information (don't use 'debug' key)
+    adata_hto = add_meta(
+        adata_hto,
+        step="denoise",
+        layer=add_key_denoise,
+        meta_background={"warning": "2 or fewer HTOs present."},
+    )
+
+    # Finish
+    if add_key_denoise is not None:
+        adata_hto.layers[add_key_denoise] = x
+    return adata_hto
+
+

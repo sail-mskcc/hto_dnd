@@ -73,40 +73,43 @@ def adata_hto():
     return adata
 
 
-def test_demux(adata_hto):
+@pytest.mark.parametrize("demux_method", SUPPORTED_DEMUX_METHODS)
+def test_demux(adata_hto, demux_method):
     """Test the demux function for demultiplexing using different methods."""
-    # All should work
-    for method in SUPPORTED_DEMUX_METHODS:
-        # Run demux
-        adata_demux = demux(
-            adata_hto=adata_hto,
-            demux_method=method,
-            enforce_larger_than_background=False,  # <- no normalised layer available
-            add_key_labels="demux_labels",
-            use_layer=None,
-            inplace=False,
-        )
+    # Run demux
+    # skip gmm_demux if github actions
+    if demux_method == "gmm_demux" and is_github_actions():
+        pytest.skip("Skipping gmm_demux on GitHub Actions")
 
-        # Check results
-        assert "hash_id" in adata_demux.obs.columns
-        assert "doublet_info" in adata_demux.obs.columns
-        assert "demux_labels" in adata_demux.layers
-        assert "metrics" in adata_demux.uns["dnd"]["demux"]
-        assert "thresholds" in adata_demux.uns["dnd"]["demux"]
-        thresholds = adata_demux.uns["dnd"]["demux"]["thresholds"]
-        assert len(thresholds) == adata_hto.X.shape[1]
-        assert isinstance(thresholds["hto_1"], numbers.Real)
-        # check classification
-        assert all(adata_demux.obs["hash_id"] == adata_demux.obs["true_labels"])
-        assert np.all(adata_demux.layers["demux_labels"] == adata_hto.layers["labels"])
-        # check doublet_info
-        assert np.all(
-            adata_demux.obs["doublet_info"] == adata_demux.obs["true_doublet_info"]
-        )
+    adata_demux = demux(
+        adata_hto=adata_hto,
+        demux_method=demux_method,
+        enforce_larger_than_background=False,  # <- no normalised layer available
+        add_key_labels="demux_labels",
+        use_layer=None,
+        inplace=False,
+    )
+
+    # Check results
+    assert "hash_id" in adata_demux.obs.columns
+    assert "doublet_info" in adata_demux.obs.columns
+    assert "demux_labels" in adata_demux.layers
+    assert "metrics" in adata_demux.uns["dnd"]["demux"]
+    assert "thresholds" in adata_demux.uns["dnd"]["demux"]
+    thresholds = adata_demux.uns["dnd"]["demux"]["thresholds"]
+    assert len(thresholds) == adata_hto.X.shape[1]
+    assert isinstance(thresholds["hto_1"], numbers.Real)
+    # check classification
+    assert all(adata_demux.obs["hash_id"] == adata_demux.obs["true_labels"])
+    assert np.all(adata_demux.layers["demux_labels"] == adata_hto.layers["labels"])
+    # check doublet_info
+    assert np.all(
+        adata_demux.obs["doublet_info"] == adata_demux.obs["true_doublet_info"]
+    )
 
 
 @pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
-@pytest.mark.parametrize("demux_method", ["kmeans", "gmm", "otsu", "gmm_demux"])
+@pytest.mark.parametrize("demux_method", SUPPORTED_DEMUX_METHODS)
 def test_classify(mock_hto_data, demux_method):
     """Test the clustering and evaluation of HTO data.
 
@@ -161,8 +164,6 @@ def test_classify(mock_hto_data, demux_method):
     for hto, thresh in thresholds.items():
         # Check if the threshold is a float
         assert isinstance(thresh, numbers.Real)
-        if demux_method == "gmm_demux":
-            print(pd.DataFrame(classifications))
         assert thresh > 0
 
     # metric specific

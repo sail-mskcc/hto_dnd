@@ -126,7 +126,7 @@ def distribution_stages(
     layer_raw=None,
     highlight: int = None,
     use_key_normalise=DEFAULTS["add_key_normalise"],
-    use_key_denoise=DEFAULTS["add_key_denoise"],
+    use_key_denoise=DEFAULTS["add_key_denoised"],
     cmap="tab20",
     axs=None,
 ):

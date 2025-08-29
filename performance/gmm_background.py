@@ -28,7 +28,7 @@ def main():
     )
 
     # normalise
-    adata_norm = hto.dnd(
+    adata_norm = hto.demultiplex(
         adata_filtered=mock["filtered"],
         adata_raw=mock["raw"],
         pseudocount=10,

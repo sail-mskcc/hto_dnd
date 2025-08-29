@@ -6,7 +6,6 @@ import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytest
 import scipy
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas.api.types import is_float_dtype, is_integer_dtype
@@ -336,7 +335,12 @@ def add_docstring():
 @user_input_error_decorator
 def read_adata(path):
     if path.endswith(".h5"):
-        import scanpy as sc
+        try:
+            import scanpy as sc
+        except ImportError:
+            raise ImportError(
+                "scanpy is not installed. Install with `pip install scanpy`"
+            )
 
         adata = sc.read_10x_h5(path)
     elif path.endswith(".h5ad"):
@@ -356,6 +360,8 @@ def skip_on_github_actions():
     """Skip test on GitHub Actions."""
 
     def wrapper(func):
+        import pytest
+
         return pytest.mark.skipif(
             is_github_actions(), reason="Skipping on GitHub Actions"
         )(func)

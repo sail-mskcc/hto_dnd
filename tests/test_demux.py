@@ -147,7 +147,7 @@ def test_classify(mock_hto_data, demux_method):
     adata_denoised = denoise(
         adata_normalised,
         denoise_version="v1",
-        add_key_denoise="denoised",
+        add_key_denoised="denoised",
         use_layer="normalised",
     )
     df = adata_denoised.to_df("denoised")

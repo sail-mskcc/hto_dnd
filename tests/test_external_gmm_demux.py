@@ -17,8 +17,7 @@ def test_gmm_demux(mock_hto_data):
     assert not any(adata_filtered.obs["hash_id_gmm_demux"].isna())
 
     accuracy = (
-        adata_filtered.obs["hash_id_gmm_demux"]
-        == adata_filtered.obs["hto_classification"]
+        adata_filtered.obs["hash_id_gmm_demux"] == adata_filtered.obs["ground_truth"]
     ).mean()
     assert accuracy > 0.6, (
         f"Classification accuracy appears random, got {accuracy:.2f} instead of > 0.6. Might be fixed after re-running the demultiplexing, due to potential seeding issues."

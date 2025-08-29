@@ -25,7 +25,7 @@ def remove_batch_effect(
 
     if denoise_version == "v1":
         logger.warning(
-            f"Not recommended. Using denoise version: {denoise_version}. Plot 'hto_dnd.pl.technical_noise(adata)' to verify that the denoising is working as expected."
+            f"Not recommended. Using denoise version: {denoise_version}. Plot 'hto.pl.technical_noise(adata)' to verify that the denoising is working as expected."
         )
         return remove_batch_effect_v1(
             x=kwargs["x"],

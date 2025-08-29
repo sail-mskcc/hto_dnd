@@ -112,7 +112,7 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
         {
             "cell_id": cell_ids,
             "cell_type": raw_cell_types,
-            "hto_classification": raw_labels,
+            "ground_truth": raw_labels,
         },
         index=cell_ids,
     )

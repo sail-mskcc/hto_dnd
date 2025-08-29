@@ -3,7 +3,6 @@
 import numpy as np
 import scipy.stats
 from scipy.optimize import root_scalar
-from skimage.filters import threshold_otsu
 from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, silhouette_score
 from sklearn.mixture import GaussianMixture
@@ -177,6 +176,14 @@ def _classify_gmm_one(series, logger=None, **kwargs):
 
 
 def _classify_otsu_one(series, logger=None, **kwargs):
+    # import
+    try:
+        from skimage.filters import threshold_otsu
+    except ImportError:
+        raise ImportError(
+            "scikit-image is not installed. Install with `pip install scikit-image`"
+        )
+
     # predict
     logger = logger or get_logger("demux", level=1)
     logger.debug("Thresholding HTO data using Otsu's method")

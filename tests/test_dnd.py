@@ -3,7 +3,7 @@
 import anndata as ad
 import numpy as np
 import pytest
-from hto import dnd
+from hto import demultiplex
 from hto._exceptions import AnnDataFormatError
 
 
@@ -15,12 +15,12 @@ def test_dnd(mock_hto_data):
     adata_raw = mock_hto_data["raw"]
 
     # Not in place
-    adata_result = dnd(
+    adata_result = demultiplex(
         adata_hto=adata_filtered,
         adata_hto_raw=adata_raw,
         background_method="kmeans-fast",
         add_key_normalise="normalised",
-        add_key_denoise="denoised",
+        add_key_denoised="denoised",
         background_version="v2",
         pseudocount=20,
         inplace=False,
@@ -28,12 +28,12 @@ def test_dnd(mock_hto_data):
 
     # In place
     adata_filtered_copy = adata_filtered.copy()
-    dnd(
+    demultiplex(
         adata_hto=adata_filtered_copy,
         adata_hto_raw=adata_raw,
         background_method="kmeans-fast",
         add_key_normalise="normalised",
-        add_key_denoise="denoised",
+        add_key_denoised="denoised",
         background_version="v2",
         pseudocount=20,
         inplace=True,
@@ -56,7 +56,7 @@ def test_dnd(mock_hto_data):
             "'doublet_info' column not found in demultiplexing result"
         )
         assert len(adata.obs.columns) == 5, (
-            f"Expected columns cell_id', 'cell_type', 'hto_classification', 'hash_id', 'doublet_info'. Unexpected columns in demultiplexing result: {adata.obs.columns}"
+            f"Expected columns cell_id', 'cell_type', 'ground_truth', 'hash_id', 'doublet_info'. Unexpected columns in demultiplexing result: {adata.obs.columns}"
         )
         assert "metrics" in adata.uns["dnd"]["demux"], (
             "Metrics not found in demultiplexing result"
@@ -81,7 +81,7 @@ def test_dnd(mock_hto_data):
         assert all(i in metrics for i in hash_ids), "Metrics missing for some HTOs"
 
         # Check overall accuracy
-        true_labels = adata.obs["hto_classification"]
+        true_labels = adata.obs["ground_truth"]
         predicted_labels = adata.obs["hash_id"]
         overall_accuracy = np.mean(predicted_labels == true_labels)
         assert overall_accuracy > 0.8, (
@@ -101,7 +101,7 @@ def test_no_background(mock_hto_data):
 
     # Test with no background
     with pytest.raises(AnnDataFormatError):
-        _ = dnd(
+        _ = demultiplex(
             adata_hto=adata_filtered,
             adata_hto_raw=adata_filtered.copy(),
             adata_gex=adata_filtered.copy(),
@@ -109,7 +109,7 @@ def test_no_background(mock_hto_data):
 
     # Test with too few cells
     with pytest.raises(AnnDataFormatError):
-        _ = dnd(
+        _ = demultiplex(
             adata_hto=adata_filtered[:2],
             adata_hto_raw=adata_raw,
             adata_gex=adata_filtered,

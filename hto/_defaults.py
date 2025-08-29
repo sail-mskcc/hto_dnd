@@ -22,7 +22,7 @@ DEFAULTS = {
     "background_method": "kmeans-fast",
     "covariates": None,
     "design": None,
-    "add_key_denoise": "denoised",
+    "add_key_denoised": "denoised",
     "denoise_version": "v2",
     "kwargs_denoise": {
         "C": 1,
@@ -68,7 +68,7 @@ DESCRIPTIONS = {
     "background_quantile": f"Quantile to use for background estimation. Last resort only. Default is {DEFAULTS['background_quantile']}.",
     # denoise
     "background_method": f"Method to use for background estimation. Must be either 'kmeans-fast', 'gmm' or 'kmeans'. Default is {DEFAULTS['background_method']}.",
-    "add_key_denoise": f"Key to store the denoised data in the AnnData object. Default is {DEFAULTS['add_key_denoise']}.",
+    "add_key_denoised": f"Key to store the denoised data in the AnnData object. Default is {DEFAULTS['add_key_denoised']}.",
     "covariates": f"Matrix of covariates to use for denoising. Not recommended for general use. Default is {DEFAULTS['covariates']}.",
     "design": f"Design matrix to use for denoising. Not recommended for general use. Default is {DEFAULTS['design']}.",
     "denoise_version": f"Version of the denoising algorithm. Must be either 'v1' or 'v2'. Default is {DEFAULTS['denoise_version']}.",
@@ -184,11 +184,11 @@ OPTIONS = {
     "design": click.option(
         "--design", type=click.Path(exists=True), help="NOT YET SUPPORT IN CLI"
     ),
-    "add_key_denoise": click.option(
+    "add_key_denoised": click.option(
         "--add-key-denoise",
         type=str,
         default="denoised",
-        help=DESCRIPTIONS["add_key_denoise"],
+        help=DESCRIPTIONS["add_key_denoised"],
     ),  # (!) <-- changed from DEFAULTS
     "denoise_version": click.option(
         "--denoise-version",

@@ -36,7 +36,7 @@ warnings.filterwarnings("ignore", module="anndata")
 
 @user_input_error_decorator
 @add_docstring()
-def dnd(
+def demultiplex(
     adata_hto: ad.AnnData,
     adata_hto_raw: ad.AnnData = None,
     adata_gex: ad.AnnData = None,
@@ -60,7 +60,7 @@ def dnd(
         path_report (str, optional): {path_report}
         show_report (bool, optional): Show report in current session after processing.
         _as_cli (bool, optional): Run code in CLI mode. This triggers additional checks and logging.
-        **kwargs: Allows for keywords such as: `inplace`, `verbose`, `denoise_version`, `add_key_hashid`, `add_key_doublet`, `add_key_normalise`, `add_key_denoise`, `demux_method`, `background_method`, `background_version`
+        **kwargs: Allows for keywords such as: `inplace`, `verbose`, `denoise_version`, `add_key_hashid`, `add_key_doublet`, `add_key_normalise`, `add_key_denoised`, `demux_method`, `background_method`, `background_version`
 
     Returns:
         anndata.AnnData: Anndata object with normalised and denoised expression levels, and sample assignments stored in .obs
@@ -73,7 +73,7 @@ def dnd(
     add_key_hashid = get_arg("add_key_hashid", kwargs, DEFAULTS)
     add_key_doublet = get_arg("add_key_doublet", kwargs, DEFAULTS)
     add_key_normalise = get_arg("add_key_normalise", kwargs, DEFAULTS)
-    add_key_denoise = get_arg("add_key_denoise", kwargs, DEFAULTS)
+    add_key_denoised = get_arg("add_key_denoised", kwargs, DEFAULTS)
     demux_method = get_arg("demux_method", kwargs, DEFAULTS)
     background_method = get_arg("background_method", kwargs, DEFAULTS)
     background_version = get_arg("background_version", kwargs, DEFAULTS)
@@ -118,8 +118,8 @@ def dnd(
         assert add_key_normalise not in adata_hto.layers, (
             f"Key {add_key_normalise} already exists in adata. Add option --add-key-normalise to change the key."
         )
-        assert add_key_denoise not in adata_hto.layers, (
-            f"Key {add_key_denoise} already exists in adata. Add option --add-key-denoise to change the key."
+        assert add_key_denoised not in adata_hto.layers, (
+            f"Key {add_key_denoised} already exists in adata. Add option --add-key-denoise to change the key."
         )
 
     # GET DATA
@@ -155,7 +155,7 @@ def dnd(
         inplace=inplace,
         verbose=verbose,
         use_layer=add_key_normalise,
-        add_key_denoise=add_key_denoise,
+        add_key_denoised=add_key_denoised,
         background_method=background_method,
         denoise_version=denoise_version,
         covariates=get_arg("covariates", kwargs, DEFAULTS),
@@ -167,7 +167,7 @@ def dnd(
         adata_hto=adata_hto,
         inplace=inplace,
         verbose=verbose,
-        use_layer=add_key_denoise,
+        use_layer=add_key_denoised,
         demux_method=demux_method,
         key_normalise=add_key_normalise,
         enforce_larger_than_background=get_arg(
@@ -190,9 +190,9 @@ def dnd(
     )
 
     # REPORT
-    if add_key_normalise is None or add_key_denoise is None:
+    if add_key_normalise is None or add_key_denoised is None:
         logger.warning(
-            "Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoise' (--add-key-denoise) to generate report."
+            "Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoised' (--add-key-denoise) to generate report."
         )
     elif path_report is not None or show_report:
         # get background
@@ -209,7 +209,7 @@ def dnd(
             adata_gex=adata_gex,
             path_report=path_report,
             use_key_normalise=add_key_normalise,
-            use_key_denoise=add_key_denoise,
+            use_key_denoise=add_key_denoised,
             show=show_report,
             verbose=verbose,
         )

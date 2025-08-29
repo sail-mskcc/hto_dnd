@@ -30,7 +30,7 @@ def test_denoise(mock_hto_data):
         adata_hto=adata_norm,
         background_method="kmeans-fast",
         use_layer="normalised",
-        add_key_denoise="denoised",
+        add_key_denoised="denoised",
         inplace=False,
     )
 
@@ -74,7 +74,7 @@ def test_denoise(mock_hto_data):
     denoise(
         adata_hto=adata_inplace,
         background_method="kmeans-fast",
-        add_key_denoise=None,
+        add_key_denoised=None,
         inplace=True,
     )
     assert is_float_dtype(adata_inplace.X)
@@ -115,7 +115,7 @@ def test_background_methods(mock_hto_data):
         adata_hto=adata_norm,
         background_method="kmeans-fast",
         use_layer="normalised",
-        add_key_denoise="denoised",
+        add_key_denoised="denoised",
         inplace=False,
     )
     covariates_benchmark = adata_benchmark.uns["dnd"]["denoise"]["covariates"]
@@ -127,7 +127,7 @@ def test_background_methods(mock_hto_data):
                 adata_hto=adata_norm,
                 background_method=method,
                 use_layer="normalised",
-                add_key_denoise="denoised",
+                add_key_denoised="denoised",
                 denoise_version=denoise_version,
                 inplace=False,
             )

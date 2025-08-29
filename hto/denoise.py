@@ -16,7 +16,7 @@ def denoise(
     adata_hto: ad.AnnData,
     use_layer: str = DEFAULTS["use_layer"],
     background_method: str = DEFAULTS["background_method"],
-    add_key_denoise: str = DEFAULTS["add_key_denoise"],
+    add_key_denoised: str = DEFAULTS["add_key_denoised"],
     covariates: np.ndarray = DEFAULTS["covariates"],
     denoise_version: str = DEFAULTS["denoise_version"],
     design: np.ndarray = DEFAULTS["design"],
@@ -36,7 +36,7 @@ def denoise(
         adata_hto (anndata.AnnData): {adata_hto}
         use_layer (str): {use_layer}
         background_method (str): {background_method}
-        add_key_denoise (str): {add_key_denoise}
+        add_key_denoised (str): {add_key_denoised}
         covariates (np.ndarray): {covariates}
         denoise_version (str): {denoise_version}
         design (np.ndarray): {design}
@@ -68,7 +68,7 @@ def denoise(
     # 0. Skip if two or fewer HTO's are present
     if x.shape[0] <= 2:
         logger.warning("Skipping denoising: two or fewer HTO's present.")
-        return _denoise_skip(adata_hto, x, add_key_denoise)
+        return _denoise_skip(adata_hto, x, add_key_denoised)
 
     # 1. Build Background Data
     if covariates is None:
@@ -97,7 +97,7 @@ def denoise(
     adata_hto = add_meta(
         adata_hto,
         step="denoise",
-        layer=add_key_denoise,
+        layer=add_key_denoised,
         params={
             "background_method": background_method,
         },
@@ -107,9 +107,9 @@ def denoise(
     )
 
     # Finish
-    if add_key_denoise is not None:
-        adata_hto.layers[add_key_denoise] = norm_adt
-        logger.info(f"Denoised matrix stored in adata.layers['{add_key_denoise}']")
+    if add_key_denoised is not None:
+        adata_hto.layers[add_key_denoised] = norm_adt
+        logger.info(f"Denoised matrix stored in adata.layers['{add_key_denoised}']")
     else:
         adata_hto.X = norm_adt
         logger.info("Denoised matrix stored in adata.X")
@@ -120,7 +120,7 @@ def denoise(
 def _denoise_skip(
     adata_hto: ad.AnnData,
     x: np.ndarray,
-    add_key_denoise: str,
+    add_key_denoised: str,
 ):
     """Skip denoising step if 2 or fewer HTOs are present.
 
@@ -130,11 +130,11 @@ def _denoise_skip(
     adata_hto = add_meta(
         adata_hto,
         step="denoise",
-        layer=add_key_denoise,
+        layer=add_key_denoised,
         meta_background={"warning": "2 or fewer HTOs present."},
     )
 
     # Finish
-    if add_key_denoise is not None:
-        adata_hto.layers[add_key_denoise] = x
+    if add_key_denoised is not None:
+        adata_hto.layers[add_key_denoised] = x
     return adata_hto

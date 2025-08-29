@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from click.testing import CliRunner
 from hto._defaults import DEFAULTS
-from hto.cli import cli
+from hto.cli import demultiplex_cli
 
 
 @pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
@@ -23,7 +23,7 @@ def test_cli(mock_hto_data):
     # run in cli
     runner = CliRunner()
     result = runner.invoke(
-        cli,
+        demultiplex_cli,
         [
             "--adata-hto",
             path_filtered,
@@ -61,7 +61,7 @@ def test_cli(mock_hto_data):
     assert df.shape[0] == adata.shape[0]
 
     # check labels
-    true_labels = adata.obs["hto_classification"]
+    true_labels = adata.obs["ground_truth"]
     predicted_labels = adata.obs["hash_id"]
     overall_accuracy = np.mean(predicted_labels == true_labels)
     assert overall_accuracy > 0.8, f"Overall accuracy is only {overall_accuracy:.2f}"
@@ -79,7 +79,7 @@ def test_faulty_inputs(mock_hto_data):
 
     # wrong output path
     result = runner.invoke(
-        cli,
+        demultiplex_cli,
         [
             "--adata-hto",
             path_filtered,
@@ -93,7 +93,7 @@ def test_faulty_inputs(mock_hto_data):
 
     # wrong output path csv
     result = runner.invoke(
-        cli,
+        demultiplex_cli,
         [
             "--adata-hto",
             path_filtered,
@@ -109,7 +109,7 @@ def test_faulty_inputs(mock_hto_data):
 
     # wrong method
     result = runner.invoke(
-        cli,
+        demultiplex_cli,
         [
             "--adata-hto",
             path_filtered,
@@ -128,7 +128,7 @@ def test_faulty_inputs(mock_hto_data):
     adata.layers["normalised"] = adata.X
     adata.write(path_filtered)
     result = runner.invoke(
-        cli,
+        demultiplex_cli,
         [
             "--adata-hto",
             path_filtered,

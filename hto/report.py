@@ -33,7 +33,7 @@ def report(
     path_report: str = None,
     show: bool = False,
     use_key_normalise: str = DEFAULTS["add_key_normalise"],
-    use_key_denoise: str = DEFAULTS["add_key_denoise"],
+    use_key_denoise: str = DEFAULTS["add_key_denoised"],
     verbose: int = DEFAULTS["verbose"],
 ):
     """Create a simple demultiplexing report.
@@ -45,7 +45,7 @@ def report(
     - technical_noise
 
     This requires some specialised inputs. This function is best used as part of
-    dnd().
+    hto.demultiplex().
     """
     # setup
     logger = get_logger("report", level=verbose)

@@ -51,7 +51,7 @@ def technical_noise(
     var: Union[int, str] = None,
     add_threshold: bool = True,
     use_key_normalise: str = DEFAULTS["add_key_normalise"],
-    use_key_denoise: str = DEFAULTS["add_key_denoise"],
+    use_key_denoise: str = DEFAULTS["add_key_denoised"],
     kwargs_fig: dict = {},
     highlight: np.ndarray = None,
     plot_layers: list = ["normalised", "denoised"],

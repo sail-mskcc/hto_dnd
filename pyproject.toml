@@ -1,41 +1,41 @@
-[project]
+[tool.poetry]
 name = "hto"
-version = "1.1.0"
+version = "1.1.1"
 description = "A method to demultiplex hashtagged single-cell data."
-dependencies = [
-    "click >= 8.0.0",
-    "pandas >= 1.5.0",
-    "numpy >= 1.21.0",
-    "matplotlib >= 3.5.0",
-    "seaborn >= 0.12.0",
-    "scipy >= 1.8.0",
-    "scikit-learn >= 1.2.0",
-    "scikit-image >= 0.19.0",
-    "anndata >= 0.8.0",
-    "pyyaml >= 6.0",
-]
 authors = [
-    { name = "Hussen Mohammed Ibrahim", email = "ibrahih3@mskcc.org" },
-    { name = "Tobias Krause", email = "krauset@mskcc.org" }
+    "Hussen Mohammed Ibrahim <ibrahih3@mskcc.org>",
+    "Tobias Krause <krauset@mskcc.org>"
 ]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
-requires-python = ">=3.7"
+homepage = "https://pypi.org/project/hto/"
+repository = "https://github.com/YOUR-ORG/hto"
+keywords = ["single-cell", "demultiplexing", "HTO"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Operating System :: OS Independent"
 ]
 
-[tool.setuptools]
-packages = ["hto"]
+[tool.poetry.dependencies]
+python = ">=3.7"
+click = ">=8.0.0"
+pandas = ">=1.5.0"
+numpy = ">=1.21.0"
+matplotlib = ">=3.5.0"
+seaborn = ">=0.12.0"
+scipy = ">=1.8.0"
+scikit-learn = ">=1.2.0"
+anndata = ">=0.8.0"
+pyyaml = ">=6.0"
+pytest = "8.4.1"
 
-[project.scripts]
-dnd = "hto.cli:cli"
+[tool.poetry.scripts]
+hto = "hto.cli:cli"
 
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 src = ["hto", "tests"]
@@ -43,8 +43,8 @@ line-length = 88
 fix = true
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "D", "C90"]      # errors, flake8, isort, pydocstyle, mccabe
-ignore = ["E501", "D203", "D213"]         # line length, conflicting docstring rules
+select = ["E", "F", "I", "D", "C90"]
+ignore = ["E501", "D203", "D213"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 11

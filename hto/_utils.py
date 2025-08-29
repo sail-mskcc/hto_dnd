@@ -134,7 +134,7 @@ def test_write(path, filetype, create_folder=True, _require_write=False):
     assert path.endswith(f".{filetype}"), "Output path must end with .h5ad"
 
     # create folder
-    if create_folder:
+    if create_folder and os.path.dirname(path) != "":
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
     # write
@@ -176,7 +176,7 @@ def write_h5ad_safe(adata, path, create_folder=True, _require_write=False):
         return
     try:
         # create folder
-        if create_folder:
+        if create_folder and os.path.dirname(path) != "":
             os.makedirs(os.path.dirname(path), exist_ok=True)
         # all categorical columns to str
         adata.obs = _fix_columns(adata.obs)

@@ -79,28 +79,21 @@ def build_background(
     if adata_background is not None:
         adata_background = adata_background
     elif background_version == "v1":
-        adata_background = build_background_v1(
-            **params_required,
-            **params_optional,
-            verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
-        )
+        build_background_func = build_background_v1
     elif background_version == "v2":
-        adata_background = build_background_v2(
-            **params_required,
-            **params_optional,
-            verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
-        )
+        build_background_func = build_background_v2
     elif background_version == "v3":
-        adata_background = build_background_v3(
-            **params_required,
-            **params_optional,
-            verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
-        )
+        build_background_func = build_background_v3
     else:
         raise ValueError(
             f"Invalid version: {background_version}. Must be 'v1', 'v2' or 'v3'."
         )
 
+    adata_background = build_background_func(
+        **params_required,
+        **params_optional,
+        verbose=kwargs.get("verbose", DEFAULTS["verbose"]),
+    )
     _assert_background(adata_background, _run_assert=_run_assert)
     return adata_background
 

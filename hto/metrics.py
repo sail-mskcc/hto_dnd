@@ -59,6 +59,7 @@ def singlet_sensitivity(
     # ignore case
     if ignore_case:
         prediction = prediction.str.lower()
+        ground_truth = ground_truth.str.lower()
         non_singlet_substring = [sub.lower() for sub in non_singlet_substring]
 
     # subset ground truth singlets

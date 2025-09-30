@@ -32,35 +32,35 @@ def ground_truth_prediction_50():
 def test_sa_100(ground_truth_prediction_100):
     """Test if SA is correctly calculated for 100% recovery."""
     ground_truth, prediction = ground_truth_prediction_100
-    sa = metrics.sa(ground_truth, prediction)
+    sa = metrics.singlet_precision(ground_truth, prediction)
     assert sa == 1.0
 
 
 def test_sa_50(ground_truth_prediction_50):
     """Test if SA is correctly calculated for 50% recovery."""
     ground_truth, prediction = ground_truth_prediction_50
-    sa = metrics.sa(ground_truth, prediction)
+    sa = metrics.singlet_precision(ground_truth, prediction)
     assert sa == 0.5
 
 
 def test_srr_100(ground_truth_prediction_100):
     """Test if SRR is correctly calculated for 100% recovery."""
     ground_truth, prediction = ground_truth_prediction_100
-    srr = metrics.srr(ground_truth, prediction)
+    srr = metrics.singlet_sensitivity(ground_truth, prediction)
     assert srr == 1.0
 
 
 def test_srr_50(ground_truth_prediction_50):
     """Test if SRR is correctly calculated for 50% recovery."""
     ground_truth, prediction = ground_truth_prediction_50
-    srr = metrics.srr(ground_truth, prediction)
+    srr = metrics.singlet_sensitivity(ground_truth, prediction)
     assert srr == 0.5
 
 
 def test_srr_fail(ground_truth_prediction_50):
     """Test if SRR fails for non-singlet substrings."""
     ground_truth, prediction = ground_truth_prediction_50
-    srr = metrics.srr(
+    srr = metrics.singlet_sensitivity(
         ground_truth, prediction, non_singlet_substring=["someotherstuff"]
     )
     assert srr != 0.5

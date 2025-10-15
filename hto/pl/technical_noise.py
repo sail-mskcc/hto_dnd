@@ -133,7 +133,6 @@ def technical_noise(
     # normalised layer
     i = 0
     if "normalised" in plot_layers:
-        i += 1
         _plot_layer(
             df=df,
             axs_row=axs[i],
@@ -143,9 +142,9 @@ def technical_noise(
             hline=None,
             **kwargs_fig,
         )
+        i += 1
 
     if "denoised" in plot_layers:
-        i += 1
         _plot_layer(
             df=df,
             axs_row=axs[i],

@@ -21,6 +21,13 @@ def assert_normalisation(df, logger, max_spread=1.5, qs=[0.1, 0.99]):
         q = df[c].quantile(qs).values
         diff = float(q[1] - q[0])
         spans.append(diff)
+    # no column should have a spread of 0
+    if min(spans) <= 0:
+        logger.warning(
+            "At least one column has a spread of 0. Results may be invalid."
+        )
+        return
+    # get ratio of max to min spread
     ratio = max(spans) / min(spans)
     if ratio > max_spread:
         logger.warning(

@@ -66,7 +66,7 @@ def denoise(
     )
 
     # 0. Skip if two or fewer HTO's are present
-    if x.shape[0] <= 2:
+    if x.shape[1] <= 2:
         logger.warning("Skipping denoising: two or fewer HTO's present.")
         return _denoise_skip(adata_hto, x, add_key_denoised)
 

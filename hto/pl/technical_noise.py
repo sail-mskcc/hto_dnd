@@ -107,7 +107,10 @@ def technical_noise(
     df_line = pd.DataFrame({"x": x, "y": y})
 
     # get thresholds
-    threshold_denoised = adata.uns["dnd"]["demux"]["thresholds"][varname]
+    if add_threshold:
+        threshold_denoised = adata.uns["dnd"]["demux"]["thresholds"][varname]
+    else:
+        threshold_denoised = None
 
     # defaults
     defaults = {
@@ -128,25 +131,29 @@ def technical_noise(
         fig, axs = plt.subplots(m, 2, squeeze=False, **params_fig)
 
     # normalised layer
-    _plot_layer(
-        df=df,
-        axs_row=axs[0],
-        y="normalised",
-        varname=varname,
-        df_line=df_line,
-        hline=None,
-        **kwargs_fig,
-    )
+    i = 0
+    if "normalised" in plot_layers:
+        _plot_layer(
+            df=df,
+            axs_row=axs[i],
+            y="normalised",
+            varname=varname,
+            df_line=df_line,
+            hline=None,
+            **kwargs_fig,
+        )
+        i += 1
 
-    _plot_layer(
-        df=df,
-        axs_row=axs[1],
-        y="denoised",
-        varname=varname,
-        df_line=None,
-        hline=threshold_denoised,
-        **kwargs_fig,
-    )
+    if "denoised" in plot_layers:
+        _plot_layer(
+            df=df,
+            axs_row=axs[i],
+            y="denoised",
+            varname=varname,
+            df_line=None,
+            hline=threshold_denoised,
+            **kwargs_fig,
+        )
 
     plt.tight_layout()
 

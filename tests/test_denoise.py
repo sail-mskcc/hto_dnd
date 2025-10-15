@@ -136,3 +136,41 @@ def test_background_methods(mock_hto_data):
             assert np.corrcoef(covariates_benchmark, covariates_test)[0, 1] > 0.9, (
                 "Covariates from kmeans and kmeans-fast should be highly correlated"
             )
+
+
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
+def test_denoise_skip(mock_hto_data):
+    """Test if denoising is skipped when two or fewer HTO's are present."""
+    # Get mock data
+    adata_filtered = mock_hto_data["filtered"][:, :2]
+    adata_raw = mock_hto_data["raw"][:, :2]
+
+    # Run normalisation
+    adata_norm = normalise(
+        adata_hto=adata_filtered,
+        adata_hto_raw=adata_raw,
+        add_key_normalise="normalised",
+        inplace=False,
+        background_version="v2",
+    )
+
+    # Run denoising
+    adata_denoised = denoise(
+        adata_hto=adata_norm,
+        background_method="kmeans-fast",
+        use_layer="normalised",
+        add_key_denoised="denoised",
+        inplace=False,
+    )
+
+    # Verify that the normalised and denoised layer is added and has expected dimensions
+    assert "normalised" in adata_denoised.layers
+    assert "denoised" in adata_denoised.layers
+    assert adata_denoised.layers["normalised"].shape == adata_filtered.X.shape
+    assert adata_denoised.layers["denoised"].shape == adata_filtered.X.shape
+
+    # Check that denoised values are identical to non-denoised values
+    assert "warning" in adata_denoised.uns["dnd"]["denoise"]["meta_background"].keys()
+    assert np.array_equal(
+        adata_denoised.layers["denoised"], adata_denoised.layers["normalised"]
+    ), "Denoised and non-denoised results should be identical when two or fewer HTO's are present"

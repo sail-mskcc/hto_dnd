@@ -148,6 +148,9 @@ def demultiplex(
         add_key_normalise=add_key_normalise,
         use_layer=get_arg("use_layer", kwargs, DEFAULTS),
         pseudocount=get_arg("pseudocount", kwargs, DEFAULTS),
+        k_gex_cells=get_arg("k_gex_cells", kwargs, DEFAULTS),
+        next_k_cells=get_arg("next_k_cells", kwargs, DEFAULTS),
+        min_umi=get_arg("min_umi", kwargs, DEFAULTS),
     )
 
     adata_hto = denoise(

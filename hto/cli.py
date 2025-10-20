@@ -18,6 +18,10 @@ hto demultiplex \\
     --adata-hto-raw /path/to/adata_hto_raw.h5ad \\
     --adata-gex /path/to/adata_gex.h5ad \\
     --adata-out /path/to/output.h5ad
+
+For all options, run:
+\b
+hto demultiplex --help
 """
 )
 def cli():

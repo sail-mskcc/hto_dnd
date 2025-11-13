@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hto"
-version = "1.1.4a"
+version = "1.1.4a0"
 description = "A method to demultiplex hashtagged single-cell data."
 authors = [
     "Tobias Krause <krauset@mskcc.org>",
@@ -9,7 +9,7 @@ authors = [
 license = "MIT"
 readme = "README.md"
 homepage = "https://pypi.org/project/hto/"
-repository = "https://github.com/YOUR-ORG/hto"
+repository = "https://github.com/sail-mskcc/hto_dnd/"
 keywords = ["single-cell", "demultiplexing", "HTO"]
 classifiers = [
     "Programming Language :: Python :: 3",

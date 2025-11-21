@@ -1,5 +1,11 @@
 """Automated sphinx docs configuration."""
 
+import os
+import sys
+
+# Add the parent directory to the path so we can import hto
+sys.path.insert(0, os.path.abspath('..'))
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -22,6 +28,16 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
+]
+
+# MyST configuration
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_admonition",
+    "html_image",
+    "tasklist",
 ]
 
 templates_path = ["_templates"]

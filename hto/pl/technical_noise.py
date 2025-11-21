@@ -31,14 +31,14 @@ def _plot_layer(
         ax=axs_row[0],
         **kwargs_fig,
     )
-    axs_row[0].set_title(f"{varname} normalised")
+    axs_row[0].set_title(f"{varname} {y}")
 
     # regression line
     if df_line is not None:
         sns.lineplot(df_line, x="x", y="y", c="black", ax=axs_row[0])
 
     # KDE plot
-    sns.kdeplot(data=df, y="normalised", ax=axs_row[1], fill=True)
+    sns.kdeplot(data=df, y=y, ax=axs_row[1], fill=True)
 
     # horizontal line (demultiplexing threshold)
     if hline is not None:

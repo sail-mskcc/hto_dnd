@@ -40,7 +40,7 @@ DEFAULTS = {
         "kmeans_placeholder": -1,
         "gmm-p-cutoff": 0.99,
         "otsu_placeholder": -1,
-        "otsu_nbins": 256,
+        "otsu_nbins": 512,
         "otsu_lam": 1.0,
         "otsu_p_target": None,
     },

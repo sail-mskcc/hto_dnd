@@ -38,7 +38,7 @@ DEFAULTS = {
     "add_key_labels": None,
     "kwargs_classify": {
         "kmeans_placeholder": -1,
-        "gmm-p-cutoff": 0.5,
+        "gmm-p-cutoff": 0.99,
         "otsu_placeholder": -1,
     },
     # build_background

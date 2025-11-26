@@ -129,9 +129,18 @@ def demux(
 
     result_df.loc[:, add_key_doublet] = labels_df.apply(_assign_doublet, axis=1)
 
-    # Append to AnnData
+    # Add layer
     if add_key_labels is not None:
         adata_hto.layers[add_key_labels] = scipy.sparse.csr_matrix(labels_df.values)
+    
+    # Archive existing columns
+    for col in result_df.columns:
+        if col in adata_hto.obs.columns:
+            logger.warning(
+                f"Column '{col}' already exists in adata.obs. Overwriting and storing previous columns under '{col}_archive'."
+            )
+            adata_hto.obs[f"{col}_archive"] = adata_hto.obs[col]
+            adata_hto.obs.drop(col, axis=1, inplace=True)
     adata_hto.obs = pd.concat([adata_hto.obs, result_df], axis=1)
 
     # add metadata

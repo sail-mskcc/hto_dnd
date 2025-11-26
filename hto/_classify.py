@@ -188,11 +188,14 @@ def _classify_otsu_one(series, logger=None, **kwargs):
             "scikit-image is not installed. Install with `pip install scikit-image`"
         )
 
+    # defaults
+    nbins = kwargs.get("otsu_nbins", DEFAULTS["kwargs_classify"]["otsu_nbins"])
+
     # predict
     logger = logger or get_logger("demux", level=1)
     logger.debug("Thresholding HTO data using Otsu's method")
     series = series.flatten()
-    threshold = threshold_otsu(series)
+    threshold = threshold_otsu(series, nbins=nbins)
     labels = (series > threshold).astype(int)
 
     # evaluate
@@ -220,8 +223,11 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
     from hto._otsu import threshold_otsu_weighted
 
     # init
-    p_target = 1 / df_umi.shape[1]
-    lam = 1.0
+    nbins = kwargs.get("otsu_nbins", DEFAULTS["kwargs_classify"]["otsu_nbins"])
+    lam = kwargs.get("otsu_lam", DEFAULTS["kwargs_classify"]["otsu_lam"])
+    p_target = kwargs.get("otsu_p_target", DEFAULTS["kwargs_classify"]["otsu_p_target"])
+    if p_target is None:
+        p_target = 1 / df_umi.shape[1]
     logger = logger or get_logger("demux", level=1)
 
     # init
@@ -236,7 +242,7 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
         logger.debug(f"Demultiplexing HTO '{hto}'...")
         series = df_umi[hto].values.reshape(-1, 1)
         # apply function
-        threshold = threshold_otsu_weighted(series, p_target=p_target, lam=lam)
+        threshold = threshold_otsu_weighted(series, p_target=p_target, lam=lam, nbins=nbins)
         labels = (series > threshold).astype(int).flatten()
         # evaluate
         logger.debug("Evaluating Otsu thresholding")

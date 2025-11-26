@@ -43,12 +43,15 @@ def threshold_otsu_weighted(image=None, nbins=256, p_target=None, lam=1.0, *, hi
     # The last value of ``weight1``/``mean1`` should pair with zero values in
     # ``weight2``/``mean2``, which do not exist.
     variance12 = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
+    variance_norm = variance12 / (variance12.max() + 1e-5)
 
-    # soft prior on class proportion: penalize deviation of weight2 from p_target
-    pos_frac = weight2[1:]
-    penalty = lam * (pos_frac - p_target) ** 2
+    # normalize weight2 to get actual proportions (0-1 scale)
+    total_counts = weight1[-1]  # total number of pixels/points
+    pos_frac = weight2[1:] / total_counts
 
-    score = variance12 - penalty      # maximize this combined objective
+    # penalise deviations from target
+    prior = np.exp(-lam * (pos_frac - p_target) ** 2)
+    score = variance_norm * prior
     idx = np.argmax(score)
 
     threshold = bin_centers[idx]

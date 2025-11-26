@@ -5,13 +5,12 @@ import scipy.stats
 from scipy.optimize import root_scalar
 from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, silhouette_score
-from sklearn.mixture import GaussianMixture
 
 from ._defaults import DEFAULTS
 from ._logging import get_logger
 from ._utils import add_docstring
 
-SUPPORTED_DEMUX_METHODS = ["kmeans", "gmm", "otsu", "gmm_demux"]
+SUPPORTED_DEMUX_METHODS = ["kmeans", "gmm", "otsu", "otsu_weighted", "gmm_demux"]
 
 
 def assert_demux(method):
@@ -59,6 +58,9 @@ def classify(
     elif demux_method == "otsu":
         logger.debug("Applying Otsu's method to each column")
         return classify_by_column(_classify_otsu_one, data, logger, **kwargs_classify)
+    elif demux_method == "otsu_weighted":
+        logger.debug("Applying weighted Otsu's method to each column")
+        return classify_otsu_weighted(data, logger, **kwargs_classify)
     elif demux_method == "gmm_demux":
         logger.debug("Applying GMM demux to each column")
         return classify_gmm_demux(data, logger, **kwargs_classify)
@@ -113,6 +115,8 @@ def _classify_kmeans_one(series, logger=None, **kwargs):
 
 
 def _classify_gmm_one(series, logger=None, **kwargs):
+    from sklearn.mixture import GaussianMixture
+
     # get params
     gmm_p_cutoff = kwargs.get(
         "gmm-p-cutoff", DEFAULTS["kwargs_classify"]["gmm-p-cutoff"]
@@ -210,6 +214,56 @@ def _classify_otsu_one(series, logger=None, **kwargs):
         "entropy": float(entropy),
     }
     return labels, threshold, metrics
+
+
+def classify_otsu_weighted(df_umi, logger=None, **kwargs):
+    from hto._otsu import threshold_otsu_weighted
+
+    # init
+    p_target = 1 / df_umi.shape[1]
+    lam = 1.0
+    logger = logger or get_logger("demux", level=1)
+
+    # init
+    classifications = {}
+    metrics = {}
+    thresholds = {}
+    if logger is None:
+        logger = get_logger("demux", level=1)
+
+    for hto in df_umi.columns:
+        # prepare data
+        logger.debug(f"Demultiplexing HTO '{hto}'...")
+        series = df_umi[hto].values.reshape(-1, 1)
+        # apply function
+        threshold = threshold_otsu_weighted(series, p_target=p_target, lam=lam)
+        labels = (series > threshold).astype(int).flatten()
+        # evaluate
+        logger.debug("Evaluating Otsu thresholding")
+        background = series[labels == 0]
+        signal = series[labels == 1]
+        # Inter-class variance (which Otsu's method maximizes)
+        weight1 = np.sum(labels == 0) / len(labels)
+        weight2 = np.sum(labels == 1) / len(labels)
+        inter_class_variance = (weight1 * weight2 * (np.mean(signal) - np.mean(background)) ** 2)
+        inter_class_variance_weighted = inter_class_variance - lam * (weight2 - p_target) ** 2
+
+        # Calculate entropy of the thresholded image
+        hist, _ = np.histogram(labels, bins=2)
+        hist_norm = hist / np.sum(hist)
+        entropy = scipy.stats.entropy(hist_norm)
+        metrics_one = {
+            "inter_class_variance": float(inter_class_variance),
+            "inter_class_variance_weighted": float(inter_class_variance_weighted),
+            "entropy": float(entropy),
+        }
+
+        # store results
+        thresholds[hto] = float(threshold)
+        metrics[hto] = metrics_one
+        classifications[hto] = labels
+
+    return classifications, thresholds, metrics
 
 
 def classify_gmm_demux(df, logger=None, **kwargs):

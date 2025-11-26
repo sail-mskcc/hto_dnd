@@ -31,7 +31,7 @@ DEFAULTS = {
         "intercept_scaling": 1,
     },
     # demux
-    "demux_method": "gmm",
+    "demux_method": "otsu_weighted",
     "enforce_larger_than_background": True,
     "add_key_hashid": "hash_id",
     "add_key_doublet": "doublet_info",

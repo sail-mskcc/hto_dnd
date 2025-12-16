@@ -43,6 +43,14 @@ def gmm_demux(
                 f"Prohibited parameter '{param}' found in params. Please remove it."
             )
 
+    gmm_demux_available = subprocess.run(
+        "which GMM-demux", shell=True, capture_output=True, text=True
+    )
+    if gmm_demux_available.returncode != 0:
+        raise UserInputError(
+            "GMM-demux not found. Please install GMM-demux (`pip install GMM-Demux`) or ensure it is in your PATH."
+        )
+
     # set tmp path
     path_tmp_dir = os.environ.get(
         "DND_TMPDIR", os.path.join(os.path.expanduser("~"), ".dnd_tmp")

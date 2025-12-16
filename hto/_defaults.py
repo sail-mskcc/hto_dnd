@@ -31,15 +31,18 @@ DEFAULTS = {
         "intercept_scaling": 1,
     },
     # demux
-    "demux_method": "gmm",
+    "demux_method": "otsu_weighted",
     "enforce_larger_than_background": True,
     "add_key_hashid": "hash_id",
     "add_key_doublet": "doublet_info",
     "add_key_labels": None,
     "kwargs_classify": {
         "kmeans_placeholder": -1,
-        "gmm-p-cutoff": 0.5,
+        "gmm-p-cutoff": 0.99,
         "otsu_placeholder": -1,
+        "otsu_nbins": 512,
+        "otsu_lam": 1.0,
+        "otsu_p_target": None,
     },
     # build_background
     "min_umi": 300,

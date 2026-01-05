@@ -77,6 +77,7 @@ def demultiplex(
     demux_method = get_arg("demux_method", kwargs, DEFAULTS)
     background_method = get_arg("background_method", kwargs, DEFAULTS)
     background_version = get_arg("background_version", kwargs, DEFAULTS)
+    force = get_arg("force", kwargs, DEFAULTS)
 
     # LOGGER
     logger = get_logger("dnd", level=verbose)
@@ -115,10 +116,10 @@ def demultiplex(
         assert adata_out is not None, (
             "Output path must be provided using parameter --output-path"
         )
-        assert add_key_normalise not in adata_hto.layers, (
+        assert (force) or (add_key_normalise not in adata_hto.layers), (
             f"Key {add_key_normalise} already exists in adata. Add option --add-key-normalise to change the key."
         )
-        assert add_key_denoised not in adata_hto.layers, (
+        assert (force) or (add_key_denoised not in adata_hto.layers), (
             f"Key {add_key_denoised} already exists in adata. Add option --add-key-denoise to change the key."
         )
 

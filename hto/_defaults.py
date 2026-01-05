@@ -14,6 +14,7 @@ DEFAULTS = {
     "inplace": False,
     "verbose": 1,
     "_required_write": False,
+    "force": False,
     # normalise
     "pseudocount": 10,
     "add_key_normalise": "normalised",
@@ -65,6 +66,7 @@ DESCRIPTIONS = {
     "inplace": f"Whether to perform the operation in place. Default is {DEFAULTS['inplace']}.",
     "use_layer": f"Layer to use for denoising. Default is {DEFAULTS['use_layer']}.",
     "_required_write": f"Internal parameter. Writing adata is required when run through CLI. Default is {DEFAULTS['_required_write']}.",
+    "force": f"Ignore common non-breaking assertions, for example overwriting existing files or columns. Use with caution. Default is {DEFAULTS['force']}.",
     # normalise
     "pseudocount": f"Value to add to the counts matrix before log-transformation. Default is {DEFAULTS['pseudocount']}.",
     "add_key_normalise": f"Key to store the normalized data in the AnnData object. Default is {DEFAULTS['add_key_normalise']}.",
@@ -160,6 +162,12 @@ OPTIONS = {
         type=str,
         default=DEFAULTS["use_layer"],
         help=DESCRIPTIONS["use_layer"],
+    ),
+    "force": click.option(
+        "--force",
+        is_flag=True,
+        default=DEFAULTS["force"],
+        help=DESCRIPTIONS["force"],
     ),
     # normalise
     "pseudocount": click.option(

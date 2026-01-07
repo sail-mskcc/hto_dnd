@@ -59,7 +59,6 @@ def adata_hto():
     ]
     adata = ad.AnnData(
         X=x,
-        dtype="float32",
         obs=pd.DataFrame(
             {
                 "true_labels": true_labels,
@@ -69,6 +68,7 @@ def adata_hto():
         ),
         var=pd.DataFrame(index=var_names),
     )
+    adata.X = adata.X.astype("float32")
     adata.layers["labels"] = labels
     return adata
 

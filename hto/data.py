@@ -121,10 +121,10 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
 
     raw_adata = ad.AnnData(
         X=raw_data,
-        dtype="int32",
         obs=obs,
         var=var,
     )
+    raw_adata.X = raw_adata.X.astype("int32")
     filtered_adata = raw_adata[subset_filterd].copy()
 
     # Create GEX data (15 genes)
@@ -141,9 +141,9 @@ def generate_hto(n_cells=1000, n_htos=3, noise_level=0.5, seed=42):
     gex = np.round(gex).astype(int)
     gex_adata = ad.AnnData(
         X=gex,
-        dtype="float32",
         obs=obs,
     )
+    gex_adata.X = gex_adata.X.astype("float32")
 
     # return
     return {

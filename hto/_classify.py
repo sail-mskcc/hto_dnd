@@ -139,7 +139,7 @@ def _classify_gmm_one(series, logger=None, **kwargs):
         - If x is between the means, return 0 or 1 based on the posterior probability
         """
         # prepare and predict
-        series = np.array(series).reshape(-1, 1)
+        series = np.asarray(series).reshape(-1, 1)
         probabilities = model.predict_proba(series)
         larger_mean = np.argmax(model.means_)
         smaller_mean = np.argmin(model.means_)
@@ -161,7 +161,7 @@ def _classify_gmm_one(series, logger=None, **kwargs):
 
     def posterior_diff(x):
         """Optimise function."""
-        return custom_predict(model, x) - gmm_p_cutoff
+        return (custom_predict(model, x) - gmm_p_cutoff)[0]
 
     # find threshold
     x_min = series.min()

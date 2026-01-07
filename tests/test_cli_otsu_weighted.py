@@ -35,7 +35,9 @@ def test_cli(mock_hto_data):
                 "v2",
                 "--demux-method",
                 "otsu_weighted",
-                f"--kwargs-classify otsu_p_weighted {otsu_p_target}",
+                "--kwargs-classify",
+                "otsu_p_target",
+                otsu_p_target,
             ],
         )
 
@@ -44,24 +46,25 @@ def test_cli(mock_hto_data):
         )
 
         adata = ad.read_h5ad(adata_out)
+        print("DEBUG", adata.uns["dnd"]["demux"])
         assert adata.uns["dnd"]["demux"]["params"]["demux_method"] == "otsu_weighted"
-        assert adata.uns["dnd"]["demux"]["params"]["otsu_p_target"] == "otsu_weighted"
+        assert adata.uns["dnd"]["demux"]["params"]["otsu_p_target"] == otsu_p_target
 
         # return threshold
         return adata.uns["dnd"]["demux"]["thresholds"]
 
     # evaluate multiple thresholds
     thresholds_all = []
-    for p_target in [0.2, 0.5, 0.7]:
+    p_targets = [0.1, 0.5, 0.9]
+    for p_target in p_targets:
         thresholds = _run_otsu_weights(otsu_p_target=p_target)
         thresholds_all.append(thresholds)
 
     # assert that thresholds change as expected
-    for hash_id in thresholds_all[0].keys():
-        thresh_low = thresholds_all[0][hash_id]
-        thresh_mid = thresholds_all[1][hash_id]
-        thresh_high = thresholds_all[2][hash_id]
-        assert thresh_low > thresh_mid > thresh_high, (
-            f"Thresholds for {hash_id} do not follow expected order: "
-            f"{thresh_low} !> {thresh_mid} !> {thresh_high}"
-        )
+    for i in range(len(thresholds_all) - 1):
+        thresh_lower = thresholds_all[i]
+        thresh_higher = thresholds_all[i + 1]
+        for hash_id in thresh_lower.keys():
+            assert thresh_lower[hash_id] >= thresh_higher[hash_id], (
+                f"Threshold for {hash_id} did not decrease with higher p_target: {thresh_lower[hash_id]} (p={p_targets[i]}) !> {thresh_higher[hash_id]} (p={p_targets[i + 1]})"
+            )

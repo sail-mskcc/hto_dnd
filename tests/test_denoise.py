@@ -173,4 +173,6 @@ def test_denoise_skip(mock_hto_data):
     assert "warning" in adata_denoised.uns["dnd"]["denoise"]["meta_background"].keys()
     assert np.array_equal(
         adata_denoised.layers["denoised"], adata_denoised.layers["normalised"]
-    ), "Denoised and non-denoised results should be identical when two or fewer HTO's are present"
+    ), (
+        "Denoised and non-denoised results should be identical when two or fewer HTO's are present"
+    )

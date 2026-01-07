@@ -139,7 +139,7 @@ def _classify_gmm_one(series, logger=None, **kwargs):
         - If x is between the means, return 0 or 1 based on the posterior probability
         """
         # prepare and predict
-        series = np.array(series).reshape(-1, 1)
+        series = np.asarray(series).reshape(-1, 1)
         probabilities = model.predict_proba(series)
         larger_mean = np.argmax(model.means_)
         smaller_mean = np.argmin(model.means_)
@@ -161,7 +161,7 @@ def _classify_gmm_one(series, logger=None, **kwargs):
 
     def posterior_diff(x):
         """Optimise function."""
-        return custom_predict(model, x) - gmm_p_cutoff
+        return (custom_predict(model, x) - gmm_p_cutoff)[0]
 
     # find threshold
     x_min = series.min()
@@ -242,7 +242,9 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
         logger.debug(f"Demultiplexing HTO '{hto}'...")
         series = df_umi[hto].values.reshape(-1, 1)
         # apply function
-        threshold = threshold_otsu_weighted(series, p_target=p_target, lam=lam, nbins=nbins)
+        threshold = threshold_otsu_weighted(
+            series, p_target=p_target, lam=lam, nbins=nbins
+        )
         labels = (series > threshold).astype(int).flatten()
         # evaluate
         logger.debug("Evaluating Otsu thresholding")
@@ -251,8 +253,12 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
         # Inter-class variance (which Otsu's method maximizes)
         weight1 = np.sum(labels == 0) / len(labels)
         weight2 = np.sum(labels == 1) / len(labels)
-        inter_class_variance = (weight1 * weight2 * (np.mean(signal) - np.mean(background)) ** 2)
-        inter_class_variance_weighted = inter_class_variance - lam * (weight2 - p_target) ** 2
+        inter_class_variance = (
+            weight1 * weight2 * (np.mean(signal) - np.mean(background)) ** 2
+        )
+        inter_class_variance_weighted = (
+            inter_class_variance - lam * (weight2 - p_target) ** 2
+        )
 
         # Calculate entropy of the thresholded image
         hist, _ = np.histogram(labels, bins=2)

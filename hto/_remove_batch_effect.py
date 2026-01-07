@@ -104,7 +104,7 @@ def remove_batch_effect_v2(
         # Fit SVR model
         model = LinearSVR(fit_intercept=True, **kwargs_denoise)
         model.fit(covariates, x_i)
-        coefs.append([float(model.intercept_), float(model.coef_[0])])
+        coefs.append([float(model.intercept_[0]), float(model.coef_[0])])
 
         # apply correction
         pred = model.predict(covariates)

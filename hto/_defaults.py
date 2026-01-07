@@ -243,7 +243,7 @@ OPTIONS = {
         "--kwargs-classify",
         type=(str, float),
         multiple=True,
-        help="Additional parameters for the demultiplexing algorithm. Use key-value pairs, e.g. --kwargs-classify gmm-p-cutoff 0.8.",
+        help="Additional parameters for the demultiplexing algorithm. Use key-value pairs, e.g. --kwargs-classify gmm_p_cutoff 0.8.",
     ),
     # build_background
     "min_umi": click.option(

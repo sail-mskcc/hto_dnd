@@ -147,9 +147,10 @@ def demux(
     adata_hto = add_meta(
         adata_hto,
         step="demux",
-        params=dict(
-            demux_method=demux_method,
-        ),
+        params={
+            "demux_method": demux_method,
+            **kwargs_classify
+        },
         metrics=metrics,
         thresholds=thresholds,
     )

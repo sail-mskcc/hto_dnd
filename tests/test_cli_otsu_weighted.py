@@ -3,11 +3,8 @@
 import os
 
 import anndata as ad
-import numpy as np
-import pandas as pd
 import pytest
 from click.testing import CliRunner
-from hto._defaults import DEFAULTS
 from hto.cli import demultiplex_cli
 
 
@@ -52,18 +49,19 @@ def test_cli(mock_hto_data):
 
         # return threshold
         return adata.uns["dnd"]["demux"]["thresholds"]
-    
+
     # evaluate multiple thresholds
     thresholds_all = []
     for p_target in [0.2, 0.5, 0.7]:
         thresholds = _run_otsu_weights(otsu_p_target=p_target)
-        thresholds_all.append(
-            thresholds
-        )
-    
+        thresholds_all.append(thresholds)
+
     # assert that thresholds change as expected
     for hash_id in thresholds_all[0].keys():
         thresh_low = thresholds_all[0][hash_id]
         thresh_mid = thresholds_all[1][hash_id]
         thresh_high = thresholds_all[2][hash_id]
-        assert thresh_low > thresh_mid > thresh_high,
+        assert thresh_low > thresh_mid > thresh_high, (
+            f"Thresholds for {hash_id} do not follow expected order: "
+            f"{thresh_low} !> {thresh_mid} !> {thresh_high}"
+        )

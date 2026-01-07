@@ -1,7 +1,6 @@
 """Introducing two metrics: Singlet Accuracy (SA) and Singlet Recovery Rate (SRR)."""
 
 import numpy as np
-import pandas as pd
 from sklearn.metrics import f1_score
 
 # y_true: ground truth labels

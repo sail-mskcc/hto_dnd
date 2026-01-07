@@ -1,9 +1,11 @@
 import numpy as np
-from skimage.exposure import histogram
-from skimage.filters.thresholding import _validate_image_histogram
 from skimage._shared.utils import warn
+from skimage.filters.thresholding import _validate_image_histogram
 
-def threshold_otsu_weighted(image=None, nbins=256, p_target=None, lam=1.0, *, hist=None) -> float:
+
+def threshold_otsu_weighted(
+    image=None, nbins=256, p_target=None, lam=1.0, *, hist=None
+) -> float:
     """Weighted implementation of sklearn's threshold_otsu function.
 
     Source code from: https://github.com/scikit-image/scikit-image/blob/v0.25.2/skimage/filters/thresholding.py#L336-L407
@@ -12,15 +14,14 @@ def threshold_otsu_weighted(image=None, nbins=256, p_target=None, lam=1.0, *, hi
     - Added a soft prior (p_target) which penalizes deviations of the positive class and pushes the threshold accordingly.
     - Added lam parameter to control the strength of the penalty.
     """
-
     if p_target is None:
         raise ValueError("'p_target' must be provided for weighted Otsu thresholding.")
-    
+
     if image is not None and image.ndim > 2 and image.shape[-1] in (3, 4):
         warn(
-            f'threshold_otsu is expected to work correctly only for '
-            f'grayscale images; image shape {image.shape} looks like '
-            f'that of an RGB image.'
+            f"threshold_otsu is expected to work correctly only for "
+            f"grayscale images; image shape {image.shape} looks like "
+            f"that of an RGB image."
         )
 
     # Check if the image has more than one intensity value; if not, return that

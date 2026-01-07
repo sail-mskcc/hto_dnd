@@ -132,7 +132,7 @@ def demux(
     # Add layer
     if add_key_labels is not None:
         adata_hto.layers[add_key_labels] = scipy.sparse.csr_matrix(labels_df.values)
-    
+
     # Archive existing columns
     for col in result_df.columns:
         if col in adata_hto.obs.columns:
@@ -147,10 +147,7 @@ def demux(
     adata_hto = add_meta(
         adata_hto,
         step="demux",
-        params={
-            "demux_method": demux_method,
-            **kwargs_classify
-        },
+        params={"demux_method": demux_method, **kwargs_classify},
         metrics=metrics,
         thresholds=thresholds,
     )

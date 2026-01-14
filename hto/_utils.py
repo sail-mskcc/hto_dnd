@@ -352,6 +352,17 @@ def read_adata(path):
     return adata
 
 
+@user_input_error_decorator
+def read_whitelist(path):
+    df_whitelist = pd.read_csv(path, header=None, index_col=0)
+    if df_whitelist.shape[1] > 1:
+        raise UserInputError(
+            f"If path is csv, it must be a whitelist. Make sure the file `{path}` contains only one column with barcodes."
+        )
+    whitelist = df_whitelist.index.tolist()
+    return whitelist
+
+
 def is_github_actions():
     return os.getenv("GITHUB_ACTIONS") == "true"
 

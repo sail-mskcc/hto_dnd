@@ -7,6 +7,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, silhouette_score
 
 from ._defaults import DEFAULTS
+from ._exceptions import UserInputError
 from ._logging import get_logger
 from ._utils import add_docstring
 
@@ -33,6 +34,7 @@ def classify(
         - K-means: Silhouette score and Davies-Bouldin index
         - GMM: BIC and log-likelihood
         - Otsu: Inter-class variance and entropy
+        - Weighted Otsu: Inter-class variance (weighted) and entropy
         - GMM demux: Uses external gmm_demux function
 
     Args:
@@ -226,8 +228,23 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
     nbins = kwargs.get("otsu_nbins", DEFAULTS["kwargs_classify"]["otsu_nbins"])
     lam = kwargs.get("otsu_lam", DEFAULTS["kwargs_classify"]["otsu_lam"])
     p_target = kwargs.get("otsu_p_target", DEFAULTS["kwargs_classify"]["otsu_p_target"])
+
+    # assert and init p_target:
+    # - default to 1 / n_htos
+    # - if single value, expand to all HTOs
+    # - if list, ensure length matches n_htos
     if p_target is None:
         p_target = 1 / df_umi.shape[1]
+    if isinstance(p_target, list) and (len(p_target) != df_umi.shape[1]):
+        msg = (
+            f"`otsu_p_target` is a list. It provides {len(p_target)} weights, "
+            f"but there are {df_umi.shape[1]} HTOs."
+            f" Please ensure the length matches the number of HTOs."
+        )
+        raise UserInputError(msg)
+    if not isinstance(p_target, list):
+        p_target = [p_target] * df_umi.shape[1]
+
     logger = logger or get_logger("demux", level=1)
 
     # init
@@ -237,13 +254,13 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
     if logger is None:
         logger = get_logger("demux", level=1)
 
-    for hto in df_umi.columns:
+    for i, hto in enumerate(df_umi.columns):
         # prepare data
         logger.debug(f"Demultiplexing HTO '{hto}'...")
         series = df_umi[hto].values.reshape(-1, 1)
         # apply function
         threshold = threshold_otsu_weighted(
-            series, p_target=p_target, lam=lam, nbins=nbins
+            series, p_target=p_target[i], lam=lam, nbins=nbins
         )
         labels = (series > threshold).astype(int).flatten()
         # evaluate
@@ -257,7 +274,7 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
             weight1 * weight2 * (np.mean(signal) - np.mean(background)) ** 2
         )
         inter_class_variance_weighted = (
-            inter_class_variance - lam * (weight2 - p_target) ** 2
+            inter_class_variance - lam * (weight2 - p_target[i]) ** 2
         )
 
         # Calculate entropy of the thresholded image

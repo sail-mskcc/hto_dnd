@@ -10,7 +10,6 @@
 import warnings
 
 import anndata as ad
-import pandas as pd
 
 from ._classify import assert_demux
 from ._cluster_background import assert_background
@@ -20,6 +19,7 @@ from ._utils import (
     add_docstring,
     get_arg,
     read_adata,
+    read_whitelist,
     subset_whitelist,
     test_write,
     user_input_error_decorator,
@@ -86,14 +86,14 @@ def demultiplex(
     # Note - adata_hto can also be a whitelist of barcodes
     if isinstance(adata_hto_raw, str):
         logger.debug(f"Reading raw hto adata from {adata_hto_raw}")
-        adata_hto_raw = ad.read_h5ad(adata_hto_raw)
+        adata_hto_raw = read_adata(adata_hto_raw)
     if isinstance(adata_hto, str):
         if adata_hto.endswith(".h5ad"):
             logger.debug(f"Reading filtered adata from {adata_hto}")
-            adata_hto = ad.read_h5ad(adata_hto)
+            adata_hto = read_adata(adata_hto)
         elif adata_hto.endswith(".csv") or adata_hto.endswith(".csv.gz"):
             logger.debug(f"Reading whitelist from {adata_hto}")
-            whitelist = pd.read_csv(adata_hto, header=None, index_col=0).index.tolist()
+            whitelist = read_whitelist(adata_hto)
             adata_hto = subset_whitelist(adata_hto_raw, whitelist)
         else:
             raise ValueError(
@@ -101,7 +101,7 @@ def demultiplex(
             )
     if isinstance(adata_background, str):
         logger.debug(f"Reading background adata from {adata_background}")
-        adata_background = ad.read_h5ad(adata_background)
+        adata_background = read_adata(adata_background)
 
     # ASSERTIONS
     # - check that output path is writeable (and .h5ad)

@@ -94,7 +94,7 @@ def demux(
         data=df_umi,
         demux_method=demux_method,
         verbose=verbose,
-        kwargs_classify=kwargs_classify,
+        **kwargs_classify,
     )
 
     # Enforce that positively labeled cells are larger than background. This can be skewed due to the technical noise correction of small cells.

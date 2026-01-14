@@ -36,6 +36,7 @@ def threshold_otsu_weighted(
     # class probabilities for all possible thresholds
     weight1 = np.cumsum(counts)
     weight2 = np.cumsum(counts[::-1])[::-1]
+
     # class means for all possible thresholds
     mean1 = np.cumsum(counts * bin_centers) / weight1
     mean2 = (np.cumsum((counts * bin_centers)[::-1]) / weight2[::-1])[::-1]

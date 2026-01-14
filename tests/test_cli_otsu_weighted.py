@@ -8,7 +8,7 @@ from click.testing import CliRunner
 from hto.cli import demultiplex_cli
 
 
-@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 100}], indirect=True)
+@pytest.mark.parametrize("mock_hto_data", [{"n_cells": 1000}], indirect=True)
 def test_cli(mock_hto_data):
     """Test that otsu_weighted kwargs is correctly passed and demultiplexing works."""
     # Get mock data
@@ -46,9 +46,12 @@ def test_cli(mock_hto_data):
         )
 
         adata = ad.read_h5ad(adata_out)
-        print("DEBUG", adata.uns["dnd"]["demux"])
         assert adata.uns["dnd"]["demux"]["params"]["demux_method"] == "otsu_weighted"
         assert adata.uns["dnd"]["demux"]["params"]["otsu_p_target"] == otsu_p_target
+
+        # print output if not empty
+        if result.output:
+            print(result.output)
 
         # return threshold
         return adata.uns["dnd"]["demux"]["thresholds"]
@@ -65,6 +68,6 @@ def test_cli(mock_hto_data):
         thresh_lower = thresholds_all[i]
         thresh_higher = thresholds_all[i + 1]
         for hash_id in thresh_lower.keys():
-            assert thresh_lower[hash_id] >= thresh_higher[hash_id], (
+            assert thresh_lower[hash_id] > thresh_higher[hash_id], (
                 f"Threshold for {hash_id} did not decrease with higher p_target: {thresh_lower[hash_id]} (p={p_targets[i]}) !> {thresh_higher[hash_id]} (p={p_targets[i + 1]})"
             )

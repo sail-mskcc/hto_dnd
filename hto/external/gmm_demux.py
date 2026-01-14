@@ -48,7 +48,7 @@ def gmm_demux(
     )
     if gmm_demux_available.returncode != 0:
         raise UserInputError(
-            "GMM-demux not found. Please install GMM-demux (`pip install GMM-Demux`) or ensure it is in your PATH."
+            "GMM-demux not found. Please install GMM-demux (`pip install git+https://github.com/Tobiaspk/GMM-Demux.git` which supports numpy 2.4) or ensure it is in your PATH."
         )
 
     # set tmp path

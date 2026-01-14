@@ -1,126 +1,51 @@
 # Normalisation
 
-The normalisation module provides functions to normalize hash-tagged oligonucleotide (HTO) data using background signal estimation. This is inspired by the DSB (Denoised and Scaled by Background) method and helps to remove technical noise while preserving biological signal.
+The normalisation module defines functions used to normalise HTO data. This is inspired by the DSB (Denoised and Scaled by Background) method and helps remove technical noise while preserving biological signal.
 
 ## Overview
 
-Normalisation in HTO-DND works by:
-1. Estimating background signal from empty droplets or low-signal cells
-2. Using this background to normalize the HTO counts
-3. Applying log-transformation with pseudocounts to stabilize variance
+Normalisation in HTO-DND follows these steps:
+1. Estimate a background reference from empty droplets (see [Background Selection](background_selection.md))
+3. Log transform the HTO counts
+2. Use background reference to normalise the HTO counts: `log(HTO_count + pseudocount) - log(Background_count + pseudocount)`
 
 ## Main Functions
 
-### `hto.normalise()`
+Refer to [Background Selection](background_selection.md) for building background data, which impacts normalisation.
 
-The primary normalisation function that processes HTO data with background correction.
+### Parameters
+
+- `pseudocount`: Value added to counts before log-transformation to avoid log(0). Default is 10, method is not very sensitive to this choice.
+
+### Examples
 
 ```python
 import hto
 
 # Basic usage
-adata_normalised = hto.normalise(
-    adata_hto=adata_hto,
-    adata_background=adata_background,
+mockdata = hto.data.generate_hto(n_cells=1000, n_htos=3, noise_level=0.5)
+adata = hto.normalise(
+    adata_hto=mockdata["filtered"],
+    adata_hto_raw=mockdata["raw"],
+    adata_gex=mockdata["gex"],
+    add_key_normalised="normalised",
     pseudocount=10,
-    add_key_normalise="normalised"
 )
 
-# Using quantile-based background estimation
-adata_normalised = hto.normalise(
-    adata_hto=adata_hto,
-    background_quantile=0.3,
-    pseudocount=10
-)
-```
-
-### `hto.normalise_debug()`
-
-A debug version of the normalisation function that provides additional information about the normalisation process and intermediate results.
-
-```python
-# Debug normalisation with detailed output
-adata_normalised, debug_info = hto.normalise_debug(
-    adata_hto=adata_hto,
-    adata_background=adata_background,
-    verbose=2
-)
-```
-
-## Parameters
-
-The normalisation functions accept the following key parameters:
-
-```python
-from hto._defaults import DESCRIPTIONS
-
-# Key parameters and their descriptions:
-print("pseudocount:", DESCRIPTIONS['pseudocount'])
-print("add_key_normalise:", DESCRIPTIONS['add_key_normalise']) 
-print("background_quantile:", DESCRIPTIONS['background_quantile'])
-```
-
-### Key Parameters:
-
-- **pseudocount**: Value to add to the counts matrix before log-transformation. Default is 10.
-- **add_key_normalise**: Key to store the normalized data in the AnnData object. Default is 'normalised'.
-- **background_quantile**: Quantile to use for background estimation. Last resort only. Default is 0.3.
-
-## Background Estimation Methods
-
-### Using Pre-built Background Data
-The recommended approach is to provide a pre-built background AnnData object:
-
-```python
-adata_normalised = hto.normalise(
-    adata_hto=adata_hto,
-    adata_background=adata_background
-)
-```
-
-### Quantile-based Background
-When no background data is available, you can use quantile-based estimation:
-
-```python
-adata_normalised = hto.normalise(
-    adata_hto=adata_hto,
-    background_quantile=0.3  # Use 30th percentile as background
-)
+# Show that layer is added
+print(adata.layers)
 ```
 
 ## Output
 
-The normalisation function returns:
-- **AnnData object**: Containing the normalized HTO data in the specified layer
-- **Layer**: By default, normalized data is stored in the "normalised" layer
-- **obs annotations**: Additional metadata about the normalisation process
+The function outputs and `AnnData` object with the following added information:
 
-## Example Workflow
-
-```python
-import hto
-import scanpy as sc
-
-# Load your HTO data
-adata_hto = sc.read_h5ad("hto_data.h5ad")
-
-# Load or create background data
-adata_background = hto.tl.build_background(
-    adata_hto=adata_hto,
-    adata_gex=adata_gex,
-    min_umi=300
-)
-
-# Normalise the data
-adata_normalised = hto.normalise(
-    adata_hto=adata_hto,
-    adata_background=adata_background,
-    pseudocount=10,
-    verbose=1
-)
-
-# The normalised data is now available in adata_normalised.layers["normalised"]
-```
+- **Normalised Data**: adata.layers["<add_key_normalised>"] if `add_key_normalised` is specified, the normalized HTO data is stored in this layer. Else it's stored in `adata.X`.
+- `adata.uns["dnd"]["normalise"]`: Which is a dictionary containing:
+    - `params`: Parameters used for normalisation
+    - `layer`: The layer where normalised data is stored
+    - `mu_empty`: Means of log-transformed background counts for each HTO
+    - `std_empty`: Standard deviations of log-transformed background counts for each HTO
 
 ## See Also
 

@@ -1,13 +1,15 @@
 # Background Selection
 
-Background selection is a crucial step in HTO processing that involves identifying and characterizing cells or droplets that represent technical background signal. This background is then used for normalisation to remove technical noise while preserving biological signal.
+Background selection is a crucial step in HTO-DND pre-processing. It identifies empty droplets, possibly containing debris, that represent background signal. This background is then used for background-aware normalisation.
 
 ## Overview
 
-The HTO-DND package provides several methods for building background datasets:
-- **Version 1 (v1)**: Basic approach using low UMI count cells
-- **Version 2 (v2)**: Enhanced method incorporating both HTO and GEX data
-- **Version 3 (v3)**: Recommended approach with improved cell selection criteria
+The HTO-DND has the following background selection versions:
+- **Version 1 (v1)**: Select all cells with at least `min_umi` UMIs in GEX data as background. Requires `adata_hto_raw` and `adata_gex` (raw GEX data). *Not recommended*.
+- **Version 2 (v2)**: Gets the next `k` largest cells from each HTO in the raw HTO data that are not in the filtered dataset. Requires `adata_hto` and `adata_hto_raw`. *Not recommended*.
+- **Version 3 (v3)**: RECOMMENDED. Chooses the `k` cells with the highest total counts from the GEX data that are not whitelisted. Requires `adata_hto`, `adata_hto_raw`, and `adata_gex` (raw GEX data).
+
+Returns an AnnData object containing the HTO data of filtered, and the selected background droplets.
 
 ## Main Function
 
@@ -18,195 +20,40 @@ The primary function for building background datasets with automatic version sel
 ```python
 import hto
 
+# Generate data
+mockdata = hto.data.generate_hto(n_cells=1000, n_htos=3, seed=10)
+adata_hto = mockdata["filtered"]
+adata_hto_raw = mockdata["raw"]
+adata_gex = mockdata["gex"]
+
 # Basic usage with automatic version selection (v3 by default)
 adata_background = hto.tl.build_background(
     adata_hto=adata_hto,
+    adata_hto_raw=adata_hto_raw,
     adata_gex=adata_gex,
     min_umi=300,
     background_version="v3"
 )
-
-# Using only HTO data (v1 approach)
-adata_background = hto.tl.build_background(
-    adata_hto=adata_hto,
-    min_umi=300,
-    next_k_cells=10000,
-    background_version="v1"
-)
 ```
-
-## Background Versions
-
-### Version 1 (v1) - Basic UMI-based Selection
-
-The simplest approach that selects cells based solely on low UMI counts in HTO data.
-
-```python
-adata_background = hto.tl.build_background(
-    adata_hto=adata_hto,
-    min_umi=300,
-    next_k_cells=10000,
-    background_version="v1"
-)
-```
-
-**Characteristics:**
-- Uses only HTO data
-- Selects cells with UMI counts below threshold
-- Fast and straightforward
-- May include some low-expressing cells
-
-### Version 2 (v2) - HTO + GEX Integration
-
-Enhanced method that considers both HTO and gene expression data for background selection.
-
-```python
-adata_background = hto.tl.build_background(
-    adata_hto=adata_hto,
-    adata_gex=adata_gex,
-    min_umi=300,
-    k_gex_cells=40000,
-    background_version="v2"
-)
-```
-
-**Characteristics:**
-- Incorporates both HTO and GEX information
-- Better separation of true background from low-expressing cells
-- More accurate background estimation
-- Requires both HTO and GEX data
-
-### Version 3 (v3) - Recommended Approach
-
-The most sophisticated method with improved cell selection criteria and quality control.
-
-```python
-adata_background = hto.tl.build_background(
-    adata_hto=adata_hto,
-    adata_gex=adata_gex,
-    min_umi=300,
-    next_k_cells=10000,
-    k_gex_cells=40000,
-    background_version="v3"
-)
-```
-
-**Characteristics:**
-- Advanced filtering and selection criteria
-- Optimal balance between background purity and sample size
-- Robust to various experimental conditions
-- **Recommended for most applications**
 
 ## Parameters
 
-The background building functions accept the following key parameters:
+- `background_version`: Version of the background building algorithm. One of 'v1', 'v2' or 'v3'. 'v3' is recommended. Default is 'v3'.
+    - `"v1"`: `min_umi`: Minimum UMI count to consider a barcode. Default is 300.
+    - `"v2"`: `next_k_cells`: Number of cells to add to the background. Default is 10000.
+    - `"v3"`: `k_gex_cells`: Number of cells to use for GEX-based background estimation. Default is 40000.
 
-```python
-from hto._defaults import DESCRIPTIONS
-
-# Key parameters and their descriptions:
-print("min_umi:", DESCRIPTIONS['min_umi'])
-print("next_k_cells:", DESCRIPTIONS['next_k_cells'])
-print("k_gex_cells:", DESCRIPTIONS['k_gex_cells'])
-print("background_version:", DESCRIPTIONS['background_version'])
-```
-
-### Key Parameters:
-
-- **min_umi**: Minimum UMI count to consider a barcode. Default is 300.
-- **next_k_cells**: Number of cells to add to the background. Default is 10000.
-- **k_gex_cells**: Number of cells to use for GEX-based background estimation. Default is 40000.
-- **background_version**: Version of the background building algorithm. Must be either 'v1', 'v2' or 'v3'. 'v3' is recommended for best results. Default is 'v3'.
-
-## Quality Control
-
-### Assessing Background Quality
-
-After building background data, it's important to assess its quality:
-
-```python
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Check background cell count distribution
-print(f"Background cells: {adata_background.n_obs}")
-print(f"Original cells: {adata_hto.n_obs}")
-
-# Plot UMI distribution comparison
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-
-# Original data UMI distribution
-ax1.hist(adata_hto.obs['total_counts'], bins=50, alpha=0.7, label='All cells')
-ax1.hist(adata_background.obs['total_counts'], bins=50, alpha=0.7, label='Background')
-ax1.set_xlabel('Total UMI counts')
-ax1.set_ylabel('Frequency')
-ax1.set_title('UMI Distribution')
-ax1.legend()
-
-# HTO expression comparison
-hto_names = adata_hto.var_names
-for i, hto in enumerate(hto_names[:3]):  # Show first 3 HTOs
-    ax2.hist(adata_hto[:, hto].X.toarray().flatten(), bins=50, alpha=0.5, label=f'{hto} (all)')
-    ax2.hist(adata_background[:, hto].X.toarray().flatten(), bins=50, alpha=0.5, label=f'{hto} (bg)')
-
-ax2.set_xlabel('HTO counts')
-ax2.set_ylabel('Frequency')
-ax2.set_title('HTO Expression Distribution')
-ax2.legend()
-
-plt.tight_layout()
-plt.show()
-```
-
-## Example Workflow
-
-```python
-import hto
-import scanpy as sc
-
-# Load your data
-adata_hto = sc.read_h5ad("hto_raw_data.h5ad")
-adata_gex = sc.read_h5ad("gex_raw_data.h5ad")
-
-# Build background using recommended v3 method
-adata_background = hto.tl.build_background(
-    adata_hto=adata_hto,
-    adata_gex=adata_gex,
-    min_umi=300,
-    next_k_cells=10000,
-    k_gex_cells=40000,
-    background_version="v3"
-)
-
-# Quality control
-print(f"Selected {adata_background.n_obs} background cells")
-print(f"Background represents {adata_background.n_obs/adata_hto.n_obs*100:.1f}% of total cells")
-
-# Save background for later use
-adata_background.write("background_data.h5ad")
-
-# Use background for normalisation
-adata_normalised = hto.normalise(
-    adata_hto=adata_hto,
-    adata_background=adata_background
-)
-```
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Too few background cells**:
-- Decrease `min_umi` threshold
-- Increase `next_k_cells` or `k_gex_cells`
+**No background barcodes found in HTO data.**: This occurs if no background droplets meet the criteria. Check the following
 
-**Background cells seem too high-expressing**:
-- Increase `min_umi` threshold
-- Use v3 for better filtering
+- Ensure that `adata_hto_raw` and `adata_hto` are *not* the same dataset. `adata_hto_raw` should also include empty droplets, while `adata_hto` should only contain filtered cells.
+- Check that the parameters for background selection (e.g., `min_umi`, `next_k_cells`, `k_gex_cells`) are set appropriately for your dataset.
 
-**Memory issues with large datasets**:
-- Reduce `k_gex_cells` parameter
-- Process data in chunks
+**Only `n` barcodes found in HTO data.**: Similar to above, there are fewer than 100 background droplets detected. Those are too few to build a reliable background signal.
 
 ## See Also
 

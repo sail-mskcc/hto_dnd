@@ -14,7 +14,7 @@ The package supports command-line interface (CLI) usage and Python imports.
 ### Installation
 
 ```bash
-pip install hto-dnd
+pip install hto
 ```
 
 ### Basic Usage
@@ -46,51 +46,23 @@ hto demultiplex \
     --adata-hto hto_data.h5ad \
     --adata-hto-raw hto_raw_data.h5ad \
     --adata-gex gex_data.h5ad \
-    --adata-out demultiplexed_output.h5ad \
-    --csv-out assignments.csv
+    --adata-out adata_demultiplexed.h5ad
 ```
 
-## Package Structure
-
-The HTO-DND package is organized into several main modules:
-
-- **`hto.normalise()`** - Background-based normalisation
-- **`hto.denoise()`** - Technical noise removal  
-- **`hto.demux()`** - Cell assignment and classification
-- **`hto.demultiplex()`** - Complete end-to-end workflow
-- **`hto.tl.build_background()`** - Background dataset construction
-- **CLI** - Command-line interface for all functions
-
-## Workflow Overview
-
-The typical HTO-DND workflow consists of these steps:
-
-1. **[Background Selection](background_selection.md)** - Identify appropriate background cells
-2. **[Normalisation](normalisation.md)** - Background-based data normalisation  
-3. **[Denoising](denoising.md)** - Remove technical noise and batch effects
-4. **[Demultiplexing](demultiplexing.md)** - Assign cells to experimental conditions
-
-Each step can be run independently or as part of the complete workflow using `hto.demultiplex()` or the [CLI](cli.md).
-
-## Key Features
-
-### Multiple Algorithm Support
-- **Background methods**: k-means, GMM, quantile-based
-- **Denoising versions**: v1 (basic), v2 (enhanced, recommended)
-- **Demultiplexing methods**: GMM, k-means, Otsu thresholding, Weighted Otsu
+See [Demultiplexing](demultiplexing.md) for advanced usage and [CLI](cli.md) for command-line options.
 
 ## Data Requirements
 
-### Input Data
+HTO-DND requires data from cell hashing experiments where samples are labeled with hashtagged antibodies:
 
-- **HTO data**: Filtered feature-barcode matrix with HTO counts.
-- **Raw HTO data**: Unfiltered matrix including empty droplets. Required for background estimation.
-- **Gene expression data** (highly recommended!): For improved background estimation.
+- **HTO data** (`adata_hto`): Filtered cell × HTO count matrix in AnnData format. 
+- **Raw HTO data** (`adata_hto_raw`): Unfiltered barcode × HTO count matrix including empty droplets. Required for background estimation.
+- **Gene expression data** (`adata_gex`, recommended): Cell × gene count matrix for improved background estimation.
 
 ## Links
 
 * [GitHub Repository](https://github.com/sail-mskcc/hto_dnd.git)
-* [PyPI Package](https://pypi.org/project/hto-dnd/)
+* [PyPI Package](https://pypi.org/project/hto/)
 * [Issue Tracker](https://github.com/sail-mskcc/hto_dnd/issues)
 
 ## Citation

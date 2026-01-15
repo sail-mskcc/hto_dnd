@@ -9,10 +9,11 @@
    pages/installation.md
    pages/demultiplexing.md
    pages/cli.md
+   pages/parameters.rst
 
 .. toctree::
    :maxdepth: 1
-   :caption: Demultiplexing Workflow
+   :caption: Individual Steps:
 
    pages/demultiplexing/background_selection.md
    pages/demultiplexing/normalisation.md

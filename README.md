@@ -34,7 +34,7 @@ pip install .
 
 ### Python API
 
-The python API is built around AnnData. it is highly recommended two work with three AnnData objects:
+The python API is built around AnnData. It is highly recommended two work with three AnnData objects:
 
 * `adata_hto`: Filtered AnnData object with HTO data, containing only actual cells.
 * `adata_hto_raw`: Raw AnnData object with HTO data, containing actual cells and background signal.
@@ -54,7 +54,6 @@ adata_demux = hto.demultiplex(
   adata_hto,
   adata_hto_raw,
   adata_gex=adata_gex,
-  inplace=False,
 )
 
 # see results
@@ -77,6 +76,6 @@ hto demultiplex \
 
 HTO-DND requires data from cell hashing experiments where samples are labeled with hashtagged antibodies:
 
-- **HTO data** (`adata_hto`): Filtered cell × HTO count matrix in AnnData format
+- **HTO data** (`adata_hto`): Filtered cell × HTO count matrix in AnnData format.
 - **Raw HTO data** (`adata_hto_raw`): Unfiltered barcode × HTO count matrix including empty droplets. Required for background estimation.
 - **Gene expression data** (`adata_gex`, recommended): Cell × gene count matrix for improved background estimation.

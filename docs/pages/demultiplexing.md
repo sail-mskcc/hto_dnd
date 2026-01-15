@@ -4,24 +4,31 @@ Complete end-to-end workflow for HTO demultiplexing: background selection, norma
 
 ## Quick Example
 
+The resulting AnnData object contains:
+- `obs["hash_id"]`: assigned sample for each cell <-- This is commonly used to assign cells to samples.
+- `obs["doublet_info"]`: singlet/doublet/negative classification
+- `layers["normalised"]`: normalised HTO counts
+- `layers["denoised"]`: denoised HTO counts
+- `uns["dnd"]`: detailed QC and processing information
+
 ```python
 import hto
-import scanpy as sc
 
-# Load your data
-adata_hto = sc.read_h5ad("hto_data.h5ad")
-adata_hto_raw = sc.read_h5ad("hto_raw_data.h5ad")
-adata_gex = sc.read_h5ad("gex_data.h5ad")
+# get mockdata
+mockdata = hto.data.generate_hto(n_cells=1000, n_htos=3, seed=10)
+adata_hto = mockdata["filtered"]
+adata_hto_raw = mockdata["raw"]
+adata_gex = mockdata["gex"]
 
-# Complete workflow
+# denoise, normalize, and demultiplex
 adata_result = hto.demultiplex(
-    adata_hto=adata_hto,
-    adata_hto_raw=adata_hto_raw,
-    adata_gex=adata_gex
+  adata_hto,
+  adata_hto_raw,
+  adata_gex=adata_gex,
 )
 
-# Check results
-print(adata_result.obs['hash_id'].value_counts())
+# annotations are stored in adata_result.obs
+display(adata_result.obs.head())
 ```
 
 ## Advanced Examples
@@ -37,9 +44,13 @@ adata_result = hto.demultiplex(
     demux_method="otsu_weighted",
     kwargs_classify={"otsu_p_target": [0.6, 0.2, 0.2]}
 )
+
+hto.pl.barplot(adata_result.obs, by="hash_id")
 ```
 
 ### Visualizing and Interpreting Results
+
+*The plots below are based on real, not generated, data.*
 
 ```python
 # Visualize HTO distributions at each processing stage

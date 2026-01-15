@@ -87,6 +87,7 @@ def demultiplex(
     if isinstance(adata_hto_raw, str):
         logger.debug(f"Reading raw hto adata from {adata_hto_raw}")
         adata_hto_raw = read_adata(adata_hto_raw)
+
     if isinstance(adata_hto, str):
         if adata_hto.endswith(".h5ad"):
             logger.debug(f"Reading filtered adata from {adata_hto}")
@@ -96,9 +97,9 @@ def demultiplex(
             whitelist = read_whitelist(adata_hto)
             adata_hto = subset_whitelist(adata_hto_raw, whitelist)
         else:
-            raise ValueError(
-                f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)"
-            )
+            msg = f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)"
+            raise ValueError(msg)
+
     if isinstance(adata_background, str):
         logger.debug(f"Reading background adata from {adata_background}")
         adata_background = read_adata(adata_background)
@@ -121,6 +122,12 @@ def demultiplex(
         )
         assert (force) or (add_key_denoised not in adata_hto.layers), (
             f"Key {add_key_denoised} already exists in adata. Add option --add-key-denoise to change the key."
+        )
+
+    # WARNINGS
+    if inplace:
+        logger.warning(
+            "Behaviour with `inplace=True` works, but is not recommended. Some behaviours may change in future versions."
         )
 
     # GET DATA
@@ -199,12 +206,6 @@ def demultiplex(
             "Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoised' (--add-key-denoise) to generate report."
         )
     elif path_report is not None or show_report:
-        # get background
-        if adata_background is None:
-            adata_background = subset_whitelist(
-                adata_hto_raw, adata_hto.uns["dnd"]["normalise"]["params"]["background"]
-            )
-
         # run report
         report_safe(
             adata_hto=adata_hto,

@@ -16,11 +16,15 @@ adata_background = hto.tl.build_background(
 )
 ```
 
-## Methods/Versions
+## Background Version Options
 
-- **v3** (recommended): Selects `k` highest-count cells from raw GEX data not in filtered set. Requires `adata_hto`, `adata_hto_raw`, and `adata_gex`.
-- **v2**: Gets next `k` largest cells per HTO from raw data. Requires `adata_hto` and `adata_hto_raw`. Not recommended.
-- **v1**: Selects cells below `min_umi` threshold in GEX. Requires `adata_hto_raw` and `adata_gex`. Not recommended.
+The `background_version` parameter determines which algorithm is used for selecting empty droplets. Version `v3` is strongly recommended.
+
+| Value | Description | Required Data | Recommended |
+|-------|-------------|---------------|-------------|
+| "v3" | Selects `k` highest-count cells from raw GEX data not in filtered set. | `adata_hto`, `adata_hto_raw`, `adata_gex` | ✓ |
+| "v2" | Gets next `k` largest cells per HTO from raw data. | `adata_hto`, `adata_hto_raw` | |
+| "v1" | Selects cells below `min_umi` threshold in GEX. | `adata_hto_raw`, `adata_gex` | |
 
 ## Key Parameters
 
@@ -33,7 +37,7 @@ adata_background = hto.tl.build_background(
 
 ## Common Issues
 
-- **No background barcodes found**: Ensure `adata_hto_raw` includes empty droplets and differs from `adata_hto`. Check parameters match dataset size.
+- **No background barcodes found**: Ensure `adata_hto_raw` includes empty droplets and differs from `adata_hto`. 
 - **Too few barcodes (< 100)**: Increase `k_gex_cells` or adjust selection criteria. At least 100 droplets needed for reliable background.
 
 ## See Also

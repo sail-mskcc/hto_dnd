@@ -38,8 +38,8 @@ adata_denoised = hto.denoise(adata_hto=adata, use_layer="normalised")
 
 ## Common Issues
 
-- **Noise relationship not well captured**: Use `v2` (SVR) instead of `v1`. Adjust `C` and `epsilon` in `kwargs_denoise` if needed.
-- **Bi-modal distributions**: Linear regression (`v1`) fails on bi-modal HTO data. Always use `v2`.
+- **Bi-modal distributions**: Linear regression (`v1`) often fails to capture trend on bi-modal HTO data. `v2` (SVR) is recommended.
+- **Noise relationship not well captured**:  Adjust `C` and `epsilon` in `kwargs_denoise` as needed. Defaults work well in most cases due to normalization step.
 
 ## See Also
 

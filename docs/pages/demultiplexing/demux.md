@@ -18,12 +18,17 @@ adata = hto.denoise(adata, use_layer="normalised", add_key_denoised="denoised")
 adata_demuxed = hto.demux(adata_hto=adata, demux_method="otsu_weighted", use_layer="denoised")
 ```
 
-## Methods/Versions
+## Demux Method Options
 
-- **otsu_weighted** (default, recommended): Weighted Otsu thresholding per HTO. Controls for expected sample proportions.
-- **otsu**: Standard Otsu thresholding per HTO. Minimizes intra-class variance.
-- **gmm**: 2-component Gaussian Mixture Model with probabilistic assignments.
-- **kmeans**: 2-component k-means clustering. Slow for large datasets.
+The `demux_method` parameter determines which algorithm is used for classifying cells.
+
+| Value | Description | Recommended |
+|-------|-------------|-------------|
+| `otsu_weighted` | Weighted Otsu thresholding per HTO. Controls for expected sample proportions. | ✓ (default) |
+| `otsu` | Standard Otsu thresholding per HTO. Minimizes intra-class variance. | ✓ |
+| `gmm` | 2-component Gaussian Mixture Model with probabilistic assignments. | ✓ |
+| `kmeans` | 2-component k-means clustering. Slow for large datasets. | |
+| `gmm_demux` | Uses external gmm_demux function. Requires R. | |
 
 ## Key Parameters
 

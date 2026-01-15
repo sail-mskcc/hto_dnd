@@ -51,6 +51,8 @@ def report(
     logger = get_logger("report", level=verbose)
 
     if path_report is None:
+        if not show:
+            return
         show = True
         pdf = None
     else:

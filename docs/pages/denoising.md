@@ -1,30 +1,8 @@
 # Denoising
 
-The denoising module removes batch effects and technical noise from normalized HTO data by regressing out cell-by-cell variation. This step is crucial for improving the signal-to-noise ratio before demultiplexing.
+Removes batch effects and technical noise from normalized HTO data by regressing out cell-by-cell variation.
 
-## Overview
-
-Denoising in HTO-DND follows these steps:
-1. Estimate a cell-by-cell covariate that captures technical variation. Covariate is the background signal for estimate for each cell.
-2. Fit a regression model to remove this variation from the normalized HTO counts
-3. Output denoised HTO counts
-
-## Denoise method
-
-### Denoise versions (`denoise_version`)
-
-**Version 2 (`v2`, default)**: Uses Support Vector Regression (SVR) to model and remove technical variation. This version is more robust to outliers.
-**Version 1 (`v1`)**: Uses linear regression to model and remove technical variation. This version is less robust and does not capture the linear relationships as well.
-
-### Background estimation methods (`background_method`)
-
-The method is not very sensitive to this choice. `kmeans-fast` is recommended for speed and performance.
-
-- `"kmeans-fast"` (default): Fast k-means clustering (2-component) which identifies the lower cluster and members for each individual cells.
-- `"gmm"`: Gaussian Mixture Model (2-component) which models the background signal probabilistically.
-- `"kmeans"`: Standard k-means clustering (2-component). Slow and worse performance than `"kmeans-fast"`.
-
-### Examples
+## Quick Example
 
 ```python
 import hto
@@ -34,47 +12,38 @@ adata = hto.normalise(
     adata_hto=mockdata["filtered"],
     adata_hto_raw=mockdata["raw"],
     adata_gex=mockdata["gex"],
-    add_key_normalised="normalised",
+    add_key_normalised="normalised"
 )
-
-# Basic use
-adata_denoised = hto.denoise(adata_hto=adata)
-
-# Advanced use
-adata_denoised = hto.denoise(
-    adata_hto=adata,
-    background_method="kmeans-fast",
-    denoise_version="v2",
-    kwargs_denoise={
-        "C": 0.5,
-        "epsilon": 0.5,
-        "loss": "squared_epsilon_insensitive"
-    }
-)
-
-# Plot technical noise
-hto.pl.plot_technical_noise(adata_hto=adata, var=0)
+adata_denoised = hto.denoise(adata_hto=adata, use_layer="normalised")
 ```
 
-## Advanced Parameters
+## Methods/Versions
 
-The `kwargs_denoise` parameter accepts a dictionary with algorithm-specific parameters:
+**Denoise versions:**
+- **v2** (default): Support Vector Regression (SVR). More robust to outliers and bi-modal distributions.
+- **v1**: Linear regression. Less robust, not recommended.
 
-- **C**: Regularization parameter for the support vector regression (default: 1)
-- **epsilon**: Epsilon parameter for SVR loss function (default: 1)
-- **loss**: Loss function type (default: "squared_epsilon_insensitive")
-- **intercept_scaling**: Scaling factor for intercept (default: 1)
+**Background estimation:**
+- **kmeans-fast** (default, recommended): Fast 2-component k-means for identifying lower cluster per cell.
+- **gmm**: 2-component Gaussian Mixture Model. Probabilistic approach.
+- **kmeans**: Standard k-means. Slow, worse performance than kmeans-fast.
 
-## Troubleshooting
+## Key Parameters
 
-### Common Issues
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `denoise_version` | "v2" | Denoising algorithm version. Use "v2" for SVR. |
+| `background_method` | "kmeans-fast" | Method for estimating per-cell background signal. |
+| `kwargs_denoise` | {} | Dict of SVR parameters: `C` (regularization, default 1), `epsilon` (loss function, default 1), `loss` (type, default "squared_epsilon_insensitive"). |
 
-**Noise to Signal relationship not well captured**:
-- Since HTO is commonly bi-modal, linear regression models (`v1`) often don't capture the relationship well. 
-- While `v2` (SVR) is more robust, if issues persist, consider adjusting the `C` and `epsilon` parameters in `kwargs_denoise`.
+## Common Issues
+
+- **Noise relationship not well captured**: Use `v2` (SVR) instead of `v1`. Adjust `C` and `epsilon` in `kwargs_denoise` if needed.
+- **Bi-modal distributions**: Linear regression (`v1`) fails on bi-modal HTO data. Always use `v2`.
 
 ## See Also
 
+- [Demultiplexing](demultiplexing.md) - Complete workflow
 - [Normalisation](normalisation.md) - Required preprocessing step
-- [Demultiplexing](demultiplexing.md) - Next step after denoising
-- [CLI](cli.md) - Command-line interface for denoising
+- [Demux](demux.md) - Next step after denoising
+- [CLI](cli.md) - Command-line interface

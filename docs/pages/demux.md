@@ -1,25 +1,8 @@
 # Demux
 
-Demux is the final step that assigns each cell to specific sample based normalised and denoised HTO expression patterns. This module has classification methods to identify singlets, doublets, and negative cells.
+Assigns each cell to specific samples based on HTO expression, classifying singlets, doublets, and negatives.
 
-## Overview
-
-Demux follows these steps
-1. Cluster cells based on denoised HTO expression data
-2. Classify cells into singlets (one HTO), doublets (multiple HTOs), or negatives (no HTO signal)
-3. Calculate assignment metrices
-
-It supports the following demultiplexing methods:
-
-- `otsu`: Otsu thresholding for each HTO independently
-- `otsu_weighted`: Weighted Otsu thresholding for each HTO independently (more conservative than `otsu`)
-- `kmeans`: 2-component K-means clustering
-- `gmm`: Gaussian Mixture Model clustering with probabilistic assignments
-- `gmm_demux": External GMM-based demultiplexing, using HTO-Demux package (not recommended, data is already denoised)
-
-## Demux methods
-
-Generate normalised and denoised data for examples below:
+## Quick Example
 
 ```python
 import hto
@@ -29,112 +12,37 @@ adata = hto.normalise(
     adata_hto=mockdata["filtered"],
     adata_hto_raw=mockdata["raw"],
     adata_gex=mockdata["gex"],
-    add_key_normalised="normalised",
+    add_key_normalised="normalised"
 )
-adata = hto.denoise(
-    adata,
-    use_layer="normalised",
-    add_key_denoised="denoised"
-)
+adata = hto.denoise(adata, use_layer="normalised", add_key_denoised="denoised")
+adata_demuxed = hto.demux(adata_hto=adata, demux_method="otsu_weighted", use_layer="denoised")
 ```
 
-### Otsu Thresholding (`"otsu"`) - Recommended
+## Methods/Versions
 
-Otsu's method finds a threshold that minimizes intra-class variance for each HTO.
+- **otsu_weighted** (default, recommended): Weighted Otsu thresholding per HTO. Controls for expected sample proportions.
+- **otsu**: Standard Otsu thresholding per HTO. Minimizes intra-class variance.
+- **gmm**: 2-component Gaussian Mixture Model with probabilistic assignments.
+- **kmeans**: 2-component k-means clustering. Slow for large datasets.
 
-*Parameters*: None
+## Key Parameters
 
-```python
-# generate random data
-adata_demuxed = hto.demux(
-    adata_hto=adata,
-    demux_method="otsu",
-    use_layer="denoised",
-)
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `demux_method` | "otsu_weighted" | Demultiplexing algorithm to use. |
+| `otsu_p_target` | None | Expected proportion per HTO. None = equal weights (1/#HTOs). Can be float or list matching #HTOs. Higher weights → lower thresholds → more positives. |
+| `otsu_lam` | 1 | Penalty strength for weighted Otsu (0-1 scale). Higher = stronger penalty. |
+| `gmm_p_cutoff` | 0.5 | Probability cutoff for GMM classification. |
 
-# show thresholds
-thresholds = adata_demuxed.uns["dnd"]["demux"]["thresholds"]
-print("Otsu thresholds for each HTO:", thresholds)
+## Common Issues
 
-# show metrics
-metrics = adata_demuxed.uns["dnd"]["demux"]["metrics"]
-print("Demux metrics:", metrics)
-```
-
-### Weighted Otsu Thresholding (`"otsu_weighted"`) - Recommended, Default (v1.1.5+)
-
-Weighted Otsu's method applies weights to the histogram bins. This helps control for expected sample proportions.
-
-*Parameters*:
-- `otsu_p_target`: 
-    - If `None`, equal weights of `1 / #HTOs` are applied.
-    - If a number, that weight is applied to all HTOs.
-    - If a list of numbers, those weights are applied to each HTO respectively. Must match number of HTOs.
-- `otsu_lam`: Control strength of penalty (default: 1). 0-1 scale, higher values increase penalty.
-
-```python
-# Example: Higher weights lead to lower thresholds (and more cells classified as positive)
-thrs_hto_1 = hto.demux(adata_hto=adata, demux_method="otsu_weighted", use_layer="denoised", kwargs_classify={"otsu_p_target": [0.8, 0.1, 0.1]})
-thrs_hto_3 = hto.demux(adata_hto=adata, demux_method="otsu_weighted", use_layer="denoised", kwargs_classify={"otsu_p_target": [0.1, 0.1, 0.8]})
-
-print(f"Thresholds HTO 1 Rich:", thrs_hto_1.uns["dnd"]["demux"]["thresholds"])
-print(f"Thresholds HTO 3 Rich:", thrs_hto_3.uns["dnd"]["demux"]["thresholds"])
-```
-
-### Gaussian Mixture Model (`"gmm"`) - Recommended
-
-2-component GMM clustering that assigns cells based on probability distributions.
-
-```python
-adata_demuxed = hto.demux(
-    adata_hto=adata,
-    demux_method="gmm",
-    kwargs_classify={"gmm-p-cutoff": 0.5},
-    use_layer="denoised",
-)
-
-adata_demuxed.uns["dnd"]["demux"]["metrics"]
-
-# Show thresholds
-thresholds = adata_demuxed.uns["dnd"]["demux"]["thresholds"]
-print("GMM thresholds for each HTO:", thresholds)
-
-# Show metrics
-metrics = adata_demuxed.uns["dnd"]["demux"]["metrics"]
-print("Demux metrics:", metrics)
-```
-
-### K-means Clustering (`"kmeans"`) - Slow for large datasets
-
-Traditional clustering approach that partitions cells into discrete groups.
-
-```python
-adata_demuxed = hto.demux(
-    adata_hto=adata,
-    demux_method="kmeans",
-    use_layer="denoised",
-)
-
-# Show thresholds
-thresholds = adata_demuxed.uns["dnd"]["demux"]["thresholds"]
-print("K-means thresholds for each HTO:", thresholds)
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**High negative rate**:
-- If data does not follow a bi-modal distribution, demultiplexing quality suffers. Library quality could be poor, or insufficient HTO labelling.
-- Consider using `otsu_weighted` with higher weights for expected positive HTOs. Can be controlled with `otsu_p_target` parameter.
-
-**High doublet rates**:
-- Generally, parameters balance high doublet or negative rates. Lower thresholds increase doublets, while higher thresholds increase negatives.
-- Adjust `otsu_p_target` or `otsu_lam` parameters to tune thresholds, or consider using GMM and control with `gmm-p-cutoff`.
+- **High negative rate**: Poor library quality or non-bi-modal distribution. Use `otsu_weighted` with higher `otsu_p_target` for expected positive HTOs.
+- **High doublet rate**: Lower thresholds increase doublets, higher increase negatives. Adjust `otsu_p_target`, `otsu_lam`, or `gmm_p_cutoff` to balance.
 
 ## See Also
 
+- [Demultiplexing](demultiplexing.md) - Complete workflow
 - [Normalisation](normalisation.md) - Required preprocessing step
 - [Denoising](denoising.md) - Recommended preprocessing step
-- [CLI](cli.md) - Command-line interface for demultiplexing
-- [Background Selection](background_selection.md) - For building background data
+- [Background Selection](background_selection.md) - Building background data
+- [CLI](cli.md) - Command-line interface

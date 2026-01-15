@@ -36,6 +36,6 @@ hto demultiplex \
 ## See Also
 
 - [Installation](installation.md) - Package installation
-- [Normalisation](normalisation.md) - Understanding normalisation
-- [Denoising](denoising.md) - Denoising parameters  
+- [Normalisation](demultiplexing/normalisation.md) - Understanding normalisation
+- [Denoising](demultiplexing/denoising.md) - Denoising parameters  
 - [Demultiplexing](demultiplexing.md) - Demultiplexing methods

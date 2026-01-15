@@ -72,3 +72,11 @@ hto demultiplex \
   --adata-gex /path/to/adata_gex.h5ad \
   --adata-out /path/to/output.h5ad
 ```
+
+## Data Requirements
+
+HTO-DND requires data from cell hashing experiments where samples are labeled with hashtagged antibodies:
+
+- **HTO data** (`adata_hto`): Filtered cell × HTO count matrix in AnnData format
+- **Raw HTO data** (`adata_hto_raw`): Unfiltered barcode × HTO count matrix including empty droplets. Required for background estimation.
+- **Gene expression data** (`adata_gex`, recommended): Cell × gene count matrix for improved background estimation.

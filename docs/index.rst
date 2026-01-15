@@ -3,14 +3,19 @@
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
-   pages/welcome.md
    pages/installation.md
-   pages/normalisation.md
-   pages/background_selection.md
-   pages/denoising.md
    pages/demultiplexing.md
    pages/cli.md
-   pages/snakemake_test.md
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Demultiplexing Workflow
+
+   pages/demultiplexing/background_selection.md
+   pages/demultiplexing/normalisation.md
+   pages/demultiplexing/denoising.md
+   pages/demultiplexing/demux.md
+

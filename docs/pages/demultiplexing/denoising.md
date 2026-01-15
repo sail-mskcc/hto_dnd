@@ -43,7 +43,7 @@ adata_denoised = hto.denoise(adata_hto=adata, use_layer="normalised")
 
 ## See Also
 
-- [Demultiplexing](demultiplexing.md) - Complete workflow
+- [Demultiplexing](../demultiplexing.md) - Complete workflow
 - [Normalisation](normalisation.md) - Required preprocessing step
 - [Demux](demux.md) - Next step after denoising
-- [CLI](cli.md) - Command-line interface
+- [CLI](../cli.md) - Command-line interface

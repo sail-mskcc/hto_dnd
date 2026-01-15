@@ -46,34 +46,35 @@ adata_result = hto.demultiplex(
 hto.pl.distribution_stages(adata_result)
 ```
 
-![Distribution stages](media/distributions_example_v0.png)
+![Distribution stages](../media/distributions_example_v0.png)
 
 ```python
 # Plot technical noise to assess denoising quality
 hto.pl.technical_noise(adata_result, var=0)  # var=0 for first HTO
 ```
 
-![Technical noise](media/technical_noise_v0.png)
+![Technical noise](../media/technical_noise_v0.png)
 
 ## Key Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `demux_method` | "otsu_weighted" | Demultiplexing algorithm. See [Demux](demux.md) for options. |
-| `background_version` | "v3" | Background selection method. See [Background Selection](background_selection.md). |
-| `denoise_version` | "v2" | Denoising algorithm version. See [Denoising](denoising.md). |
+| `demux_method` | "otsu_weighted" | Demultiplexing algorithm. See [Demux](demultiplexing/demux.md) for options. |
+| `background_version` | "v3" | Background selection method. See [Background Selection](demultiplexing/background_selection.md). |
+| `denoise_version` | "v2" | Denoising algorithm version. See [Denoising](demultiplexing/denoising.md). |
 | `kwargs_classify` | {} | Method-specific parameters (e.g., `otsu_p_target`, `gmm_p_cutoff`). |
 
 ## Common Issues
 
-- **High negative/doublet rates**: Adjust `kwargs_classify` parameters. See [Demux](demux.md) for troubleshooting.
-- **Poor background estimation**: Ensure `adata_hto_raw` contains empty droplets. See [Background Selection](background_selection.md).
-- **Insufficient denoising**: Check technical noise plots. Adjust denoising parameters if needed. See [Denoising](denoising.md).
+- **High negative/doublet rates**: Adjust `kwargs_classify` parameters. See [Demux](demultiplexing/demux.md) for troubleshooting.
+- **Poor background estimation**: Ensure `adata_hto_raw` contains empty droplets. See [Background Selection](demultiplexing/background_selection.md).
+- **Insufficient denoising**: Check technical noise plots. Adjust denoising parameters if needed. See [Denoising](demultiplexing/denoising.md).
 
 ## See Also
 
-- [Background Selection](background_selection.md) - First step in workflow
-- [Normalisation](normalisation.md) - Background-based normalisation
-- [Denoising](denoising.md) - Technical noise removal
-- [Demux](demux.md) - Cell assignment methods
+- [Background Selection](demultiplexing/background_selection.md) - First step in workflow
+- [Normalisation](demultiplexing/normalisation.md) - Background-based normalisation
+- [Denoising](demultiplexing/denoising.md) - Technical noise removal
+- [Demux](demultiplexing/demux.md) - Cell assignment methods
 - [CLI](cli.md) - Command-line interface
+

@@ -30,7 +30,7 @@ adata = hto.normalise(
 
 ## See Also
 
-- [Demultiplexing](demultiplexing.md) - Complete workflow
+- [Demultiplexing](../demultiplexing.md) - Complete workflow
 - [Background Selection](background_selection.md) - Building background data
 - [Denoising](denoising.md) - Next step after normalisation
-- [CLI](cli.md) - Command-line interface
+- [CLI](../cli.md) - Command-line interface

@@ -41,8 +41,8 @@ adata_demuxed = hto.demux(adata_hto=adata, demux_method="otsu_weighted", use_lay
 
 ## See Also
 
-- [Demultiplexing](demultiplexing.md) - Complete workflow
+- [Demultiplexing](../demultiplexing.md) - Complete workflow
 - [Normalisation](normalisation.md) - Required preprocessing step
 - [Denoising](denoising.md) - Recommended preprocessing step
 - [Background Selection](background_selection.md) - Building background data
-- [CLI](cli.md) - Command-line interface
+- [CLI](../cli.md) - Command-line interface

@@ -38,6 +38,6 @@ adata_background = hto.tl.build_background(
 
 ## See Also
 
-- [Demultiplexing](demultiplexing.md) - Complete workflow
+- [Demultiplexing](../demultiplexing.md) - Complete workflow
 - [Normalisation](normalisation.md) - Using background data
-- [CLI](cli.md) - Command-line interface
+- [CLI](../cli.md) - Command-line interface

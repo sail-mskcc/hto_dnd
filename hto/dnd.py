@@ -200,23 +200,17 @@ def demultiplex(
         create_folder=True,
     )
 
-    # REPORT
-    if add_key_normalise is None or add_key_denoised is None:
-        logger.warning(
-            "Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoised' (--add-key-denoise) to generate report."
-        )
-    elif path_report is not None or show_report:
-        # run report
-        report_safe(
-            adata_hto=adata_hto,
-            adata_background=adata_background,
-            adata_hto_raw=adata_hto_raw,
-            adata_gex=adata_gex,
-            path_report=path_report,
-            use_key_normalise=add_key_normalise,
-            use_key_denoise=add_key_denoised,
-            show=show_report,
-            verbose=verbose,
-        )
+    # REPORT (not yet tested well)
+    report_safe(
+        adata_hto=adata_hto,
+        adata_background=adata_background,
+        adata_hto_raw=adata_hto_raw,
+        adata_gex=adata_gex,
+        path_report=path_report,
+        use_key_normalise=add_key_normalise,
+        use_key_denoise=add_key_denoised,
+        show=show_report,
+        verbose=verbose,
+    )
 
     return adata_hto

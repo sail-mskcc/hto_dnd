@@ -36,6 +36,7 @@ def threshold_otsu_weighted(
     # class probabilities for all possible thresholds
     weight1 = np.cumsum(counts)
     weight2 = np.cumsum(counts[::-1])[::-1]
+
     # class means for all possible thresholds
     mean1 = np.cumsum(counts * bin_centers) / weight1
     mean2 = (np.cumsum((counts * bin_centers)[::-1]) / weight2[::-1])[::-1]
@@ -54,6 +55,49 @@ def threshold_otsu_weighted(
     prior = np.exp(-lam * (pos_frac - p_target) ** 2)
     score = variance_norm * prior
     idx = np.argmax(score)
+
+    threshold = bin_centers[idx]
+
+    return threshold
+
+
+def threshold_otsu_biased(image=None, nbins=256, alpha=0.5, *, hist=None) -> float:
+    """Weighted implementation of sklearn's threshold_otsu function.
+
+    Source code from: https://github.com/scikit-image/scikit-image/blob/v0.25.2/skimage/filters/thresholding.py#L336-L407
+
+    Changes:
+    - Added alpha parameter to bias the threshold towards smaller or larger classes. If alpha > 1, the threshold is biased towards foreground (smaller class). If alpha < 1, the threshold is biased towards background (larger class).
+    """
+    if image is not None and image.ndim > 2 and image.shape[-1] in (3, 4):
+        warn(
+            f"threshold_otsu is expected to work correctly only for "
+            f"grayscale images; image shape {image.shape} looks like "
+            f"that of an RGB image."
+        )
+
+    # Check if the image has more than one intensity value; if not, return that
+    # value
+    if image is not None:
+        first_pixel = image.reshape(-1)[0]
+        if np.all(image == first_pixel):
+            return first_pixel
+
+    counts, bin_centers = _validate_image_histogram(image, hist, nbins)
+
+    # class probabilities for all possible thresholds
+    weight1 = np.cumsum(counts)
+    weight2 = np.cumsum(counts[::-1])[::-1]
+
+    # class means for all possible thresholds
+    mean1 = np.cumsum(counts * bin_centers) / weight1
+    mean2 = (np.cumsum((counts * bin_centers)[::-1]) / weight2[::-1])[::-1]
+
+    # penalise deviations from target
+    variance_biased = (
+        weight1[:-1] * (weight2[1:] ** alpha) * (mean1[:-1] - mean2[1:]) ** 2
+    )
+    idx = np.argmax(variance_biased)
 
     threshold = bin_centers[idx]
 

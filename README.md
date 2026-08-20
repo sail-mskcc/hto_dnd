@@ -3,14 +3,15 @@
 [![PyPI version](https://badge.fury.io/py/hto.svg)](https://badge.fury.io/py/hto)
 [![Build Status](https://github.com/sail-mskcc/hto_dnd/actions/workflows/test.yml/badge.svg)](https://github.com/sail-mskcc/hto_dnd/actions/workflows/test.yml)
 
-`hto` is a Python package designed for efficient and accurate demultiplexing of hash-tagged oligonucleotides (HTOs) in single-cell data.
+`hto` is a Python package for efficient and accurate **hashtag multiplexing** demultiplexing of hash-tagged oligonucleotides (HTOs) in **single-cell** data.
+Hashtag multiplexing lets many single-cell samples be pooled into one run; `hto` recovers each cell's sample of origin from the HTO signal.
 It normalises based on observed background signal and denoises the data to remove batch effects and noise:
 
 - **Normalization**: Normalize HTO data using background signal, inspired by the DSB method (see citation below).
-- **Denoising**: Remove batch effects and noise from the data by regressing out cell by cell variation.
-- **Demultiplexing**: Cluster and classify cells into singlets, doublets, or negatives using clustering methods like k-means or Gaussian Mixture Models (GMM).
+- **Denoising**: Remove batch effects and noise from the single-cell data by regressing out cell-by-cell variation.
+- **Demultiplexing**: Cluster and classify cells into singlets, doublets, or negatives. The default method is `otsu_weighted`; `otsu`, `otsu_biased`, `kmeans`, `gmm`, and `gmm_demux` are also available.
 
-The package supports command-line interface (CLI) usage and Python imports.
+The package supports command-line interface (CLI) usage and Python imports, and ships a Cromwell/WDL pipeline (see [`pipeline/`](./pipeline)) that takes hashtag multiplexing experiments from raw FASTQs to demultiplexed single-cell results.
 
 ![HTO DND](./media/pipeline_v0.png)
 
@@ -34,7 +35,7 @@ pip install .
 
 ### Python API
 
-The python API is built around AnnData. it is highly recommended two work with three AnnData objects:
+The python API is built around AnnData. It is highly recommended two work with three AnnData objects:
 
 * `adata_hto`: Filtered AnnData object with HTO data, containing only actual cells.
 * `adata_hto_raw`: Raw AnnData object with HTO data, containing actual cells and background signal.
@@ -49,15 +50,15 @@ adata_hto = mockdata["filtered"]
 adata_hto_raw = mockdata["raw"]
 adata_gex = mockdata["gex"]
 
-# denoise, normalize, and demultiplex
+# denoise, normalize, and demultiplex the hashtag multiplexing signal
+# (demux_method defaults to "otsu_weighted")
 adata_demux = hto.demultiplex(
   adata_hto,
   adata_hto_raw,
   adata_gex=adata_gex,
-  inplace=False,
 )
 
-# see results
+# see results: each single cell is assigned to its sample of origin
 adata_demux.obs[["hash_id", "doublet_info"]].head()
 ```
 
@@ -70,5 +71,20 @@ hto demultiplex \
   --adata-hto /path/to/adata_hto.h5ad \
   --adata-hto-raw /path/to/adata_hto_raw.h5ad \
   --adata-gex /path/to/adata_gex.h5ad \
+  --demux-method otsu_weighted \
   --adata-out /path/to/output.h5ad
 ```
+
+`--demux-method` defaults to `otsu_weighted`. Run `hto demultiplex --help` for all options.
+
+### Cromwell / WDL pipeline
+
+For processing hashtag multiplexing experiments end-to-end (raw FASTQs → aligned counts → demultiplexed single-cell AnnData + QC report), an alevin-fry based Cromwell/WDL pipeline is provided in [`pipeline/`](./pipeline). See [`pipeline/README.md`](./pipeline/README.md).
+
+## Data Requirements
+
+`hto` requires data from single-cell hashtag multiplexing (cell hashing) experiments where samples are labeled with hashtagged antibodies:
+
+- **HTO data** (`adata_hto`): Filtered cell × HTO count matrix in AnnData format.
+- **Raw HTO data** (`adata_hto_raw`): Unfiltered barcode × HTO count matrix including empty droplets. Required for background estimation.
+- **Gene expression data** (`adata_gex`, recommended): Cell × gene count matrix for improved background estimation.

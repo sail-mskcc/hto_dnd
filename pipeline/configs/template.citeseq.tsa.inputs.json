@@ -1,0 +1,33 @@
+{
+    "CiteSeq.uriFastqR1": [
+        "/path/to/fastq/sample_S35_L003_R1_001.fastq.gz",
+        "/path/to/fastq/sample_S35_L004_R1_001.fastq.gz"
+    ],
+    "CiteSeq.uriFastqR2": [
+        "/path/to/fastq/sample_S35_L003_R2_001.fastq.gz",
+        "/path/to/fastq/sample_S35_L004_R2_001.fastq.gz"
+    ],
+    "CiteSeq.sampleName": "cite_test",
+    "CiteSeq.lengthR1": 28,
+    "CiteSeq.lengthR2": 15,
+    "CiteSeq.cbStartPos": 1,
+    "CiteSeq.cbEndPos": 16,
+    "CiteSeq.umiStartPos": 17,
+    "CiteSeq.umiEndPos": 28,
+    "CiteSeq.cellBarcodeWhitelistUriRaw": "/path/to/raw/whitelist.tsv.gz",
+    "CiteSeq.cellBarcodeWhiteListMethodRaw": "10x",
+    "CiteSeq.cellBarcodeWhitelistUriFil": "/path/to/filtered/whitelist.tsv.gz",
+    "CiteSeq.cellBarcodeWhiteListMethodFil": "10x",
+    "CiteSeq.translate10XBarcodes": false,
+    "CiteSeq.chemistry": "10x V3.1 CITE",
+    "CiteSeq.slidingWindowSearch": false,
+    "CiteSeq.cbCollapsingDistance": 1,
+    "CiteSeq.umiCollapsingDistance": 1,
+    "CiteSeq.numExpectedCells": 0,
+    "CiteSeq.resourceSpec": {
+        "cpu": 32,
+        "memory": -1
+    },
+    "CiteSeq.taglist": "/data/sail/isabl/datalake/prod/010/collaborators/abdel-wahab-omar-lab/.data/analyses/10/19/1019/cromwell-inputs/taglist.csv",
+    "CiteSeq.trimPos": 0
+}

@@ -10,7 +10,6 @@
 import warnings
 
 import anndata as ad
-import pandas as pd
 
 from ._classify import assert_demux
 from ._cluster_background import assert_background
@@ -20,6 +19,7 @@ from ._utils import (
     add_docstring,
     get_arg,
     read_adata,
+    read_whitelist,
     subset_whitelist,
     test_write,
     user_input_error_decorator,
@@ -86,22 +86,23 @@ def demultiplex(
     # Note - adata_hto can also be a whitelist of barcodes
     if isinstance(adata_hto_raw, str):
         logger.debug(f"Reading raw hto adata from {adata_hto_raw}")
-        adata_hto_raw = ad.read_h5ad(adata_hto_raw)
+        adata_hto_raw = read_adata(adata_hto_raw)
+
     if isinstance(adata_hto, str):
         if adata_hto.endswith(".h5ad"):
             logger.debug(f"Reading filtered adata from {adata_hto}")
-            adata_hto = ad.read_h5ad(adata_hto)
+            adata_hto = read_adata(adata_hto)
         elif adata_hto.endswith(".csv") or adata_hto.endswith(".csv.gz"):
             logger.debug(f"Reading whitelist from {adata_hto}")
-            whitelist = pd.read_csv(adata_hto, header=None, index_col=0).index.tolist()
+            whitelist = read_whitelist(adata_hto)
             adata_hto = subset_whitelist(adata_hto_raw, whitelist)
         else:
-            raise ValueError(
-                f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)"
-            )
+            msg = f"Unknown file format for adata_hto: {adata_hto}. Must be anndata (.h5ad) or whitelist (.csv|.csv.gz)"
+            raise ValueError(msg)
+
     if isinstance(adata_background, str):
         logger.debug(f"Reading background adata from {adata_background}")
-        adata_background = ad.read_h5ad(adata_background)
+        adata_background = read_adata(adata_background)
 
     # ASSERTIONS
     # - check that output path is writeable (and .h5ad)
@@ -121,6 +122,12 @@ def demultiplex(
         )
         assert (force) or (add_key_denoised not in adata_hto.layers), (
             f"Key {add_key_denoised} already exists in adata. Add option --add-key-denoise to change the key."
+        )
+
+    # WARNINGS
+    if inplace:
+        logger.warning(
+            "Behaviour with `inplace=True` works, but is not recommended. Some behaviours may change in future versions."
         )
 
     # GET DATA
@@ -193,29 +200,17 @@ def demultiplex(
         create_folder=True,
     )
 
-    # REPORT
-    if add_key_normalise is None or add_key_denoised is None:
-        logger.warning(
-            "Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) and 'add_key_denoised' (--add-key-denoise) to generate report."
-        )
-    elif path_report is not None or show_report:
-        # get background
-        if adata_background is None:
-            adata_background = subset_whitelist(
-                adata_hto_raw, adata_hto.uns["dnd"]["normalise"]["params"]["background"]
-            )
-
-        # run report
-        report_safe(
-            adata_hto=adata_hto,
-            adata_background=adata_background,
-            adata_hto_raw=adata_hto_raw,
-            adata_gex=adata_gex,
-            path_report=path_report,
-            use_key_normalise=add_key_normalise,
-            use_key_denoise=add_key_denoised,
-            show=show_report,
-            verbose=verbose,
-        )
+    # REPORT (not yet tested well)
+    report_safe(
+        adata_hto=adata_hto,
+        adata_background=adata_background,
+        adata_hto_raw=adata_hto_raw,
+        adata_gex=adata_gex,
+        path_report=path_report,
+        use_key_normalise=add_key_normalise,
+        use_key_denoise=add_key_denoised,
+        show=show_report,
+        verbose=verbose,
+    )
 
     return adata_hto

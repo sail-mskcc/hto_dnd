@@ -1,0 +1,36 @@
+{
+    "Hashtag.uriFastqR1": [
+        "s3://.../sample1_L001_R1_001.fastq.gz",
+        "s3://.../sample1_L002_R1_001.fastq.gz",
+        "s3://.../sample1_L003_R1_001.fastq.gz",
+        "s3://.../sample1_L004_R1_001.fastq.gz"
+    ],
+    "Hashtag.uriFastqR2": [
+        "s3://.../sample1_L001_R2_001.fastq.gz",
+        "s3://.../sample1_L002_R2_001.fastq.gz",
+        "s3://.../sample1_L003_R2_001.fastq.gz",
+        "s3://.../sample1_L004_R2_001.fastq.gz"
+    ],
+    "Hashtag.sampleName": "sample1",
+    "Hashtag.scRnaSeqPlatform": "10x",
+    "Hashtag.lengthR1": 26,
+    "Hashtag.lengthR2": 25,
+    "Hashtag.cellBarcodeWhitelistUri": "s3://.../barcodes.csv.gz",
+    "Hashtag.cellBarcodeWhiteListMethod": "10x",
+    "Hashtag.hashTagList": "s3://.../tag-list.csv",
+    "Hashtag.cbStartPos": 1,
+    "Hashtag.cbEndPos": 16,
+    "Hashtag.umiStartPos": 17,
+    "Hashtag.umiEndPos": 26,
+    "Hashtag.trimPos": 10,
+    "Hashtag.slidingWindowSearch": false,
+    "Hashtag.translate10XBarcodes": false,
+    "Hashtag.cbCollapsingDistance": 1,
+    "Hashtag.umiCollapsingDistance": 1,
+    "Hashtag.numExpectedCells": 0,
+    "Hashtag.minCount": 10,
+    "Hashtag.resourceSpec": {
+        "cpu": 16,
+        "memory": -1
+    }
+}

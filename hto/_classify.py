@@ -7,10 +7,18 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, silhouette_score
 
 from ._defaults import DEFAULTS
+from ._exceptions import UserInputError
 from ._logging import get_logger
 from ._utils import add_docstring
 
-SUPPORTED_DEMUX_METHODS = ["kmeans", "gmm", "otsu", "otsu_weighted", "gmm_demux"]
+SUPPORTED_DEMUX_METHODS = [
+    "kmeans",
+    "gmm",
+    "otsu",
+    "otsu_weighted",
+    "otsu_biased",
+    "gmm_demux",
+]
 
 
 def assert_demux(method):
@@ -33,6 +41,7 @@ def classify(
         - K-means: Silhouette score and Davies-Bouldin index
         - GMM: BIC and log-likelihood
         - Otsu: Inter-class variance and entropy
+        - Weighted Otsu: Inter-class variance (weighted) and entropy
         - GMM demux: Uses external gmm_demux function
 
     Args:
@@ -61,6 +70,9 @@ def classify(
     elif demux_method == "otsu_weighted":
         logger.debug("Applying weighted Otsu's method to each column")
         return classify_otsu_weighted(data, logger, **kwargs_classify)
+    elif demux_method == "otsu_biased":
+        logger.debug("Applying biased Otsu's method to each column")
+        return classify_otsu_biased(data, logger, **kwargs_classify)
     elif demux_method == "gmm_demux":
         logger.debug("Applying GMM demux to each column")
         return classify_gmm_demux(data, logger, **kwargs_classify)
@@ -226,8 +238,23 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
     nbins = kwargs.get("otsu_nbins", DEFAULTS["kwargs_classify"]["otsu_nbins"])
     lam = kwargs.get("otsu_lam", DEFAULTS["kwargs_classify"]["otsu_lam"])
     p_target = kwargs.get("otsu_p_target", DEFAULTS["kwargs_classify"]["otsu_p_target"])
+
+    # assert and init p_target:
+    # - default to 1 / n_htos
+    # - if single value, expand to all HTOs
+    # - if list, ensure length matches n_htos
     if p_target is None:
         p_target = 1 / df_umi.shape[1]
+    if isinstance(p_target, list) and (len(p_target) != df_umi.shape[1]):
+        msg = (
+            f"`otsu_p_target` is a list. It provides {len(p_target)} weights, "
+            f"but there are {df_umi.shape[1]} HTOs."
+            f" Please ensure the length matches the number of HTOs."
+        )
+        raise UserInputError(msg)
+    if not isinstance(p_target, list):
+        p_target = [p_target] * df_umi.shape[1]
+
     logger = logger or get_logger("demux", level=1)
 
     # init
@@ -237,13 +264,13 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
     if logger is None:
         logger = get_logger("demux", level=1)
 
-    for hto in df_umi.columns:
+    for i, hto in enumerate(df_umi.columns):
         # prepare data
         logger.debug(f"Demultiplexing HTO '{hto}'...")
         series = df_umi[hto].values.reshape(-1, 1)
         # apply function
         threshold = threshold_otsu_weighted(
-            series, p_target=p_target, lam=lam, nbins=nbins
+            series, p_target=p_target[i], lam=lam, nbins=nbins
         )
         labels = (series > threshold).astype(int).flatten()
         # evaluate
@@ -257,7 +284,7 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
             weight1 * weight2 * (np.mean(signal) - np.mean(background)) ** 2
         )
         inter_class_variance_weighted = (
-            inter_class_variance - lam * (weight2 - p_target) ** 2
+            inter_class_variance - lam * (weight2 - p_target[i]) ** 2
         )
 
         # Calculate entropy of the thresholded image
@@ -267,6 +294,55 @@ def classify_otsu_weighted(df_umi, logger=None, **kwargs):
         metrics_one = {
             "inter_class_variance": float(inter_class_variance),
             "inter_class_variance_weighted": float(inter_class_variance_weighted),
+            "entropy": float(entropy),
+        }
+
+        # store results
+        thresholds[hto] = float(threshold)
+        metrics[hto] = metrics_one
+        classifications[hto] = labels
+
+    return classifications, thresholds, metrics
+
+
+def classify_otsu_biased(df_umi, logger=None, **kwargs):
+    from hto._otsu import threshold_otsu_biased
+
+    # init
+    nbins = kwargs.get("otsu_nbins", DEFAULTS["kwargs_classify"]["otsu_nbins"])
+    alpha = kwargs.get("otsu_alpha", 0.5)
+
+    logger = logger or get_logger("demux", level=1)
+
+    # init
+    classifications = {}
+    metrics = {}
+    thresholds = {}
+
+    for hto in df_umi.columns:
+        # prepare data
+        logger.debug(f"Demultiplexing HTO '{hto}'...")
+        series = df_umi[hto].values.reshape(-1, 1)
+        # apply function
+        threshold = threshold_otsu_biased(series, alpha=alpha, nbins=nbins)
+        labels = (series > threshold).astype(int).flatten()
+        # evaluate
+        logger.debug("Evaluating Otsu thresholding")
+        background = series[labels == 0]
+        signal = series[labels == 1]
+        # Inter-class variance (which Otsu's method maximizes)
+        weight1 = np.sum(labels == 0) / len(labels)
+        weight2 = np.sum(labels == 1) / len(labels)
+        inter_class_variance = (
+            weight1 * weight2 * (np.mean(signal) - np.mean(background)) ** 2
+        )
+
+        # Calculate entropy of the thresholded image
+        hist, _ = np.histogram(labels, bins=2)
+        hist_norm = hist / np.sum(hist)
+        entropy = scipy.stats.entropy(hist_norm)
+        metrics_one = {
+            "inter_class_variance": float(inter_class_variance),
             "entropy": float(entropy),
         }
 

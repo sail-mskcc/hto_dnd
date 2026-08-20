@@ -47,6 +47,7 @@ def distribution(
     layer=None,
     cmap="tab20",
     title="",
+    add_thresholds=True,
     remove_legend=False,
     params_legend={},
     use_log=True,
@@ -60,6 +61,7 @@ def distribution(
         layer (str, optional): The layer to use for the plot. Defaults to None.
         cmap (str, optional): The colormap to use for the plot. Defaults to "tab20".
         title (str, optional): The title of the plot. Defaults to "".
+        add_thresholds (bool, optional): If True, draw demultiplexing thresholds stored in `adata.uns["dnd"]`. Defaults to True.
         remove_legend (bool, optional): If True, remove the legend from the plot. Defaults to False.
         params_legend (dict, optional): Additional parameters for the legend.
         use_log (bool, optional): If True, use a log scale for the x-axis. Defaults to True.
@@ -78,6 +80,9 @@ def distribution(
         "fill": True,
     }
     params_kdeplot = {**defaults_kdeplot, **kwargs}
+
+    if isinstance(cmap, str):
+        cmap = dict(zip(adata.var_names, sns.color_palette(cmap)))
 
     # prep data
     df_long = adata.to_df(layer).melt(var_name="variable", value_name="value")
@@ -110,6 +115,15 @@ def distribution(
     else:
         ax.set_xlabel("Antibody Count")
 
+    if add_thresholds and "dnd" in adata.uns:
+        thresholds = adata.uns["dnd"]["demux"]["thresholds"]
+        for v, thresh in thresholds.items():
+            if use_log:
+                thresh_plot = _symmetric_log1p(thresh)
+            else:
+                thresh_plot = thresh
+            ax.axvline(thresh_plot, c=cmap[v], ls="--")
+
     if remove_legend:
         ax.get_legend().remove()
     else:
@@ -125,6 +139,7 @@ def distribution_stages(
     figsize=(8, 12),
     layer_raw=None,
     highlight: int = None,
+    add_thresholds: bool = True,
     use_key_normalise=DEFAULTS["add_key_normalise"],
     use_key_denoise=DEFAULTS["add_key_denoised"],
     cmap="tab20",
@@ -142,10 +157,14 @@ def distribution_stages(
         fig, axs = plt.subplots(3, 1, figsize=figsize)
     plt.tight_layout()
 
+    if isinstance(cmap, str):
+        cmap = dict(zip(adata.var_names, sns.color_palette(cmap)))
+
     def _plot_temp(
         ax,
         layer,
         title,
+        add_thresholds,
         use_log,
     ):
         ax = distribution(
@@ -154,6 +173,7 @@ def distribution_stages(
             layer=layer,
             cmap=cmap,
             title=title,
+            add_thresholds=add_thresholds,
             fill=True,
             remove_legend=False,
             use_log=use_log,
@@ -165,6 +185,7 @@ def distribution_stages(
         ax=ax,
         layer=layer_raw,
         title="Logged Raw Data",
+        add_thresholds=False,
         use_log=True,
     )
     ax.set_xlabel("")
@@ -174,6 +195,7 @@ def distribution_stages(
         ax=ax,
         layer=use_key_normalise,
         title="Normalised Data",
+        add_thresholds=False,
         use_log=False,
     )
     ax.set_xlabel("")
@@ -184,6 +206,7 @@ def distribution_stages(
         layer=use_key_denoise,
         title="Denoised Data",
         use_log=False,
+        add_thresholds=add_thresholds,
     )
 
     # add lines

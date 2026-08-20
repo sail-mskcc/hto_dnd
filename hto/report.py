@@ -9,7 +9,7 @@ import hto.pl as pl
 
 from ._defaults import DEFAULTS
 from ._logging import get_logger
-from ._utils import get_arg, savepdf
+from ._utils import get_arg, savepdf, subset_whitelist
 
 REPORT_PLT_DEFAULTS = {"dpi": 80}
 
@@ -51,6 +51,8 @@ def report(
     logger = get_logger("report", level=verbose)
 
     if path_report is None:
+        if not show:
+            return
         show = True
         pdf = None
     else:
@@ -59,8 +61,21 @@ def report(
         os.makedirs(os.path.dirname(path_report), exist_ok=True)
         pdf = matplotlib.backends.backend_pdf.PdfPages(path_report)
 
+    # assertions
+    if use_key_normalise is None or use_key_denoise is None:
+        logger.error(
+            "Skipping report. Require parameters 'add_key_normalise' (--add-key-normalise) "
+            "and 'add_key_denoised' (--add-key-denoise) to generate report."
+        )
+        return
+
     # preprocess
-    adata_background = adata_background.copy()
+    if adata_background is None:
+        adata_background = subset_whitelist(
+            adata_hto_raw, adata_hto.uns["dnd"]["normalise"]["params"]["background"]
+        )
+    else:
+        adata_background = adata_background.copy()
     adata_background.obs.loc[:, "filtered"] = adata_background.obs_names.isin(
         adata_hto.obs_names
     )

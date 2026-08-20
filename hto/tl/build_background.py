@@ -77,7 +77,8 @@ def build_background(
         for k in _background_version_meta[background_version]["optional"]
     }
     if adata_background is not None:
-        adata_background = adata_background
+        _assert_background(adata_background, _run_assert=_run_assert)
+        return adata_background
     elif background_version == "v1":
         build_background_func = build_background_v1
     elif background_version == "v2":

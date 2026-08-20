@@ -44,6 +44,7 @@ DEFAULTS = {
         "otsu_nbins": 512,
         "otsu_lam": 1.0,
         "otsu_p_target": None,
+        "otsu_alpha": 1.5,
     },
     # build_background
     "min_umi": 300,
@@ -79,7 +80,7 @@ DESCRIPTIONS = {
     "denoise_version": f"Version of the denoising algorithm. Must be either 'v1' or 'v2'. Default is {DEFAULTS['denoise_version']}.",
     "kwargs_denoise": f"Additional parameters for the denoising algorithm. Default is {DEFAULTS['kwargs_denoise']}.",
     # demux
-    "demux_method": f"Method to use for demultiplexing. Must be either 'kmeans', 'gmm' or 'otsu'. Default is {DEFAULTS['demux_method']}.",
+    "demux_method": f"Method to use for demultiplexing hashtag (HTO) signal in single-cell data. Must be one of 'otsu_weighted', 'otsu', 'otsu_biased', 'kmeans', 'gmm' or 'gmm_demux'. Default is {DEFAULTS['demux_method']}.",
     "enforce_larger_than_background": f"Enforce that only cells with larger than background counts are considered for a hashtag label. This ensures that normalised counts are larger than 0. Default is {DEFAULTS['enforce_larger_than_background']}.",
     "add_key_hashid": f"Column to store the demultiplexed cell type in the AnnData object. Default is {DEFAULTS['add_key_hashid']}.",
     "add_key_doublet": f"Column to store the doublet information in the AnnData object. Default is {DEFAULTS['add_key_doublet']}.",
